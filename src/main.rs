@@ -10,10 +10,29 @@ struct Drift {
     gamma0: f64,
 }
 
+impl Drift {
+    fn new(l: f64, g: f64) -> Drift {
+        Drift {
+            length: l,
+            gamma0: g,
+        }
+    }
+}
+
 struct Dipole {
     b_field: f64,
     theta: f64,
     gamma0: f64,
+}
+
+impl Dipole {
+    fn new(b: f64, angle: f64, g: f64) -> Dipole {
+        Dipole {
+            b_field: b,
+            theta: angle,
+            gamma0: g,
+        }
+    }
 }
 
 impl Tracking for Drift {
@@ -98,46 +117,15 @@ fn main() {
 
     let bunch_compressor = Accelerator {
         elements: vec![
-            Box::new(Drift {
-                length: 1.0,
-                gamma0: design_gamma,
-            }),
-            Box::new(Dipole {
-                b_field: 1.0,
-                theta: 1.0,
-                gamma0: design_gamma,
-            }),
-            Box::new(Drift {
-                length: 1.0,
-                gamma0: design_gamma,
-            }),
-            Box::new(Dipole {
-                b_field: 1.0,
-                theta: -1.0,
-                gamma0: design_gamma,
-            }),
-            Box::new(Drift {
-                length: 1.0,
-                gamma0: design_gamma,
-            }),
-            Box::new(Dipole {
-                b_field: 1.0,
-                theta: -1.0,
-                gamma0: design_gamma,
-            }),
-            Box::new(Drift {
-                length: 1.0,
-                gamma0: design_gamma,
-            }),
-            Box::new(Dipole {
-                b_field: 1.0,
-                theta: 1.0,
-                gamma0: design_gamma,
-            }),
-            Box::new(Drift {
-                length: 1.0,
-                gamma0: design_gamma,
-            }),
+            Box::new(Drift::new(1.0, design_gamma)),
+            Box::new(Dipole::new(1.0, 1.0, design_gamma)),
+            Box::new(Drift::new(1.0, design_gamma)),
+            Box::new(Dipole::new(1.0, -1.0, design_gamma)),
+            Box::new(Drift::new(1.0, design_gamma)),
+            Box::new(Dipole::new(1.0, -1.0, design_gamma)),
+            Box::new(Drift::new(1.0, design_gamma)),
+            Box::new(Dipole::new(1.0, 1.0, design_gamma)),
+            Box::new(Drift::new(1.0, design_gamma)),
         ],
     };
 
