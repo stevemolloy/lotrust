@@ -1,5 +1,3 @@
-use core::fmt::Debug;
-
 const MASS: f64 = 510998.9499961642;
 const C: f64 = 299792458.0;
 
@@ -7,7 +5,6 @@ pub trait Tracking {
     fn track(&self, beam: Beam) -> Beam;
 }
 
-#[derive(Debug)]
 struct Drift {
     length: f64,
     gamma0: f64,
@@ -87,7 +84,7 @@ impl Accelerator {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct Electron {
     t: f64,
     ke: f64,
