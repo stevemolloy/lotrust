@@ -97,48 +97,49 @@ type Beam = Vec<Electron>;
 
 fn main() {
     let design_ke = 1e8;
+    let design_gamma = design_ke / MASS;
 
     let bunch_compressor = Accelerator {
         elements: vec![
             Box::new(Drift {
                 length: 1.0,
-                gamma0: design_ke / MASS,
+                gamma0: design_gamma,
             }),
             Box::new(Dipole {
                 b_field: 1.0,
                 theta: 1.0,
-                gamma0: design_ke / MASS,
+                gamma0: design_gamma,
             }),
             Box::new(Drift {
                 length: 1.0,
-                gamma0: design_ke / MASS,
+                gamma0: design_gamma,
             }),
             Box::new(Dipole {
                 b_field: 1.0,
                 theta: -1.0,
-                gamma0: design_ke / MASS,
+                gamma0: design_gamma,
             }),
             Box::new(Drift {
                 length: 1.0,
-                gamma0: design_ke / MASS,
+                gamma0: design_gamma,
             }),
             Box::new(Dipole {
                 b_field: 1.0,
                 theta: -1.0,
-                gamma0: design_ke / MASS,
+                gamma0: design_gamma,
             }),
             Box::new(Drift {
                 length: 1.0,
-                gamma0: design_ke / MASS,
+                gamma0: design_gamma,
             }),
             Box::new(Dipole {
                 b_field: 1.0,
                 theta: 1.0,
-                gamma0: design_ke / MASS,
+                gamma0: design_gamma,
             }),
             Box::new(Drift {
                 length: 1.0,
-                gamma0: design_ke / MASS,
+                gamma0: design_gamma,
             }),
         ],
     };
@@ -146,7 +147,7 @@ fn main() {
     let beam = vec![
         Electron {
             t: -10e-15,
-            ke: 0.99*design_ke,
+            ke: 0.99 * design_ke,
         },
         Electron {
             t: 0.0,
@@ -154,7 +155,7 @@ fn main() {
         },
         Electron {
             t: 10e-15,
-            ke: 1.01*design_ke,
+            ke: 1.01 * design_ke,
         },
     ];
 
