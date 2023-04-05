@@ -113,10 +113,10 @@ impl Tracking for AccCav {
         let mut output_beam: Beam = vec![];
         let egain = self.length * self.voltage;
         for electron in beam {
-            let phase = self.phi + 2.0*PI*(electron.t*self.freq);
+            let phase = self.phi + 2.0 * PI * (electron.t * self.freq);
             output_beam.push(Electron {
                 t: electron.t,
-                ke: electron.ke + egain*phase.cos(),
+                ke: electron.ke + egain * phase.cos(),
             });
         }
         output_beam
@@ -151,28 +151,36 @@ fn main() {
     let cav_length = 6.0;
     let cav_voltage = 20e6;
     let cav_freq = 3e9;
-    let cav_phi: f64 = -PI/8.0;
+    let cav_phi: f64 = -1.56;
     let cav_egain = cav_voltage * cav_length * cav_phi.cos();
-    let design_gamma = (design_ke + cav_egain) / MASS;
+    let design_gamma = (design_ke + 4.0 * cav_egain) / MASS;
 
     let bunch_compressor = Accelerator {
         elements: vec![
+            // Acceleration
             Box::new(AccCav::new(cav_length, cav_voltage, cav_freq, cav_phi)),
+            Box::new(Drift::new(0.5, (design_ke + cav_egain) / MASS)),
+            Box::new(AccCav::new(cav_length, cav_voltage, cav_freq, cav_phi)),
+            Box::new(Drift::new(0.5, (design_ke + 2.0 * cav_egain) / MASS)),
+            Box::new(AccCav::new(cav_length, cav_voltage, cav_freq, cav_phi)),
+            Box::new(Drift::new(0.5, (design_ke + 3.0 * cav_egain) / MASS)),
+            Box::new(AccCav::new(cav_length, cav_voltage, cav_freq, cav_phi)),
+            Box::new(Drift::new(0.5, design_gamma)),
+            // Bunch compressor chicane
+            Box::new(Dipole::new(1.0, 2.0, design_gamma)),
             Box::new(Drift::new(1.0, design_gamma)),
-            Box::new(Dipole::new(1.0, 1.0, design_gamma)),
+            Box::new(Dipole::new(1.0, -2.0, design_gamma)),
             Box::new(Drift::new(1.0, design_gamma)),
-            Box::new(Dipole::new(1.0, -1.0, design_gamma)),
+            Box::new(Dipole::new(1.0, -2.0, design_gamma)),
             Box::new(Drift::new(1.0, design_gamma)),
-            Box::new(Dipole::new(1.0, -1.0, design_gamma)),
-            Box::new(Drift::new(1.0, design_gamma)),
-            Box::new(Dipole::new(1.0, 1.0, design_gamma)),
+            Box::new(Dipole::new(1.0, 2.0, design_gamma)),
             Box::new(Drift::new(1.0, design_gamma)),
         ],
     };
 
     let beam = vec![
         Electron {
-            t: -10e-15,
+            t: -10e-12,
             ke: design_ke,
         },
         Electron {
@@ -180,14 +188,18 @@ fn main() {
             ke: design_ke,
         },
         Electron {
-            t: 10e-15,
+            t: 10e-12,
             ke: design_ke,
         },
     ];
 
     println!("---   INPUT  ---");
     for electron in &beam {
-        println!("{:0.6} fs", electron.t * 1e15);
+        println!(
+            "{:0.6} ps :: {:0.3} MeV",
+            electron.t * 1e12,
+            electron.ke * 1e-6
+        );
     }
     // let out_beam = drift.track(beam);
     // let out_beam = bend.track(beam);
@@ -196,6 +208,10 @@ fn main() {
     println!("---  OUTPUT  ---");
 
     for electron in out_beam {
-        println!("{:0.6} fs", electron.t * 1e15);
+        println!(
+            "{:0.6} ps :: {:0.3} MeV",
+            electron.t * 1e12,
+            electron.ke * 1e-6
+        );
     }
 }
