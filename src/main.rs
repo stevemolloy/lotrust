@@ -1,8 +1,27 @@
-const MASS: f64 = 510998.9499961642;
-const C: f64 = 299792458.0;
+use std::f64::consts::PI;
+const MASS: f64 = 510998.9499961642f64;
+const C: f64 = 299792458f64;
 
 pub trait Tracking {
     fn track(&self, beam: Beam) -> Beam;
+}
+
+struct AccCav {
+    length: f64,
+    voltage: f64,
+    freq: f64,
+    phi: f64,
+}
+
+impl AccCav {
+    fn new(l: f64, v: f64, freq: f64, phi: f64) -> AccCav {
+        AccCav {
+            length: l,
+            voltage: v,
+            freq: freq,
+            phi: phi,
+        }
+    }
 }
 
 struct Drift {
@@ -89,6 +108,21 @@ impl Tracking for Dipole {
     }
 }
 
+impl Tracking for AccCav {
+    fn track(&self, beam: Beam) -> Beam {
+        let mut output_beam: Beam = vec![];
+        let egain = self.length * self.voltage;
+        for electron in beam {
+            let phase = self.phi + 2.0*PI*(electron.t*self.freq);
+            output_beam.push(Electron {
+                t: electron.t,
+                ke: electron.ke + egain*phase.cos(),
+            });
+        }
+        output_beam
+    }
+}
+
 struct Accelerator {
     pub elements: Vec<Box<dyn Tracking>>,
 }
@@ -103,6 +137,7 @@ impl Accelerator {
     }
 }
 
+// TODO: Electrons may be better described as a simple array. Look at ndarray.
 #[derive(Copy, Clone)]
 pub struct Electron {
     t: f64,
@@ -113,10 +148,16 @@ type Beam = Vec<Electron>;
 
 fn main() {
     let design_ke = 1e8;
-    let design_gamma = design_ke / MASS;
+    let cav_length = 6.0;
+    let cav_voltage = 20e6;
+    let cav_freq = 3e9;
+    let cav_phi: f64 = -PI/8.0;
+    let cav_egain = cav_voltage * cav_length * cav_phi.cos();
+    let design_gamma = (design_ke + cav_egain) / MASS;
 
     let bunch_compressor = Accelerator {
         elements: vec![
+            Box::new(AccCav::new(cav_length, cav_voltage, cav_freq, cav_phi)),
             Box::new(Drift::new(1.0, design_gamma)),
             Box::new(Dipole::new(1.0, 1.0, design_gamma)),
             Box::new(Drift::new(1.0, design_gamma)),
@@ -132,7 +173,7 @@ fn main() {
     let beam = vec![
         Electron {
             t: -10e-15,
-            ke: 0.99 * design_ke,
+            ke: design_ke,
         },
         Electron {
             t: 0.0,
@@ -140,7 +181,7 @@ fn main() {
         },
         Electron {
             t: 10e-15,
-            ke: 1.01 * design_ke,
+            ke: design_ke,
         },
     ];
 
