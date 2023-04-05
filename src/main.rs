@@ -77,12 +77,6 @@ struct Accelerator {
     pub elements: Vec<Box<dyn Tracking>>,
 }
 
-impl Debug for dyn Tracking {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
 impl Accelerator {
     fn track(&self, beam: Beam) -> Beam {
         let mut output_beam = beam;
