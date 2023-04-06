@@ -1,4 +1,151 @@
 use std::fs::read_to_string;
+use std::f64::consts::PI;
+const MASS: f64 = 510998.9499961642f64;
+const C: f64 = 299792458f64;
+
+// TODO: Electrons may be better described as a simple array. Look at ndarray.
+#[derive(Copy, Clone)]
+pub struct Electron {
+    t: f64,
+    ke: f64,
+}
+
+type Beam = Vec<Electron>;
+
+pub trait Tracking {
+    fn track(&self, beam: Beam) -> Beam;
+}
+
+struct Drift {
+    length: f64,
+    gamma0: f64,
+}
+
+impl Drift {
+    fn new(l: f64, g: f64) -> Drift {
+        Drift {
+            length: l,
+            gamma0: g,
+        }
+    }
+}
+
+impl Tracking for Drift {
+    fn track(&self, beam: Beam) -> Beam {
+        let mut output_beam: Beam = vec![];
+        for electron in beam {
+            let t = electron.t;
+            let l = self.length;
+
+            let g0 = self.gamma0;
+            let g = electron.ke / MASS;
+
+            let beta = (1.0 - (1.0 / g.powi(2))).sqrt();
+            let beta0 = (1.0 - (1.0 / g0.powi(2))).sqrt();
+
+            let new_t = t + (l / C) * (1.0 / beta - 1.0 / beta0);
+
+            output_beam.push(Electron {
+                t: new_t,
+                ke: electron.ke,
+            });
+        }
+        output_beam
+    }
+}
+
+// struct Dipole {
+//     b_field: f64,
+//     theta: f64,
+//     gamma0: f64,
+// }
+// 
+// impl Dipole {
+//     fn new(b: f64, angle: f64, g: f64) -> Dipole {
+//         Dipole {
+//             b_field: b,
+//             theta: angle,
+//             gamma0: g,
+//         }
+//     }
+// }
+// 
+// impl Tracking for Dipole {
+//     fn track(&self, beam: Beam) -> Beam {
+//         let mut output_beam: Beam = vec![];
+//         for electron in beam {
+//             let g0 = self.gamma0;
+//             let g = electron.ke / MASS;
+// 
+//             let pc0 = (g0.powi(2) - 1.0).sqrt() * MASS;
+//             let pc = (g.powi(2) - 1.0).sqrt() * MASS;
+// 
+//             let rho0 = pc0 / (C * self.b_field);
+//             let rho = pc / (C * self.b_field);
+// 
+//             let l0 = rho0 * self.theta;
+//             let l = rho * self.theta;
+// 
+//             let delta_l = l - l0;
+//             let v = C * (1.0 - (1.0 / g.powi(2))).sqrt();
+// 
+//             let new_t = electron.t + delta_l / v;
+// 
+//             output_beam.push(Electron {
+//                 t: new_t,
+//                 ke: electron.ke,
+//             });
+//         }
+//         output_beam
+//     }
+// }
+// 
+// struct AccCav {
+//     length: f64,
+//     voltage: f64,
+//     freq: f64,
+//     phi: f64,
+// }
+// 
+// impl AccCav {
+//     fn new(l: f64, v: f64, freq: f64, phi: f64) -> AccCav {
+//         AccCav {
+//             length: l,
+//             voltage: v,
+//             freq: freq,
+//             phi: phi,
+//         }
+//     }
+// }
+
+// impl Tracking for AccCav {
+//     fn track(&self, beam: Beam) -> Beam {
+//         let mut output_beam: Beam = vec![];
+//         let egain = self.length * self.voltage;
+//         for electron in beam {
+//             let phase = self.phi + 2.0 * PI * (electron.t * self.freq);
+//             output_beam.push(Electron {
+//                 t: electron.t,
+//                 ke: electron.ke + egain * phase.cos(),
+//             });
+//         }
+//         output_beam
+//     }
+// }
+
+struct Accelerator {
+    pub elements: Vec<Box<dyn Tracking>>,
+}
+
+impl Accelerator {
+    fn track(&self, beam: Beam) -> Beam {
+        let mut output_beam = beam;
+        for element in self.elements.iter() {
+            output_beam = element.track(output_beam.clone());
+        }
+        output_beam
+    }
+}
 
 #[derive(Debug)]
 enum TokenType {
@@ -102,7 +249,6 @@ fn tokenize_file_contents(contents: &mut String) -> Vec<Token> {
 fn main() {
     let filename = "acc_defn.lotr";
     let mut contents = read_to_string(filename).expect("Could not read file.");
-
     let tokens = tokenize_file_contents(&mut contents);
     println!("{:?}", tokens);
 }
