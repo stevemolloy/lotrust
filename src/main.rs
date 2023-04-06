@@ -1,5 +1,5 @@
 use std::fs::read_to_string;
-use std::f64::consts::PI;
+// use std::f64::consts::PI;
 const MASS: f64 = 510998.9499961642f64;
 const C: f64 = 299792458f64;
 
@@ -59,7 +59,7 @@ impl Tracking for Drift {
 //     theta: f64,
 //     gamma0: f64,
 // }
-// 
+//
 // impl Dipole {
 //     fn new(b: f64, angle: f64, g: f64) -> Dipole {
 //         Dipole {
@@ -69,28 +69,28 @@ impl Tracking for Drift {
 //         }
 //     }
 // }
-// 
+//
 // impl Tracking for Dipole {
 //     fn track(&self, beam: Beam) -> Beam {
 //         let mut output_beam: Beam = vec![];
 //         for electron in beam {
 //             let g0 = self.gamma0;
 //             let g = electron.ke / MASS;
-// 
+//
 //             let pc0 = (g0.powi(2) - 1.0).sqrt() * MASS;
 //             let pc = (g.powi(2) - 1.0).sqrt() * MASS;
-// 
+//
 //             let rho0 = pc0 / (C * self.b_field);
 //             let rho = pc / (C * self.b_field);
-// 
+//
 //             let l0 = rho0 * self.theta;
 //             let l = rho * self.theta;
-// 
+//
 //             let delta_l = l - l0;
 //             let v = C * (1.0 - (1.0 / g.powi(2))).sqrt();
-// 
+//
 //             let new_t = electron.t + delta_l / v;
-// 
+//
 //             output_beam.push(Electron {
 //                 t: new_t,
 //                 ke: electron.ke,
@@ -99,14 +99,14 @@ impl Tracking for Drift {
 //         output_beam
 //     }
 // }
-// 
+//
 // struct AccCav {
 //     length: f64,
 //     voltage: f64,
 //     freq: f64,
 //     phi: f64,
 // }
-// 
+//
 // impl AccCav {
 //     fn new(l: f64, v: f64, freq: f64, phi: f64) -> AccCav {
 //         AccCav {
@@ -147,7 +147,7 @@ impl Accelerator {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum TokenType {
     Word,
     Value,
@@ -246,9 +246,104 @@ fn tokenize_file_contents(contents: &mut String) -> Vec<Token> {
     tokens
 }
 
+fn parse_tokens(token_list: &[Token]) -> Accelerator {
+    use TokenType::*;
+    let mut acc = Accelerator { elements: vec![] };
+    let mut ind: usize = 0;
+    let mut starting_ke = 100e6;
+    while ind < token_list.len() {
+        let tok = &token_list[ind];
+        if tok.token_type == Word && tok.value == "beam" {
+            ind += 1;
+            assert!(token_list[ind].token_type == Ocurly);
+            ind += 1;
+            assert!(token_list[ind].token_type == Word);
+            while token_list[ind].token_type != Ccurly {
+                match token_list[ind].value.as_str() {
+                    "energy" => {
+                        ind += 1;
+                        assert!(token_list[ind].token_type == Colon);
+                        ind += 1;
+                        assert!(token_list[ind].token_type == Value);
+                        starting_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                    }
+                    _ => todo!("Implement more beam definitions"),
+                }
+                ind += 1;
+            }
+        }
+        if tok.token_type == Word && tok.value == "accelerator" {
+            ind += 1;
+            assert!(token_list[ind].token_type == Ocurly);
+            ind += 1;
+            assert!(token_list[ind].token_type == Word);
+            while token_list[ind].token_type != Ccurly {
+                match token_list[ind].value.as_str() {
+                    "drift" => {
+                        ind += 1;
+                        assert!(token_list[ind].token_type == Colon);
+                        ind += 1;
+                        assert!(token_list[ind].token_type == Value);
+                        let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        acc.elements
+                            .push(Box::new(Drift::new(drift_len, starting_ke / MASS)));
+                    }
+                    _ => todo!("Implement more element definitions"),
+                }
+                ind += 1;
+            }
+        }
+        ind += 1;
+    }
+    acc
+}
+
 fn main() {
     let filename = "acc_defn.lotr";
     let mut contents = read_to_string(filename).expect("Could not read file.");
     let tokens = tokenize_file_contents(&mut contents);
-    println!("{:?}", tokens);
+    let accelerator: Accelerator = parse_tokens(&tokens);
+    let design_ke = 200e6;
+    let beam = vec![
+        Electron {
+            t: -10e-12,
+            ke: design_ke,
+        },
+        Electron {
+            t: 0.0,
+            ke: design_ke,
+        },
+        Electron {
+            t: 0.0,
+            ke: 0.999 * design_ke,
+        },
+        Electron {
+            t: 0.0,
+            ke: 1.001 * design_ke,
+        },
+        Electron {
+            t: 10e-12,
+            ke: design_ke,
+        },
+    ];
+
+    println!("---   INPUT  ---");
+    for electron in &beam {
+        println!(
+            "{:0.6} ps :: {:0.3} MeV",
+            electron.t * 1e12,
+            electron.ke * 1e-6
+        );
+    }
+    println!("--- TRACKING ---");
+    let out_beam = accelerator.track(beam);
+    println!("---  OUTPUT  ---");
+
+    for electron in out_beam {
+        println!(
+            "{:0.6} ps :: {:0.3} MeV",
+            electron.t * 1e12,
+            electron.ke * 1e-6
+        );
+    }
 }

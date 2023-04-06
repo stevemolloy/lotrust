@@ -1,8 +1,7 @@
 beam {
-    energy: 100e6
+    energy: 200e6
 }
 
 accelerator {
     drift: 1.0
 }
-
