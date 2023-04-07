@@ -202,7 +202,7 @@ fn parse_digit(input: &mut String) -> Token {
     }
     Token {
         token_type: TokenType::Value,
-        value: value,
+        value,
     }
 }
 
@@ -218,7 +218,7 @@ fn tokenize_file_contents(contents: &mut String) -> Vec<Token> {
             continue;
         } else if contents.starts_with(|c: char| c.is_ascii_alphabetic()) {
             tokens.push(parse_word(contents));
-        } else if contents.starts_with(|c: char| c.is_ascii_digit() || c=='-') {
+        } else if contents.starts_with(|c: char| c.is_ascii_digit() || c == '-') {
             tokens.push(parse_digit(contents));
         } else if contents.starts_with('{') {
             chop_character(contents);
@@ -238,6 +238,11 @@ fn tokenize_file_contents(contents: &mut String) -> Vec<Token> {
                 token_type: TokenType::Colon,
                 value: ":".to_string(),
             });
+        } else if contents.starts_with("//") {
+            let mut next = chop_character(contents);
+            while next != '\n' {
+                next = chop_character(contents);
+            }
         } else {
             let chr = chop_character(contents);
             eprintln!("Unknown character: {}", chr);
