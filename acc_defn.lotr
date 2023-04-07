@@ -5,4 +5,10 @@ beam {
 accelerator {
     drift: 1.0
     dipole: 2.0 1.0
+    drift: 1.0
+    dipole: 2.0 -1.0
+    drift: 1.0
+    dipole: 2.0 -1.0
+    drift: 1.0
+    dipole: 2.0 1.0
 }
