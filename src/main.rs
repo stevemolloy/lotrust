@@ -54,52 +54,52 @@ impl Tracking for Drift {
     }
 }
 
-// struct Dipole {
-//     b_field: f64,
-//     theta: f64,
-//     gamma0: f64,
-// }
-//
-// impl Dipole {
-//     fn new(b: f64, angle: f64, g: f64) -> Dipole {
-//         Dipole {
-//             b_field: b,
-//             theta: angle,
-//             gamma0: g,
-//         }
-//     }
-// }
-//
-// impl Tracking for Dipole {
-//     fn track(&self, beam: Beam) -> Beam {
-//         let mut output_beam: Beam = vec![];
-//         for electron in beam {
-//             let g0 = self.gamma0;
-//             let g = electron.ke / MASS;
-//
-//             let pc0 = (g0.powi(2) - 1.0).sqrt() * MASS;
-//             let pc = (g.powi(2) - 1.0).sqrt() * MASS;
-//
-//             let rho0 = pc0 / (C * self.b_field);
-//             let rho = pc / (C * self.b_field);
-//
-//             let l0 = rho0 * self.theta;
-//             let l = rho * self.theta;
-//
-//             let delta_l = l - l0;
-//             let v = C * (1.0 - (1.0 / g.powi(2))).sqrt();
-//
-//             let new_t = electron.t + delta_l / v;
-//
-//             output_beam.push(Electron {
-//                 t: new_t,
-//                 ke: electron.ke,
-//             });
-//         }
-//         output_beam
-//     }
-// }
-//
+struct Dipole {
+    b_field: f64,
+    theta: f64,
+    gamma0: f64,
+}
+
+impl Dipole {
+    fn new(b: f64, angle: f64, g: f64) -> Dipole {
+        Dipole {
+            b_field: b,
+            theta: angle,
+            gamma0: g,
+        }
+    }
+}
+
+impl Tracking for Dipole {
+    fn track(&self, beam: Beam) -> Beam {
+        let mut output_beam: Beam = vec![];
+        for electron in beam {
+            let g0 = self.gamma0;
+            let g = electron.ke / MASS;
+
+            let pc0 = (g0.powi(2) - 1.0).sqrt() * MASS;
+            let pc = (g.powi(2) - 1.0).sqrt() * MASS;
+
+            let rho0 = pc0 / (C * self.b_field);
+            let rho = pc / (C * self.b_field);
+
+            let l0 = rho0 * self.theta;
+            let l = rho * self.theta;
+
+            let delta_l = l - l0;
+            let v = C * (1.0 - (1.0 / g.powi(2))).sqrt();
+
+            let new_t = electron.t + delta_l / v;
+
+            output_beam.push(Electron {
+                t: new_t,
+                ke: electron.ke,
+            });
+        }
+        output_beam
+    }
+}
+
 // struct AccCav {
 //     length: f64,
 //     voltage: f64,
@@ -278,7 +278,8 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
             ind += 1;
             assert!(token_list[ind].token_type == Word);
             while token_list[ind].token_type != Ccurly {
-                match token_list[ind].value.as_str() {
+                let ele_type = token_list[ind].value.as_str();
+                match ele_type {
                     "drift" => {
                         ind += 1;
                         assert!(token_list[ind].token_type == Colon);
@@ -288,7 +289,22 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
                         acc.elements
                             .push(Box::new(Drift::new(drift_len, starting_ke / MASS)));
                     }
-                    _ => todo!("Implement more element definitions"),
+                    "dipole" => {
+                        ind += 1;
+                        assert!(token_list[ind].token_type == Colon);
+                        ind += 1;
+                        assert!(token_list[ind].token_type == Value);
+                        let b_field = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        ind += 1;
+                        assert!(token_list[ind].token_type == Value);
+                        let angle = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        acc.elements.push(Box::new(Dipole::new(
+                            b_field,
+                            angle,
+                            starting_ke / MASS,
+                        )));
+                    }
+                    _ => todo!("Element '{ele_type}' not defined."),
                 }
                 ind += 1;
             }
