@@ -1,4 +1,5 @@
 use std::fs::read_to_string;
+use std::process::exit;
 // use std::f64::consts::PI;
 const MASS: f64 = 510998.9499961642f64;
 const C: f64 = 299792458f64;
@@ -147,6 +148,13 @@ impl Accelerator {
     }
 }
 
+#[derive(Debug)]
+struct FileLoc {
+    filename: String,
+    row: usize,
+    col: usize,
+}
+
 #[derive(Debug, PartialEq)]
 enum TokenType {
     Word,
@@ -160,9 +168,10 @@ enum TokenType {
 struct Token {
     token_type: TokenType,
     value: String,
+    loc: FileLoc,
 }
 
-fn parse_word(input: &mut String) -> Token {
+fn parse_word(input: &mut String, loc: FileLoc) -> Token {
     let mut name: String = chop_character(input).to_string();
     while !input.is_empty() {
         if input.starts_with(|c: char| c == '_' || c.is_ascii_alphanumeric()) {
@@ -174,10 +183,11 @@ fn parse_word(input: &mut String) -> Token {
     Token {
         token_type: TokenType::Word,
         value: name,
+        loc: loc,
     }
 }
 
-fn parse_digit(input: &mut String) -> Token {
+fn parse_digit(input: &mut String, loc: FileLoc) -> Token {
     let mut already_decimal: bool = false;
     let mut already_exp: bool = false;
     let mut value: String = chop_character(input).to_string();
@@ -203,6 +213,7 @@ fn parse_digit(input: &mut String) -> Token {
     Token {
         token_type: TokenType::Value,
         value,
+        loc,
     }
 }
 
@@ -210,41 +221,90 @@ fn chop_character(input: &mut String) -> char {
     input.remove(0)
 }
 
-fn tokenize_file_contents(contents: &mut String) -> Vec<Token> {
+fn tokenize_file_contents(filename: &str) -> Vec<Token> {
+    let mut contents = read_to_string(filename).expect("Could not read file.");
     let mut tokens: Vec<Token> = vec![];
+    let mut row = 1;
+    let mut col = 1;
     while !contents.is_empty() {
         if contents.starts_with(|c: char| c.is_whitespace()) {
-            chop_character(contents);
-            continue;
+            let c = chop_character(&mut contents);
+            match c {
+                '\n' => {
+                    row += 1;
+                    col = 1;
+                }
+                _ => {
+                    col += 1;
+                }
+            }
         } else if contents.starts_with(|c: char| c.is_ascii_alphabetic()) {
-            tokens.push(parse_word(contents));
+            let tok = parse_word(
+                &mut contents,
+                FileLoc {
+                    row: row,
+                    col: col,
+                    filename: filename.to_string(),
+                },
+            );
+            col += tok.value.len();
+            tokens.push(tok);
         } else if contents.starts_with(|c: char| c.is_ascii_digit() || c == '-') {
-            tokens.push(parse_digit(contents));
+            let tok = parse_digit(
+                &mut contents,
+                FileLoc {
+                    row: row,
+                    col: col,
+                    filename: filename.to_string(),
+                },
+            );
+            col += tok.value.len();
+            tokens.push(tok);
         } else if contents.starts_with('{') {
-            chop_character(contents);
+            chop_character(&mut contents);
             tokens.push(Token {
                 token_type: TokenType::Ocurly,
                 value: "{".to_string(),
+                loc: FileLoc {
+                    row: row,
+                    col: col,
+                    filename: filename.to_string(),
+                },
             });
+            col += 1;
         } else if contents.starts_with('}') {
-            chop_character(contents);
+            chop_character(&mut contents);
             tokens.push(Token {
                 token_type: TokenType::Ccurly,
                 value: "}".to_string(),
+                loc: FileLoc {
+                    row: row,
+                    col: col,
+                    filename: filename.to_string(),
+                },
             });
+            col += 1;
         } else if contents.starts_with(':') {
-            chop_character(contents);
+            chop_character(&mut contents);
             tokens.push(Token {
                 token_type: TokenType::Colon,
                 value: ":".to_string(),
+                loc: FileLoc {
+                    row: row,
+                    col: col,
+                    filename: filename.to_string(),
+                },
             });
+            col += 1;
         } else if contents.starts_with("//") {
-            let mut next = chop_character(contents);
+            let mut next = chop_character(&mut contents);
             while next != '\n' {
-                next = chop_character(contents);
+                next = chop_character(&mut contents);
             }
+            row += 1;
+            col = 1;
         } else {
-            let chr = chop_character(contents);
+            let chr = chop_character(&mut contents);
             eprintln!("Unknown character: {}", chr);
         }
     }
@@ -260,16 +320,52 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
         let tok = &token_list[ind];
         if tok.token_type == Word && tok.value == "beam" {
             ind += 1;
-            assert!(token_list[ind].token_type == Ocurly);
+            if token_list[ind].token_type != Ocurly {
+                eprintln!(
+                    "{}:{}:{}: Expected '{{' got '{}'",
+                    token_list[ind].loc.filename,
+                    token_list[ind].loc.row,
+                    token_list[ind].loc.col,
+                    token_list[ind].value,
+                );
+                exit(1);
+            }
             ind += 1;
-            assert!(token_list[ind].token_type == Word);
+            if token_list[ind].token_type != Word {
+                eprintln!(
+                    "{}:{}:{}: Expected a word got '{}'",
+                    token_list[ind].loc.filename,
+                    token_list[ind].loc.row,
+                    token_list[ind].loc.col,
+                    token_list[ind].value,
+                );
+                exit(1);
+            }
             while token_list[ind].token_type != Ccurly {
                 match token_list[ind].value.as_str() {
                     "energy" => {
                         ind += 1;
-                        assert!(token_list[ind].token_type == Colon);
+                        if token_list[ind].token_type != Colon {
+                            eprintln!(
+                                "{}:{}:{}: Expected ':' to follow 'energy', got '{}'",
+                                token_list[ind].loc.filename,
+                                token_list[ind].loc.row,
+                                token_list[ind].loc.col,
+                                token_list[ind].value,
+                            );
+                            exit(1);
+                        }
                         ind += 1;
-                        assert!(token_list[ind].token_type == Value);
+                        if token_list[ind].token_type != Value {
+                            eprintln!(
+                                "{}:{}:{}: Expected a numeric value for 'energy', got '{}'",
+                                token_list[ind].loc.filename,
+                                token_list[ind].loc.row,
+                                token_list[ind].loc.col,
+                                token_list[ind].value,
+                            );
+                            exit(1);
+                        }
                         starting_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
                     }
                     _ => todo!("Implement more beam definitions"),
@@ -321,8 +417,7 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
 
 fn main() {
     let filename = "acc_defn.lotr";
-    let mut contents = read_to_string(filename).expect("Could not read file.");
-    let tokens = tokenize_file_contents(&mut contents);
+    let tokens = tokenize_file_contents(filename);
     let accelerator: Accelerator = parse_tokens(&tokens);
     let design_ke = 20e6;
     let beam = vec![

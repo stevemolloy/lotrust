@@ -1,5 +1,5 @@
-beam {
-    energy: 20e6 // Starting energy
+beam { // Beam definitions
+    energy: d20e6 // Starting energy
 }
 
 accelerator {
