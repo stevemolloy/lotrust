@@ -1,5 +1,5 @@
 beam {
-    energy: 200e6
+    energy: 20e6
 }
 
 accelerator {

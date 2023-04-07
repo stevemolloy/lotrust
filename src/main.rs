@@ -319,27 +319,43 @@ fn main() {
     let mut contents = read_to_string(filename).expect("Could not read file.");
     let tokens = tokenize_file_contents(&mut contents);
     let accelerator: Accelerator = parse_tokens(&tokens);
-    let design_ke = 200e6;
+    let design_ke = 20e6;
     let beam = vec![
+        Electron {
+            t: -10e-12,
+            ke: 0.99 * design_ke,
+        },
         Electron {
             t: -10e-12,
             ke: design_ke,
         },
         Electron {
+            t: -10e-12,
+            ke: 1.01 * design_ke,
+        },
+        Electron {
             t: 0.0,
             ke: design_ke,
         },
         Electron {
             t: 0.0,
-            ke: 0.999 * design_ke,
+            ke: 0.99 * design_ke,
         },
         Electron {
             t: 0.0,
-            ke: 1.001 * design_ke,
+            ke: 1.01 * design_ke,
+        },
+        Electron {
+            t: 10e-12,
+            ke: 0.99 * design_ke,
         },
         Electron {
             t: 10e-12,
             ke: design_ke,
+        },
+        Electron {
+            t: 10e-12,
+            ke: 1.01 * design_ke,
         },
     ];
 
