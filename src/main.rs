@@ -183,7 +183,7 @@ fn parse_word(input: &mut String, loc: FileLoc) -> Token {
     Token {
         token_type: TokenType::Word,
         value: name,
-        loc: loc,
+        loc,
     }
 }
 
@@ -242,8 +242,8 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             let tok = parse_word(
                 &mut contents,
                 FileLoc {
-                    row: row,
-                    col: col,
+                    row,
+                    col,
                     filename: filename.to_string(),
                 },
             );
@@ -253,8 +253,8 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             let tok = parse_digit(
                 &mut contents,
                 FileLoc {
-                    row: row,
-                    col: col,
+                    row,
+                    col,
                     filename: filename.to_string(),
                 },
             );
@@ -266,8 +266,8 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
                 token_type: TokenType::Ocurly,
                 value: "{".to_string(),
                 loc: FileLoc {
-                    row: row,
-                    col: col,
+                    row,
+                    col,
                     filename: filename.to_string(),
                 },
             });
@@ -278,8 +278,8 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
                 token_type: TokenType::Ccurly,
                 value: "}".to_string(),
                 loc: FileLoc {
-                    row: row,
-                    col: col,
+                    row,
+                    col,
                     filename: filename.to_string(),
                 },
             });
@@ -290,8 +290,8 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
                 token_type: TokenType::Colon,
                 value: ":".to_string(),
                 loc: FileLoc {
-                    row: row,
-                    col: col,
+                    row,
+                    col,
                     filename: filename.to_string(),
                 },
             });
