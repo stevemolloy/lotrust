@@ -375,29 +375,92 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
         }
         if tok.token_type == Word && tok.value == "accelerator" {
             ind += 1;
-            assert!(token_list[ind].token_type == Ocurly);
+            if token_list[ind].token_type != Ocurly {
+                eprintln!(
+                    "{}:{}:{}: Expected '{{' got '{}'",
+                    token_list[ind].loc.filename,
+                    token_list[ind].loc.row,
+                    token_list[ind].loc.col,
+                    token_list[ind].value,
+                );
+                exit(1);
+            }
             ind += 1;
-            assert!(token_list[ind].token_type == Word);
+            if token_list[ind].token_type != Word {
+                eprintln!(
+                    "{}:{}:{}: Expected a word got '{}'",
+                    token_list[ind].loc.filename,
+                    token_list[ind].loc.row,
+                    token_list[ind].loc.col,
+                    token_list[ind].value,
+                );
+                exit(1);
+            }
             while token_list[ind].token_type != Ccurly {
                 let ele_type = token_list[ind].value.as_str();
                 match ele_type {
                     "drift" => {
                         ind += 1;
-                        assert!(token_list[ind].token_type == Colon);
+                        if token_list[ind].token_type != Colon {
+                            eprintln!(
+                                "{}:{}:{}: Expected ':' to follow element declaration got '{}'",
+                                token_list[ind].loc.filename,
+                                token_list[ind].loc.row,
+                                token_list[ind].loc.col,
+                                token_list[ind].value,
+                            );
+                            exit(1);
+                        }
                         ind += 1;
-                        assert!(token_list[ind].token_type == Value);
+                        if token_list[ind].token_type != Value {
+                            eprintln!(
+                                "{}:{}:{}: Expected a numeric value for 'drift_length' got '{}'",
+                                token_list[ind].loc.filename,
+                                token_list[ind].loc.row,
+                                token_list[ind].loc.col,
+                                token_list[ind].value,
+                            );
+                            exit(1);
+                        }
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         acc.elements
                             .push(Box::new(Drift::new(drift_len, starting_ke / MASS)));
                     }
                     "dipole" => {
                         ind += 1;
-                        assert!(token_list[ind].token_type == Colon);
+                        if token_list[ind].token_type != Colon {
+                            eprintln!(
+                                "{}:{}:{}: Expected ':' to follow element declaration got '{}'",
+                                token_list[ind].loc.filename,
+                                token_list[ind].loc.row,
+                                token_list[ind].loc.col,
+                                token_list[ind].value,
+                            );
+                            exit(1);
+                        }
                         ind += 1;
-                        assert!(token_list[ind].token_type == Value);
+                        if token_list[ind].token_type != Value {
+                            eprintln!(
+                                "{}:{}:{}: Expected a numeric value for 'b_field' got '{}'",
+                                token_list[ind].loc.filename,
+                                token_list[ind].loc.row,
+                                token_list[ind].loc.col,
+                                token_list[ind].value,
+                            );
+                            exit(1);
+                        }
                         let b_field = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         ind += 1;
-                        assert!(token_list[ind].token_type == Value);
+                        if token_list[ind].token_type != Value {
+                            eprintln!(
+                                "{}:{}:{}: Expected a numeric value for 'angle' got '{}'",
+                                token_list[ind].loc.filename,
+                                token_list[ind].loc.row,
+                                token_list[ind].loc.col,
+                                token_list[ind].value,
+                            );
+                            exit(1);
+                        }
                         let angle = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         acc.elements.push(Box::new(Dipole::new(
                             b_field,
