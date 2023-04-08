@@ -141,12 +141,12 @@ struct Simulation {
 }
 
 impl Simulation {
-    fn track(&self, beam: Beam) -> Beam {
-        let mut output_beam = beam;
+    fn track(&self) -> Beam {
+        let mut output_beam: Beam = self.beam.clone();
         for element in self.elements.iter() {
             output_beam = element.track(output_beam.clone());
         }
-        output_beam
+        output_beam.to_vec()
     }
 }
 
@@ -324,7 +324,10 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
 
 fn parse_tokens(token_list: &[Token]) -> Simulation {
     use TokenType::*;
-    let mut acc = Simulation { elements: vec![], beam: vec![] };
+    let mut acc = Simulation {
+        elements: vec![],
+        beam: vec![],
+    };
     let mut ind: usize = 0;
     let mut starting_ke: f64;
     while ind < token_list.len() {
@@ -336,12 +339,19 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
             token_check(&token_list[ind], Word);
             while token_list[ind].token_type != Ccurly {
                 match token_list[ind].value.as_str() {
-                    "energy" => {
+                    "particles" => {
                         ind += 1;
-                        token_check(&token_list[ind], Colon);
+                        token_check(&token_list[ind], Ocurly);
                         ind += 1;
-                        token_check(&token_list[ind], Value);
-                        starting_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        while token_list[ind].token_type != Ccurly {
+                            token_check(&token_list[ind], Value);
+                            token_check(&token_list[ind + 1], Value);
+                            let t = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                            ind += 1;
+                            let e = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                            ind += 1;
+                            acc.beam.push(Electron { t, ke: e });
+                        }
                     }
                     _ => todo!("Implement more beam definitions"),
                 }
@@ -429,48 +439,9 @@ fn main() {
     let filename = "acc_defn.lotr";
     let tokens = tokenize_file_contents(filename);
     let simulation: Simulation = parse_tokens(&tokens);
-    let design_ke = 25e6;
-    let beam = vec![
-        Electron {
-            t: -10e-12,
-            ke: 0.99 * design_ke,
-        },
-        Electron {
-            t: -10e-12,
-            ke: design_ke,
-        },
-        Electron {
-            t: -10e-12,
-            ke: 1.01 * design_ke,
-        },
-        Electron {
-            t: 0.0,
-            ke: design_ke,
-        },
-        Electron {
-            t: 0.0,
-            ke: 0.99 * design_ke,
-        },
-        Electron {
-            t: 0.0,
-            ke: 2.01 * design_ke,
-        },
-        Electron {
-            t: 10e-12,
-            ke: 0.99 * design_ke,
-        },
-        Electron {
-            t: 10e-12,
-            ke: design_ke,
-        },
-        Electron {
-            t: 10e-12,
-            ke: 1.01 * design_ke,
-        },
-    ];
 
     println!("---   INPUT  ---");
-    for electron in &beam {
+    for electron in &simulation.beam {
         println!(
             "{:0.6} ps :: {:0.3} MeV",
             electron.t * 1e12,
@@ -478,7 +449,7 @@ fn main() {
         );
     }
     println!("--- TRACKING ---");
-    let out_beam = simulation.track(beam);
+    let out_beam = simulation.track();
     println!("---  OUTPUT  ---");
 
     for electron in out_beam {
