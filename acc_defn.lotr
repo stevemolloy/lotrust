@@ -1,7 +1,7 @@
-beam { // Beam definitions
-    energy: 20e6 // Starting energy
-}
-
+// beam { // Beam definitions
+//     energy: 20e6 // Starting energy
+// }
+// 
 accelerator {
     initial_ke: 25e6
     drift: 1.0

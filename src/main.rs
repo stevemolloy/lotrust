@@ -1,3 +1,4 @@
+use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
 // use std::f64::consts::PI;
@@ -164,6 +165,12 @@ enum TokenType {
     Colon,
 }
 
+impl fmt::Display for TokenType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[derive(Debug)]
 struct Token {
     token_type: TokenType,
@@ -320,52 +327,16 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
         let tok = &token_list[ind];
         if tok.token_type == Word && tok.value == "beam" {
             ind += 1;
-            if token_list[ind].token_type != Ocurly {
-                eprintln!(
-                    "{}:{}:{}: Expected '{{' got '{}'",
-                    token_list[ind].loc.filename,
-                    token_list[ind].loc.row,
-                    token_list[ind].loc.col,
-                    token_list[ind].value,
-                );
-                exit(1);
-            }
+            token_check(&token_list[ind], Ocurly);
             ind += 1;
-            if token_list[ind].token_type != Word {
-                eprintln!(
-                    "{}:{}:{}: Expected a word got '{}'",
-                    token_list[ind].loc.filename,
-                    token_list[ind].loc.row,
-                    token_list[ind].loc.col,
-                    token_list[ind].value,
-                );
-                exit(1);
-            }
+            token_check(&token_list[ind], Word);
             while token_list[ind].token_type != Ccurly {
                 match token_list[ind].value.as_str() {
                     "energy" => {
                         ind += 1;
-                        if token_list[ind].token_type != Colon {
-                            eprintln!(
-                                "{}:{}:{}: Expected ':' to follow 'energy', got '{}'",
-                                token_list[ind].loc.filename,
-                                token_list[ind].loc.row,
-                                token_list[ind].loc.col,
-                                token_list[ind].value,
-                            );
-                            exit(1);
-                        }
+                        token_check(&token_list[ind], Colon);
                         ind += 1;
-                        if token_list[ind].token_type != Value {
-                            eprintln!(
-                                "{}:{}:{}: Expected a numeric value for 'energy', got '{}'",
-                                token_list[ind].loc.filename,
-                                token_list[ind].loc.row,
-                                token_list[ind].loc.col,
-                                token_list[ind].value,
-                            );
-                            exit(1);
-                        }
+                        token_check(&token_list[ind], Value);
                         starting_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
                     }
                     _ => todo!("Implement more beam definitions"),
@@ -375,27 +346,9 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
         }
         if tok.token_type == Word && tok.value == "accelerator" {
             ind += 1;
-            if token_list[ind].token_type != Ocurly {
-                eprintln!(
-                    "{}:{}:{}: Expected '{{' got '{}'",
-                    token_list[ind].loc.filename,
-                    token_list[ind].loc.row,
-                    token_list[ind].loc.col,
-                    token_list[ind].value,
-                );
-                exit(1);
-            }
+            token_check(&token_list[ind], Ocurly);
             ind += 1;
-            if token_list[ind].token_type != Word {
-                eprintln!(
-                    "{}:{}:{}: Expected a word got '{}'",
-                    token_list[ind].loc.filename,
-                    token_list[ind].loc.row,
-                    token_list[ind].loc.col,
-                    token_list[ind].value,
-                );
-                exit(1);
-            }
+            token_check(&token_list[ind], Word);
             if token_list[ind].value != "initial_ke" {
                 eprintln!(
                     "{}:{}:{}: The first item in 'accelerator' should be 'initial_ke', not {}'",
@@ -407,27 +360,9 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
                 exit(1);
             }
             ind += 1;
-            if token_list[ind].token_type != Colon {
-                eprintln!(
-                    "{}:{}:{}: Expected ':' to follow element declaration got '{}'",
-                    token_list[ind].loc.filename,
-                    token_list[ind].loc.row,
-                    token_list[ind].loc.col,
-                    token_list[ind].value,
-                );
-                exit(1);
-            }
+            token_check(&token_list[ind], Colon);
             ind += 1;
-            if token_list[ind].token_type != Value {
-                eprintln!(
-                    "{}:{}:{}: Expected a numeric value for 'drift_length' got '{}'",
-                    token_list[ind].loc.filename,
-                    token_list[ind].loc.row,
-                    token_list[ind].loc.col,
-                    token_list[ind].value,
-                );
-                exit(1);
-            }
+            token_check(&token_list[ind], Value);
             starting_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
             ind += 1;
             while token_list[ind].token_type != Ccurly {
@@ -435,54 +370,18 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
                 match ele_type {
                     "drift" => {
                         ind += 1;
-                        if token_list[ind].token_type != Colon {
-                            eprintln!(
-                                "{}:{}:{}: Expected ':' to follow element declaration got '{}'",
-                                token_list[ind].loc.filename,
-                                token_list[ind].loc.row,
-                                token_list[ind].loc.col,
-                                token_list[ind].value,
-                            );
-                            exit(1);
-                        }
+                        token_check(&token_list[ind], Colon);
                         ind += 1;
-                        if token_list[ind].token_type != Value {
-                            eprintln!(
-                                "{}:{}:{}: Expected a numeric value for 'drift_length' got '{}'",
-                                token_list[ind].loc.filename,
-                                token_list[ind].loc.row,
-                                token_list[ind].loc.col,
-                                token_list[ind].value,
-                            );
-                            exit(1);
-                        }
+                        token_check(&token_list[ind], Value);
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         acc.elements
                             .push(Box::new(Drift::new(drift_len, starting_ke / MASS)));
                     }
                     "dipole" => {
                         ind += 1;
-                        if token_list[ind].token_type != Colon {
-                            eprintln!(
-                                "{}:{}:{}: Expected ':' to follow element declaration got '{}'",
-                                token_list[ind].loc.filename,
-                                token_list[ind].loc.row,
-                                token_list[ind].loc.col,
-                                token_list[ind].value,
-                            );
-                            exit(1);
-                        }
+                        token_check(&token_list[ind], Colon);
                         ind += 1;
-                        if token_list[ind].token_type != Value {
-                            eprintln!(
-                                "{}:{}:{}: Expected a numeric value for 'b_field' got '{}'",
-                                token_list[ind].loc.filename,
-                                token_list[ind].loc.row,
-                                token_list[ind].loc.col,
-                                token_list[ind].value,
-                            );
-                            exit(1);
-                        }
+                        token_check(&token_list[ind], Value);
                         let b_field = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         ind += 1;
                         if token_list[ind].token_type != Value {
@@ -512,11 +411,21 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
     acc
 }
 
+fn token_check(tok: &Token, expected: TokenType) {
+    if tok.token_type != expected {
+        eprintln!(
+            "{}:{}:{} Expected '{}', got '{}'",
+            tok.loc.filename, tok.loc.row, tok.loc.col, expected, tok.value,
+        );
+        exit(1);
+    }
+}
+
 fn main() {
     let filename = "acc_defn.lotr";
     let tokens = tokenize_file_contents(filename);
     let accelerator: Accelerator = parse_tokens(&tokens);
-    let design_ke = 20e6;
+    let design_ke = 25e6;
     let beam = vec![
         Electron {
             t: -10e-12,
