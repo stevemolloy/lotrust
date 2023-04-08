@@ -3,6 +3,7 @@ beam { // Beam definitions
 }
 
 accelerator {
+    initial_ke: 25e6
     drift: 1.0
     // First bend
     dipole: 2.0 1.0

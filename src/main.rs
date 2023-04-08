@@ -315,7 +315,7 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
     use TokenType::*;
     let mut acc = Accelerator { elements: vec![] };
     let mut ind: usize = 0;
-    let mut starting_ke = 100e6;
+    let mut starting_ke: f64;
     while ind < token_list.len() {
         let tok = &token_list[ind];
         if tok.token_type == Word && tok.value == "beam" {
@@ -396,6 +396,40 @@ fn parse_tokens(token_list: &[Token]) -> Accelerator {
                 );
                 exit(1);
             }
+            if token_list[ind].value != "initial_ke" {
+                eprintln!(
+                    "{}:{}:{}: The first item in 'accelerator' should be 'initial_ke', not {}'",
+                    token_list[ind].loc.filename,
+                    token_list[ind].loc.row,
+                    token_list[ind].loc.col,
+                    token_list[ind].value,
+                );
+                exit(1);
+            }
+            ind += 1;
+            if token_list[ind].token_type != Colon {
+                eprintln!(
+                    "{}:{}:{}: Expected ':' to follow element declaration got '{}'",
+                    token_list[ind].loc.filename,
+                    token_list[ind].loc.row,
+                    token_list[ind].loc.col,
+                    token_list[ind].value,
+                );
+                exit(1);
+            }
+            ind += 1;
+            if token_list[ind].token_type != Value {
+                eprintln!(
+                    "{}:{}:{}: Expected a numeric value for 'drift_length' got '{}'",
+                    token_list[ind].loc.filename,
+                    token_list[ind].loc.row,
+                    token_list[ind].loc.col,
+                    token_list[ind].value,
+                );
+                exit(1);
+            }
+            starting_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
+            ind += 1;
             while token_list[ind].token_type != Ccurly {
                 let ele_type = token_list[ind].value.as_str();
                 match ele_type {
