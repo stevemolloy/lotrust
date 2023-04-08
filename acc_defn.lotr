@@ -1,5 +1,6 @@
 beam { // Beam definitions
-    particles {
+    particles { // Define each particle individually
+        // t (seconds) KE (eV)
         -10e-12 24.75e6
         -10e-12 25.00e6
         -10e-12 25.25e6
@@ -13,7 +14,7 @@ beam { // Beam definitions
 }
 
 accelerator {
-    initial_ke: 25e6
+    initial_ke: 25e6 // KE used to scale parameters. Must come first.
     drift: 1.0
     // First bend
     dipole: 2.0 1.0
