@@ -135,11 +135,12 @@ impl Tracking for Dipole {
 //     }
 // }
 
-struct Accelerator {
+struct Simulation {
     pub elements: Vec<Box<dyn Tracking>>,
+    pub beam: Beam,
 }
 
-impl Accelerator {
+impl Simulation {
     fn track(&self, beam: Beam) -> Beam {
         let mut output_beam = beam;
         for element in self.elements.iter() {
@@ -318,9 +319,9 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
     tokens
 }
 
-fn parse_tokens(token_list: &[Token]) -> Accelerator {
+fn parse_tokens(token_list: &[Token]) -> Simulation {
     use TokenType::*;
-    let mut acc = Accelerator { elements: vec![] };
+    let mut acc = Simulation { elements: vec![], beam: vec![] };
     let mut ind: usize = 0;
     let mut starting_ke: f64;
     while ind < token_list.len() {
@@ -424,7 +425,7 @@ fn token_check(tok: &Token, expected: TokenType) {
 fn main() {
     let filename = "acc_defn.lotr";
     let tokens = tokenize_file_contents(filename);
-    let accelerator: Accelerator = parse_tokens(&tokens);
+    let simulation: Simulation = parse_tokens(&tokens);
     let design_ke = 25e6;
     let beam = vec![
         Electron {
@@ -449,7 +450,7 @@ fn main() {
         },
         Electron {
             t: 0.0,
-            ke: 1.01 * design_ke,
+            ke: 2.01 * design_ke,
         },
         Electron {
             t: 10e-12,
@@ -474,7 +475,7 @@ fn main() {
         );
     }
     println!("--- TRACKING ---");
-    let out_beam = accelerator.track(beam);
+    let out_beam = simulation.track(beam);
     println!("---  OUTPUT  ---");
 
     for electron in out_beam {
