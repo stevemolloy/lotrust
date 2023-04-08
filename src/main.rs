@@ -202,6 +202,9 @@ fn parse_digit(input: &mut String, loc: FileLoc) -> Token {
     while !input.is_empty() {
         if input.starts_with(|c: char| c.is_ascii_digit()) {
             value.push(chop_character(input));
+        } else if input.starts_with("e-") {
+            value.push(chop_character(input));
+            value.push(chop_character(input));
         } else if input.starts_with('e') {
             if already_exp {
                 panic!("Attempt to add 'e' to a digit twice");
