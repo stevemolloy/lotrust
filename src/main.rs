@@ -1,7 +1,7 @@
+use std::f64::consts::PI;
 use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
-use std::f64::consts::PI;
 const MASS: f64 = 510998.9499961642f64;
 const C: f64 = 299792458f64;
 
@@ -114,8 +114,8 @@ impl AccCav {
         AccCav {
             length: l,
             voltage: v,
-            freq: freq,
-            phi: phi,
+            freq,
+            phi,
         }
     }
 }
@@ -329,7 +329,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
         beam: vec![],
     };
     let mut ind: usize = 0;
-    let mut starting_ke: f64;
+    let mut sync_ke: f64;
     while ind < token_list.len() {
         let tok = &token_list[ind];
         if tok.token_type == Word && tok.value == "beam" {
@@ -377,7 +377,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
             token_check(&token_list[ind], Colon);
             ind += 1;
             token_check(&token_list[ind], Value);
-            starting_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
+            sync_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
             ind += 1;
             while token_list[ind].token_type != Ccurly {
                 let ele_type = token_list[ind].value.as_str();
@@ -389,7 +389,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         token_check(&token_list[ind], Value);
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         acc.elements
-                            .push(Box::new(Drift::new(drift_len, starting_ke / MASS)));
+                            .push(Box::new(Drift::new(drift_len, sync_ke / MASS)));
                     }
                     "dipole" => {
                         ind += 1;
@@ -400,11 +400,27 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         ind += 1;
                         token_check(&token_list[ind], Value);
                         let angle = token_list[ind].value.parse::<f64>().expect("uh oh!");
-                        acc.elements.push(Box::new(Dipole::new(
-                            b_field,
-                            angle,
-                            starting_ke / MASS,
-                        )));
+                        acc.elements
+                            .push(Box::new(Dipole::new(b_field, angle, sync_ke / MASS)));
+                    }
+                    "acccav" => {
+                        ind += 1;
+                        token_check(&token_list[ind], Colon);
+                        ind += 1;
+                        token_check(&token_list[ind], Value);
+                        let length = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        ind += 1;
+                        token_check(&token_list[ind], Value);
+                        let voltage = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        ind += 1;
+                        token_check(&token_list[ind], Value);
+                        let freq = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        ind += 1;
+                        token_check(&token_list[ind], Value);
+                        let phi = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        sync_ke += voltage * length * phi.cos();
+                        acc.elements
+                            .push(Box::new(AccCav::new(length, voltage, freq, phi)));
                     }
                     _ => todo!("Element '{ele_type}' not defined."),
                 }
