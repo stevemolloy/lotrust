@@ -56,6 +56,10 @@ impl Tracking for Drift {
     }
 }
 
+type Corr = Drift;
+type Quad = Drift;
+type Sext = Drift;
+
 struct Dipole {
     b_field: f64,
     theta: f64,
@@ -390,6 +394,33 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         acc.elements
                             .push(Box::new(Drift::new(drift_len, sync_ke / MASS)));
+                    }
+                    "corrector" => {
+                        ind += 1;
+                        token_check(&token_list[ind], Colon);
+                        ind += 1;
+                        token_check(&token_list[ind], Value);
+                        let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        acc.elements
+                            .push(Box::new(Corr::new(drift_len, sync_ke / MASS)));
+                    }
+                    "quad" => {
+                        ind += 1;
+                        token_check(&token_list[ind], Colon);
+                        ind += 1;
+                        token_check(&token_list[ind], Value);
+                        let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        acc.elements
+                            .push(Box::new(Quad::new(drift_len, sync_ke / MASS)));
+                    }
+                    "sext" => {
+                        ind += 1;
+                        token_check(&token_list[ind], Colon);
+                        ind += 1;
+                        token_check(&token_list[ind], Value);
+                        let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        acc.elements
+                            .push(Box::new(Sext::new(drift_len, sync_ke / MASS)));
                     }
                     "dipole" => {
                         ind += 1;
