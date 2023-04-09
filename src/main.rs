@@ -1,7 +1,7 @@
 use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
-// use std::f64::consts::PI;
+use std::f64::consts::PI;
 const MASS: f64 = 510998.9499961642f64;
 const C: f64 = 299792458f64;
 
@@ -102,38 +102,38 @@ impl Tracking for Dipole {
     }
 }
 
-// struct AccCav {
-//     length: f64,
-//     voltage: f64,
-//     freq: f64,
-//     phi: f64,
-// }
-//
-// impl AccCav {
-//     fn new(l: f64, v: f64, freq: f64, phi: f64) -> AccCav {
-//         AccCav {
-//             length: l,
-//             voltage: v,
-//             freq: freq,
-//             phi: phi,
-//         }
-//     }
-// }
+struct AccCav {
+    length: f64,
+    voltage: f64,
+    freq: f64,
+    phi: f64,
+}
 
-// impl Tracking for AccCav {
-//     fn track(&self, beam: Beam) -> Beam {
-//         let mut output_beam: Beam = vec![];
-//         let egain = self.length * self.voltage;
-//         for electron in beam {
-//             let phase = self.phi + 2.0 * PI * (electron.t * self.freq);
-//             output_beam.push(Electron {
-//                 t: electron.t,
-//                 ke: electron.ke + egain * phase.cos(),
-//             });
-//         }
-//         output_beam
-//     }
-// }
+impl AccCav {
+    fn new(l: f64, v: f64, freq: f64, phi: f64) -> AccCav {
+        AccCav {
+            length: l,
+            voltage: v,
+            freq: freq,
+            phi: phi,
+        }
+    }
+}
+
+impl Tracking for AccCav {
+    fn track(&self, beam: Beam) -> Beam {
+        let mut output_beam: Beam = vec![];
+        let egain = self.length * self.voltage;
+        for electron in beam {
+            let phase = self.phi + 2.0 * PI * (electron.t * self.freq);
+            output_beam.push(Electron {
+                t: electron.t,
+                ke: electron.ke + egain * phase.cos(),
+            });
+        }
+        output_beam
+    }
+}
 
 struct Simulation {
     pub elements: Vec<Box<dyn Tracking>>,
@@ -398,16 +398,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         token_check(&token_list[ind], Value);
                         let b_field = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         ind += 1;
-                        if token_list[ind].token_type != Value {
-                            eprintln!(
-                                "{}:{}:{}: Expected a numeric value for 'angle' got '{}'",
-                                token_list[ind].loc.filename,
-                                token_list[ind].loc.row,
-                                token_list[ind].loc.col,
-                                token_list[ind].value,
-                            );
-                            exit(1);
-                        }
+                        token_check(&token_list[ind], Value);
                         let angle = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         acc.elements.push(Box::new(Dipole::new(
                             b_field,
