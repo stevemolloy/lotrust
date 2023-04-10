@@ -1,11 +1,22 @@
+use std::process::exit;
+use std::env;
 use crate::parse_lotr::{load_lotr_file, Simulation};
 
 mod beam;
 mod elements;
 mod parse_lotr;
 
+fn usage() {
+    todo!();
+}
+
 fn main() {
-    let filename = "acc_defn.lotr";
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        usage();
+        exit(1);
+    }
+    let filename = &args[1];
     let mut simulation: Simulation = load_lotr_file(filename);
 
     println!("---   INPUT  ---");
