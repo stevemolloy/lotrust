@@ -17,6 +17,11 @@ impl Simulation {
     }
 }
 
+pub fn load_lotr_file(filename: &str) -> Simulation {
+    let tokens = tokenize_file_contents(filename);
+    parse_tokens(&tokens)
+}
+
 struct FileLoc {
     filename: String,
     row: usize,

@@ -1,4 +1,4 @@
-use crate::parse_lotr::{Simulation, tokenize_file_contents, parse_tokens};
+use crate::parse_lotr::{load_lotr_file, Simulation};
 
 pub mod beam;
 pub mod elements;
@@ -6,8 +6,7 @@ pub mod parse_lotr;
 
 fn main() {
     let filename = "acc_defn.lotr";
-    let tokens = tokenize_file_contents(filename);
-    let mut simulation: Simulation = parse_tokens(&tokens);
+    let mut simulation: Simulation = load_lotr_file(filename);
 
     println!("---   INPUT  ---");
     for electron in &simulation.beam {
