@@ -24,6 +24,12 @@ pub fn gamma_2_beta(g: f64) -> f64 {
 }
 
 #[test]
+fn ke_of_restmass_has_gamma_two() {
+    let electron = Electron { t: 0f64, ke: MASS };
+    assert_eq!(electron.gamma(), 2.0);
+}
+
+#[test]
 fn zero_ke_has_unity_gamma() {
     let electron = Electron { t: 0f64, ke: 0f64 };
     assert_eq!(electron.gamma(), 1.0);
