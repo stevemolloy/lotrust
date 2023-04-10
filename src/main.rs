@@ -136,7 +136,6 @@ impl Simulation {
     }
 }
 
-#[derive(Debug)]
 struct FileLoc {
     filename: String,
     row: usize,
@@ -158,7 +157,6 @@ impl fmt::Display for TokenType {
     }
 }
 
-#[derive(Debug)]
 struct Token {
     token_type: TokenType,
     value: String,
