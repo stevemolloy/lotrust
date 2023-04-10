@@ -1,6 +1,6 @@
-use std::process::exit;
-use std::env;
 use crate::parse_lotr::{load_lotr_file, Simulation};
+use std::env;
+use std::process::exit;
 
 mod beam;
 mod elements;
