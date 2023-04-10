@@ -103,7 +103,14 @@ fn chop_character(input: &mut String) -> char {
 }
 
 fn tokenize_file_contents(filename: &str) -> Vec<Token> {
-    let mut contents = read_to_string(filename).expect("Could not read file.");
+    let mut contents = match read_to_string(filename) {
+        Ok(contents) => contents,
+        Err(e) => {
+            eprintln!("{}", e);
+            eprintln!("Could not open file: '{}'", filename);
+            exit(1);
+        }
+    };
     let mut tokens: Vec<Token> = vec![];
     let mut row = 1;
     let mut col = 1;
