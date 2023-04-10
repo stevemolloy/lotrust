@@ -1,8 +1,8 @@
+use crate::beam::{Beam, Electron, MASS};
+use crate::elements::*;
 use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
-use crate::elements::*;
-use crate::beam::{Beam, Electron, MASS};
 
 pub struct Simulation {
     pub elements: Vec<Box<dyn Tracking>>,

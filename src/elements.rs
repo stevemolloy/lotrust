@@ -1,4 +1,4 @@
-use crate::beam::{Beam, MASS, C};
+use crate::beam::{Beam, C, MASS};
 use std::f64::consts::PI;
 
 pub trait Tracking {
@@ -110,4 +110,3 @@ impl Tracking for AccCav {
         }
     }
 }
-
