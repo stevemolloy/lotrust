@@ -1,8 +1,8 @@
 use crate::parse_lotr::{load_lotr_file, Simulation};
 
-pub mod beam;
-pub mod elements;
-pub mod parse_lotr;
+mod beam;
+mod elements;
+mod parse_lotr;
 
 fn main() {
     let filename = "acc_defn.lotr";

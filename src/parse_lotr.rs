@@ -43,7 +43,7 @@ impl fmt::Display for TokenType {
     }
 }
 
-pub struct Token {
+struct Token {
     token_type: TokenType,
     value: String,
     loc: FileLoc,
@@ -102,7 +102,7 @@ fn chop_character(input: &mut String) -> char {
     input.remove(0)
 }
 
-pub fn tokenize_file_contents(filename: &str) -> Vec<Token> {
+fn tokenize_file_contents(filename: &str) -> Vec<Token> {
     let mut contents = read_to_string(filename).expect("Could not read file.");
     let mut tokens: Vec<Token> = vec![];
     let mut row = 1;
@@ -192,7 +192,7 @@ pub fn tokenize_file_contents(filename: &str) -> Vec<Token> {
     tokens
 }
 
-pub fn parse_tokens(token_list: &[Token]) -> Simulation {
+fn parse_tokens(token_list: &[Token]) -> Simulation {
     use TokenType::*;
     let mut acc = Simulation {
         elements: vec![],
