@@ -1,4 +1,4 @@
-use crate::beam::{Beam, C, MASS};
+use crate::beam::{gamma_2_beta, Beam, C, MASS};
 use std::f64::consts::PI;
 
 pub trait Tracking {
@@ -26,10 +26,10 @@ impl Tracking for Drift {
             let l = self.length;
 
             let g0 = self.gamma0;
-            let g = electron.ke / MASS;
+            let g = electron.gamma();
 
-            let beta = (1.0 - (1.0 / g.powi(2))).sqrt();
-            let beta0 = (1.0 - (1.0 / g0.powi(2))).sqrt();
+            let beta = gamma_2_beta(g);
+            let beta0 = gamma_2_beta(g0);
 
             let new_t = t + (l / C) * (1.0 / beta - 1.0 / beta0);
 
@@ -62,7 +62,7 @@ impl Tracking for Dipole {
     fn track(&self, beam: &mut Beam) {
         for electron in beam.iter_mut() {
             let g0 = self.gamma0;
-            let g = electron.ke / MASS;
+            let g = electron.gamma();
 
             let pc0 = (g0.powi(2) - 1.0).sqrt() * MASS;
             let pc = (g.powi(2) - 1.0).sqrt() * MASS;
@@ -74,9 +74,9 @@ impl Tracking for Dipole {
             let l = rho * self.theta;
 
             let delta_l = l - l0;
-            let v = C * (1.0 - (1.0 / g.powi(2))).sqrt();
+            let beta = gamma_2_beta(g);
 
-            let new_t = electron.t + delta_l / v;
+            let new_t = electron.t + delta_l / (beta * C);
 
             electron.t = new_t;
         }

@@ -1,4 +1,4 @@
-use crate::beam::{Beam, Electron, MASS};
+use crate::beam::{ke_2_gamma, Beam, Electron};
 use crate::elements::*;
 use std::fmt;
 use std::fs::read_to_string;
@@ -259,7 +259,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         token_check(&token_list[ind], Value);
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         acc.elements
-                            .push(Box::new(Drift::new(drift_len, sync_ke / MASS)));
+                            .push(Box::new(Drift::new(drift_len, ke_2_gamma(sync_ke))));
                     }
                     "corrector" => {
                         ind += 1;
@@ -268,7 +268,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         token_check(&token_list[ind], Value);
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         acc.elements
-                            .push(Box::new(Corr::new(drift_len, sync_ke / MASS)));
+                            .push(Box::new(Corr::new(drift_len, ke_2_gamma(sync_ke))));
                     }
                     "quad" => {
                         ind += 1;
@@ -277,7 +277,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         token_check(&token_list[ind], Value);
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         acc.elements
-                            .push(Box::new(Quad::new(drift_len, sync_ke / MASS)));
+                            .push(Box::new(Quad::new(drift_len, ke_2_gamma(sync_ke))));
                     }
                     "sext" => {
                         ind += 1;
@@ -286,7 +286,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         token_check(&token_list[ind], Value);
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
                         acc.elements
-                            .push(Box::new(Sext::new(drift_len, sync_ke / MASS)));
+                            .push(Box::new(Sext::new(drift_len, ke_2_gamma(sync_ke))));
                     }
                     "dipole" => {
                         ind += 1;
@@ -297,8 +297,11 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         ind += 1;
                         token_check(&token_list[ind], Value);
                         let angle = token_list[ind].value.parse::<f64>().expect("uh oh!");
-                        acc.elements
-                            .push(Box::new(Dipole::new(b_field, angle, sync_ke / MASS)));
+                        acc.elements.push(Box::new(Dipole::new(
+                            b_field,
+                            angle,
+                            ke_2_gamma(sync_ke),
+                        )));
                     }
                     "acccav" => {
                         ind += 1;
