@@ -6,7 +6,6 @@ const MASS: f64 = 510998.9499961642f64;
 const C: f64 = 299792458f64;
 
 // TODO: Electrons may be better described as a simple array. Look at ndarray.
-#[derive(Copy, Clone)]
 pub struct Electron {
     t: f64,
     ke: f64,
@@ -15,7 +14,7 @@ pub struct Electron {
 type Beam = Vec<Electron>;
 
 pub trait Tracking {
-    fn track(&self, beam: Beam) -> Beam;
+    fn track(&self, beam: &mut Beam);
 }
 
 struct Drift {
@@ -33,9 +32,8 @@ impl Drift {
 }
 
 impl Tracking for Drift {
-    fn track(&self, beam: Beam) -> Beam {
-        let mut output_beam: Beam = vec![];
-        for electron in beam {
+    fn track(&self, beam: &mut Beam) {
+        for electron in beam.iter_mut() {
             let t = electron.t;
             let l = self.length;
 
@@ -47,12 +45,8 @@ impl Tracking for Drift {
 
             let new_t = t + (l / C) * (1.0 / beta - 1.0 / beta0);
 
-            output_beam.push(Electron {
-                t: new_t,
-                ke: electron.ke,
-            });
+            electron.t = new_t;
         }
-        output_beam
     }
 }
 
@@ -77,9 +71,8 @@ impl Dipole {
 }
 
 impl Tracking for Dipole {
-    fn track(&self, beam: Beam) -> Beam {
-        let mut output_beam: Beam = vec![];
-        for electron in beam {
+    fn track(&self, beam: &mut Beam) {
+        for electron in beam.iter_mut() {
             let g0 = self.gamma0;
             let g = electron.ke / MASS;
 
@@ -97,12 +90,8 @@ impl Tracking for Dipole {
 
             let new_t = electron.t + delta_l / v;
 
-            output_beam.push(Electron {
-                t: new_t,
-                ke: electron.ke,
-            });
+            electron.t = new_t;
         }
-        output_beam
     }
 }
 
@@ -125,17 +114,12 @@ impl AccCav {
 }
 
 impl Tracking for AccCav {
-    fn track(&self, beam: Beam) -> Beam {
-        let mut output_beam: Beam = vec![];
+    fn track(&self, beam: &mut Beam) {
         let egain = self.length * self.voltage;
-        for electron in beam {
+        for electron in beam.iter_mut() {
             let phase = self.phi + 2.0 * PI * (electron.t * self.freq);
-            output_beam.push(Electron {
-                t: electron.t,
-                ke: electron.ke + egain * phase.cos(),
-            });
+            electron.ke += egain*phase.cos();
         }
-        output_beam
     }
 }
 
@@ -145,12 +129,10 @@ struct Simulation {
 }
 
 impl Simulation {
-    fn track(&self) -> Beam {
-        let mut output_beam: Beam = self.beam.clone();
+    fn track(&mut self) {
         for element in self.elements.iter() {
-            output_beam = element.track(output_beam.clone());
+            element.track(&mut self.beam);
         }
-        output_beam.to_vec()
     }
 }
 
@@ -476,7 +458,7 @@ fn token_check(tok: &Token, expected: TokenType) {
 fn main() {
     let filename = "acc_defn.lotr";
     let tokens = tokenize_file_contents(filename);
-    let simulation: Simulation = parse_tokens(&tokens);
+    let mut simulation: Simulation = parse_tokens(&tokens);
 
     println!("---   INPUT  ---");
     for electron in &simulation.beam {
@@ -487,10 +469,10 @@ fn main() {
         );
     }
     println!("--- TRACKING ---");
-    let out_beam = simulation.track();
+    simulation.track();
     println!("---  OUTPUT  ---");
 
-    for electron in out_beam {
+    for electron in simulation.beam {
         println!(
             "{:0.6} ps :: {:0.3} MeV",
             electron.t * 1e12,
