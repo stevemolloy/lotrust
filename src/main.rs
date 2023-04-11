@@ -7,7 +7,7 @@ mod elements;
 mod parse_lotr;
 
 fn usage() {
-    todo!();
+    println!("Please give the name of the LOTR file to use.");
 }
 
 fn main() {
