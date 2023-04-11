@@ -59,6 +59,9 @@ impl Dipole {
 }
 
 impl Tracking for Dipole {
+    // The commented lines in this function calculate the change in the angle
+    // due to the different radius of curvature, but in practise the difference
+    // this makes in the timing is *tiny*
     fn track(&self, beam: &mut Beam) {
         for electron in beam.iter_mut() {
             let g0 = self.gamma0;
@@ -69,9 +72,12 @@ impl Tracking for Dipole {
 
             let rho0 = pc0 / (C * self.b_field);
             let rho = pc / (C * self.b_field);
+            // let delta_rho = rho - rho0;
+            // let new_theta = self.theta - (delta_rho/rho)*self.theta.sin();
 
             let l0 = rho0 * self.theta;
             let l = rho * self.theta;
+            // let l = rho * new_theta;
 
             let delta_l = l - l0;
             let beta = gamma_2_beta(g);
