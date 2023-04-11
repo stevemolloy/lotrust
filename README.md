@@ -22,10 +22,10 @@ beam { // Beam definitions
 
 accelerator {
     initial_ke: 25e6 // KE used to scale parameters. Must come first.
-    drift: 1.0
-    acccav: 6.0 20e6 3e9 -0.25
+    drift: 1.0 // length (m)
+    acccav: 6.0 20e6 3e9 -0.25 // length (m) Voltage (V/m) Frequency (Hz) Phase (radians)
     // First bend
-    dipole: 2.0 1.0
+    dipole: 2.0 1.0  / B (T) Angle (radians)
     drift: 1.0
     dipole: 2.0 -1.0
     drift: 1.0
