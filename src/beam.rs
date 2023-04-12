@@ -31,6 +31,6 @@ mod tests {
     #[test]
     fn zero_ke_has_zero_beta() {
         let ke = 0f64;
-        assert_eq!(gamma_2_beta(gamma_2_beta(ke)), 0.0);
+        assert_eq!(gamma_2_beta(ke_2_gamma(ke)), 0.0);
     }
 }
