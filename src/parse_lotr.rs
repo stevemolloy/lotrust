@@ -1,4 +1,4 @@
-use crate::beam::{ke_2_gamma};
+use crate::beam::ke_2_gamma;
 use crate::elements::*;
 use ndarray::Array2;
 use std::fmt;
@@ -213,6 +213,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
     let mut beam_vec: Vec<[f64; 2]> = vec![];
     let mut ind: usize = 0;
     let mut sync_ke: f64;
+    let mut design_ke: f64;
     while ind < token_list.len() {
         let tok = &token_list[ind];
         if tok.token_type == Word && tok.value == "beam" {
@@ -220,6 +221,20 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
             token_check(&token_list[ind], Ocurly);
             ind += 1;
             token_check(&token_list[ind], Word);
+            match token_list[ind].value.as_str() {
+                "design_ke" => {
+                    ind += 1;
+                    token_check(&token_list[ind], Colon);
+                    ind += 1;
+                    token_check(&token_list[ind], Value);
+                    design_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                    ind += 1;
+                }
+                _ => {
+                    eprintln!("Expected 'design_ke', but got {}", token_list[ind].value);
+                    exit(1);
+                }
+            }
             while token_list[ind].token_type != Ccurly {
                 match token_list[ind].value.as_str() {
                     "particles" => {
@@ -233,7 +248,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                             ind += 1;
                             let del_e = token_list[ind].value.parse::<f64>().expect("uh oh!");
                             ind += 1;
-                            beam_vec.push([z, del_e]);
+                            beam_vec.push([z, del_e / design_ke]);
                         }
                     }
                     _ => todo!("Implement more beam definitions"),
