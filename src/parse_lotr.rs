@@ -1,12 +1,13 @@
-use crate::beam::{ke_2_gamma, Beam, Electron};
+use crate::beam::{ke_2_gamma};
 use crate::elements::*;
+use ndarray::Array2;
 use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
 
 pub struct Simulation {
     pub elements: Vec<Box<dyn Tracking>>,
-    pub beam: Beam,
+    pub beam: Array2<f64>,
 }
 
 impl Simulation {
@@ -207,8 +208,9 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
     use TokenType::*;
     let mut acc = Simulation {
         elements: vec![],
-        beam: vec![],
+        beam: Array2::from(vec![[]]),
     };
+    let mut beam_vec: Vec<[f64; 2]> = vec![];
     let mut ind: usize = 0;
     let mut sync_ke: f64;
     while ind < token_list.len() {
@@ -227,17 +229,18 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         while token_list[ind].token_type != Ccurly {
                             token_check(&token_list[ind], Value);
                             token_check(&token_list[ind + 1], Value);
-                            let t = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                            let z = token_list[ind].value.parse::<f64>().expect("uh oh!");
                             ind += 1;
-                            let e = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                            let del_e = token_list[ind].value.parse::<f64>().expect("uh oh!");
                             ind += 1;
-                            acc.beam.push(Electron { t, ke: e });
+                            beam_vec.push([z, del_e]);
                         }
                     }
                     _ => todo!("Implement more beam definitions"),
                 }
                 ind += 1;
             }
+            acc.beam = Array2::from(beam_vec.clone());
         }
         if tok.token_type == Word && tok.value == "accelerator" {
             ind += 1;
