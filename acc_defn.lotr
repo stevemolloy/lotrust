@@ -1,28 +1,29 @@
 beam { // Beam definitions
+    design_ke: 2.5e8 // KE used to scale parameters. Must come first.
     particles { // Define each particle individually
-        // t (seconds) KE (eV)
-        -10e-12 -0.25e6
-        -10e-12 0e6
-        -10e-12 0.25e6
+        // z (m) energy_error (eV)
+        -3e-3 -0.25e6
+        -3e-3 0e6
+        -3e-3 0.25e6
         0 -0.25e6
         0 0e6
         0 0.25e6
-        10e-12 -0.25e6
-        10e-12 0e6
-        10e-12 0.25e6
+        3e-3 -0.25e6
+        3e-3 0e6
+        3e-3 0.25e6
     }
 }
 
 accelerator {
-    initial_ke: 25e6 // KE used to scale parameters. Must come first.
+    initial_ke: 2.5e6 // KE used to scale parameters. Must come first.
     drift: 1.0
     // First bend
-    acccav: 6.0 20e6 3e9 -0.25
-    dipole: 2.0 1.0
-    drift: 1.0
-    dipole: 2.0 -1.0
-    drift: 1.0
-    dipole: 2.0 -1.0
-    drift: 1.0
-    dipole: 2.0 1.0
+    // acccav: 6.0 20e6 3e9 -0.25
+    // dipole: 2.0 1.0
+    // drift: 1.0
+    // dipole: 2.0 -1.0
+    // drift: 1.0
+    // dipole: 2.0 -1.0
+    // drift: 1.0
+    // dipole: 2.0 1.0
 }
