@@ -1,15 +1,15 @@
 beam { // Beam definitions
     particles { // Define each particle individually
         // t (seconds) KE (eV)
-        -10e-12 24.75e6
-        -10e-12 25.00e6
-        -10e-12 25.25e6
-        0 24.75e6
-        0 25.00e6
-        0 25.25e6
-        10e-12 24.75e6
-        10e-12 25.00e6
-        10e-12 25.25e6
+        -10e-12 -0.25e6
+        -10e-12 0e6
+        -10e-12 0.25e6
+        0 -0.25e6
+        0 0e6
+        0 0.25e6
+        10e-12 -0.25e6
+        10e-12 0e6
+        10e-12 0.25e6
     }
 }
 
