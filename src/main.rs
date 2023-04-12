@@ -1,5 +1,5 @@
 use crate::parse_lotr::{load_lotr_file, Simulation};
-use ndarray::{Axis,s};
+use ndarray::{s, Axis};
 use std::env;
 use std::process::exit;
 
@@ -25,9 +25,9 @@ fn main() {
     for e_num in 0..num_electrons {
         let this_electron = simulation.beam.slice(s![e_num, ..]);
         println!(
-            "{:0.3} ps :: {:0.3} MeV",
-            this_electron[0] * 1e12,
-            this_electron[1] * 1e-6
+            "{:0.3} mm :: {:0.3}",
+            this_electron[0] * 1e3,
+            this_electron[1]
         );
     }
     println!("--- TRACKING ---");
@@ -37,9 +37,9 @@ fn main() {
     for e_num in 0..num_electrons {
         let this_electron = simulation.beam.slice(s![e_num, ..]);
         println!(
-            "{:0.3} ps :: {:0.3} MeV",
-            this_electron[0] * 1e12,
-            this_electron[1] * 1e-6
+            "{:0.3} mm :: {:0.3}",
+            this_electron[0] * 1e3,
+            this_electron[1]
         );
     }
 }
