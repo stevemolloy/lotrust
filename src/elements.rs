@@ -1,4 +1,4 @@
-use crate::beam::{Beam};
+use crate::beam::{gamma_2_beta, Beam};
 use ndarray::{arr2, Array2};
 // use std::f64::consts::PI;
 
@@ -14,17 +14,20 @@ pub struct Drift {
 
 impl Drift {
     pub fn new(l: f64, g: f64) -> Drift {
+        let beta_sq = gamma_2_beta(g).powi(2);
+        let gamma_sq = g.powi(2);
+        let r56 = l / (beta_sq * gamma_sq);
         Drift {
             length: l,
             gamma0: g,
-            t_matrix: arr2(&[[1f64, 0f64], [0f64, 1f64]]),
+            t_matrix: arr2(&[[1f64, r56], [0f64, 1f64]]),
         }
     }
 }
 
 impl Tracking for Drift {
     fn track(&self, beam: &mut Beam) {
-        todo!();
+        *beam = beam.dot(&self.t_matrix.t());
     }
 }
 
