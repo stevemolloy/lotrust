@@ -1,4 +1,4 @@
-use crate::beam::{gamma_2_beta, Beam, MASS, C};
+use crate::beam::{gamma_2_beta, Beam, C, MASS};
 use ndarray::{arr2, Array2};
 // use std::f64::consts::PI;
 
@@ -44,7 +44,7 @@ impl Dipole {
         let omega_l = omega * l;
         let beta_sq = gamma_2_beta(g).powi(2);
         let gamma_sq = g.powi(2);
-        let r56 = l / (beta_sq*gamma_sq) - (omega_l - omega_l.sin()) / (omega*beta_sq);
+        let r56 = l / (beta_sq * gamma_sq) - (omega_l - omega_l.sin()) / (omega * beta_sq);
         Dipole {
             t_matrix: arr2(&[[1f64, r56], [0f64, 1f64]]),
         }
@@ -63,9 +63,9 @@ pub struct AccCav {
 
 impl AccCav {
     pub fn new(l: f64, v: f64, freq: f64, phi: f64) -> AccCav {
-        let blah = l + v + freq + phi;
+        let _blah = l + v + freq + phi;
         AccCav {
-            t_matrix: arr2(&[[1f64, blah/blah], [0f64, 1f64]]),
+            t_matrix: arr2(&[[1f64, 0f64], [0f64, 1f64]]),
         }
     }
 }
