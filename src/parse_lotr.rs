@@ -347,9 +347,14 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         ind += 1;
                         token_check(&token_list[ind], Value);
                         let phi = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                        acc.elements.push(Box::new(AccCav::new(
+                            length,
+                            voltage,
+                            freq,
+                            phi,
+                            ke_2_gamma(sync_ke),
+                        )));
                         sync_ke += voltage * length * phi.cos();
-                        acc.elements
-                            .push(Box::new(AccCav::new(length, voltage, freq, phi)));
                     }
                     _ => todo!("Element '{ele_type}' not defined."),
                 }

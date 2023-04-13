@@ -1,6 +1,6 @@
 use crate::beam::{gamma_2_beta, Beam, C, MASS};
 use ndarray::{arr2, Array2};
-// use std::f64::consts::PI;
+use std::f64::consts::PI;
 
 pub trait Tracking {
     fn track(&self, beam: &mut Beam);
@@ -58,20 +58,29 @@ impl Tracking for Dipole {
 }
 
 pub struct AccCav {
-    t_matrix: Array2<f64>,
+    drift_matrix: Array2<f64>,
+    kick_matrix: Array2<f64>,
 }
 
 impl AccCav {
-    pub fn new(l: f64, v: f64, freq: f64, phi: f64) -> AccCav {
-        let _blah = l + v + freq + phi;
+    pub fn new(l: f64, v: f64, freq: f64, phi: f64, g: f64) -> AccCav {
+        let beta_sq = gamma_2_beta(g).powi(2);
+        let gamma_sq = g.powi(2);
+        let r56_drift = l / (beta_sq * gamma_sq);
+
+        let k = 2f64 * PI * freq / C;
+        let r65_kick = k * l * v * phi.sin() / (g * MASS);
         AccCav {
-            t_matrix: arr2(&[[1f64, 0f64], [0f64, 1f64]]),
+            drift_matrix: arr2(&[[1f64, r56_drift], [0f64, 1f64]]),
+            kick_matrix: arr2(&[[1f64, 0f64], [r65_kick, 1f64]]),
         }
     }
 }
 
 impl Tracking for AccCav {
     fn track(&self, beam: &mut Beam) {
-        *beam = beam.dot(&self.t_matrix.t());
+        *beam = beam.dot(&self.drift_matrix.t());
+        *beam = beam.dot(&self.kick_matrix.t());
+        *beam = beam.dot(&self.drift_matrix.t());
     }
 }

@@ -25,7 +25,8 @@ fn main() {
     for e_num in 0..num_electrons {
         let this_electron = simulation.beam.slice(s![e_num, ..]);
         println!(
-            "{:0.3} mm :: {:0.3}",
+            // "{:0.3} mm :: {:0.3}",
+            "{} mm :: {}",
             this_electron[0] * 1e3,
             this_electron[1]
         );
@@ -37,7 +38,8 @@ fn main() {
     for e_num in 0..num_electrons {
         let this_electron = simulation.beam.slice(s![e_num, ..]);
         println!(
-            "{:0.3} mm :: {:0.3}",
+            // "{:0.3} mm :: {:0.3}",
+            "{} mm :: {}",
             this_electron[0] * 1e3,
             this_electron[1]
         );
