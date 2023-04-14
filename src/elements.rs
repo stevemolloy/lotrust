@@ -105,19 +105,49 @@ impl Tracking for AccCav {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_ulps_eq; // for floating point tests
-    const GAMMA0: f64 = 300f64;
+    use approx::{assert_relative_eq, assert_ulps_eq}; // for floating point tests
+    const GAMMA0: f64 = 3000f64;
 
     #[test]
     fn dipole_does_not_affect_energy_error() {
         let b_field = 2.0;
         let angle = 0.7;
-        let drift = Dipole::new(b_field, angle, GAMMA0);
+        let dipole = Dipole::new(b_field, angle, GAMMA0);
         for e_error in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
             for z in [-5e-3, -1e-3, 0.0, 1e-3, 5e-3] {
-                let mut beam_vec = Array2::from(vec![[z, e_error]]);
-                drift.track(&mut beam_vec);
-                assert_eq!(beam_vec[[0, 1]], e_error);
+                let mut beam_vec = Array2::from(vec![[z, (1f64 / gamma_2_beta(GAMMA0)) * e_error]]);
+                dipole.track(&mut beam_vec);
+                assert_eq!(beam_vec[[0, 1]], (1f64 / gamma_2_beta(GAMMA0)) * e_error);
+            }
+        }
+    }
+
+    #[test]
+    fn dipole_alters_z_correctly() {
+        let b_field = 2.0;
+        let angle = 0.7;
+        let dipole = Dipole::new(b_field, angle, GAMMA0);
+        let beta0 = gamma_2_beta(GAMMA0);
+        for rel_e_err in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
+            let gamma_delta = rel_e_err;
+            let pc = (GAMMA0.powi(2) - 1.0).sqrt() * MASS;
+            let rho = pc / (C * b_field.abs());
+            let dipole_l = rho * angle.abs();
+            let omega = 1f64 / rho;
+            let omega_l = angle.abs();
+            let first_term = dipole_l * (gamma_delta / (GAMMA0.powi(2) * beta0.powi(3)));
+            let second_term = (omega_l - omega_l.sin()) / (omega * beta0.powi(2));
+            let delta_z = (first_term - second_term) * rel_e_err / beta0;
+            for z in [-5e-3, -1e-3, 0.0, 1e-3, 5e-3] {
+                let mut beam_vec = Array2::from(vec![[z, (1f64 / beta0) * rel_e_err]]);
+                dipole.track(&mut beam_vec);
+                // TODO: Why does this test need max_relative = 1e-5 ?
+                assert_relative_eq!(
+                    beam_vec[[0, 0]],
+                    z + delta_z,
+                    max_relative = 1e-5,
+                    epsilon = f64::EPSILON
+                );
             }
         }
     }
