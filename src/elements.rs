@@ -131,4 +131,38 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn quad_does_not_affect_energy_error() {
+        let quad = Quad::new(2f64, 10f64);
+        for e_error in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
+            for z in [-5e-3, -1e-3, 0.0, 1e-3, 5e-3] {
+                let mut beam_vec = Array2::from(vec![[z, e_error]]);
+                quad.track(&mut beam_vec);
+                assert_eq!(beam_vec[[0, 1]], e_error);
+            }
+        }
+    }
+
+    #[test]
+    fn quad_alters_z_correctly() {
+        let quad_l = 1f64;
+        let gamma0 = 3000f64;
+        let beta0 = gamma_2_beta(gamma0);
+        let quad = Quad::new(quad_l, gamma0);
+        for rel_e_err in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
+            let gamma_delta = rel_e_err;
+            let delta_z = quad_l * (gamma_delta / (gamma0.powi(2) * beta0.powi(3)));
+            for z in [-5e-3, -1e-3, 0.0, 1e-3, 5e-3] {
+                let mut beam_vec = Array2::from(vec![[z, (1f64 / beta0) * rel_e_err]]);
+                quad.track(&mut beam_vec);
+                assert_ulps_eq!(
+                    beam_vec[[0, 0]],
+                    z + delta_z,
+                    epsilon = f64::EPSILON,
+                    max_ulps = 1
+                );
+            }
+        }
+    }
 }
