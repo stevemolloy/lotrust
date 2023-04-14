@@ -1,4 +1,4 @@
-use crate::beam::ke_2_gamma;
+use crate::beam::{gamma_2_beta, ke_2_gamma};
 use crate::elements::*;
 use ndarray::Array2;
 use std::fmt;
@@ -214,6 +214,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
     let mut ind: usize = 0;
     let mut sync_ke: f64;
     let mut design_ke: f64;
+    let mut design_beta: f64;
     while ind < token_list.len() {
         let tok = &token_list[ind];
         if tok.token_type == Word && tok.value == "beam" {
@@ -228,6 +229,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                     ind += 1;
                     token_check(&token_list[ind], Value);
                     design_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                    design_beta = gamma_2_beta(ke_2_gamma(design_ke));
                     ind += 1;
                 }
                 _ => {
@@ -248,7 +250,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                             ind += 1;
                             let del_e = token_list[ind].value.parse::<f64>().expect("uh oh!");
                             ind += 1;
-                            beam_vec.push([z, del_e / design_ke]);
+                            beam_vec.push([z, (1f64 / design_beta) * (del_e / design_ke)]);
                         }
                     }
                     _ => todo!("Implement more beam definitions"),
