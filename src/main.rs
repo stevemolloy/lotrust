@@ -34,6 +34,7 @@ fn main() {
     simulation.track();
     println!("---  OUTPUT  ---");
 
+    // TODO(#7): The output definition of energy error is different from the input. Fix this.
     for e_num in 0..num_electrons {
         let this_electron = simulation.beam.slice(s![e_num, ..]);
         println!(
