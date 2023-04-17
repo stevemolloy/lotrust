@@ -2,6 +2,7 @@ use ndarray::Array2;
 pub const MASS: f64 = 510998.9499961642f64;
 pub const C: f64 = 299792458f64;
 
+// TODO(#1): The beam should (?) be sorted by the z coord
 pub type Beam = Array2<f64>;
 
 pub fn ke_2_gamma(ke: f64) -> f64 {
