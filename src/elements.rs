@@ -9,7 +9,7 @@ pub trait Tracking {
     fn track(&self, beam: &mut Beam);
 }
 
-// TODO: Add various diag elements that act on the beam as drifts, but produce side-effects.
+// TODO(#3): Add various diag elements that act on the beam as drifts, but produce side-effects.
 pub struct Drift {
     t_matrix: Array2<f64>,
 }
