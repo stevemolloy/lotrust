@@ -146,7 +146,7 @@ mod tests {
             for z in [-5e-3, -1e-3, 0.0, 1e-3, 5e-3] {
                 let mut beam_vec = Array2::from(vec![[z, (1f64 / beta0) * rel_e_err]]);
                 dipole.track(&mut beam_vec);
-                // TODO: Why does this test need max_relative = 1e-5 ?
+                // TODO(#6): Why does this test need max_relative = 1e-5 ?
                 assert_relative_eq!(
                     beam_vec[[0, 0]],
                     z + delta_z,
