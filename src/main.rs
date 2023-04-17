@@ -1,5 +1,5 @@
+use crate::beam::print_beam;
 use crate::parse_lotr::{load_lotr_file, Simulation};
-use ndarray::{s, Axis};
 use std::env;
 use std::process::exit;
 
@@ -21,26 +21,12 @@ fn main() {
     let mut simulation: Simulation = load_lotr_file(filename);
 
     println!("---   INPUT  ---");
-    let num_electrons = simulation.beam.len_of(Axis(0));
-    for e_num in 0..num_electrons {
-        let this_electron = simulation.beam.slice(s![e_num, ..]);
-        println!(
-            "{:0.3} mm :: {:0.3}",
-            this_electron[0] * 1e3,
-            this_electron[1]
-        );
-    }
+    print_beam(&simulation.beam);
     println!("--- TRACKING ---");
     simulation.track();
     println!("---  OUTPUT  ---");
+    print_beam(&simulation.beam);
+    println!("---   DONE   ---");
 
     // TODO(#7): The output definition of energy error is different from the input. Fix this.
-    for e_num in 0..num_electrons {
-        let this_electron = simulation.beam.slice(s![e_num, ..]);
-        println!(
-            "{:0.3} mm :: {:0.3}",
-            this_electron[0] * 1e3,
-            this_electron[1]
-        );
-    }
 }

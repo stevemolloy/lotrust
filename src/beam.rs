@@ -1,9 +1,21 @@
-use ndarray::Array2;
+use ndarray::{s, Array2, Axis};
 pub const MASS: f64 = 510998.9499961642f64;
 pub const C: f64 = 299792458f64;
 
 // TODO(#1): The beam should (?) be sorted by the z coord
 pub type Beam = Array2<f64>;
+
+pub fn print_beam(beam: &Beam) {
+    let num_electrons = beam.len_of(Axis(0));
+    for e_num in 0..num_electrons {
+        let this_electron = beam.slice(s![e_num, ..]);
+        println!(
+            "{:0.3} mm :: {:0.3}",
+            this_electron[0] * 1e3,
+            this_electron[1]
+        );
+    }
+}
 
 pub fn ke_2_gamma(ke: f64) -> f64 {
     ke / MASS + 1f64
