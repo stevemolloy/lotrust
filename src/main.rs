@@ -18,6 +18,8 @@ fn main() {
         exit(1);
     }
     let filename = &args[1];
+
+    // TODO(#8): Should be able to read elegant lte files
     let mut simulation: Simulation = load_lotr_file(filename);
 
     println!("---   INPUT  ---");
