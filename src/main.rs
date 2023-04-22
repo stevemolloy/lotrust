@@ -19,7 +19,7 @@ fn main() {
         exit(1);
     }
 
-    
+
     let filename = &args[1];
     let mut simulation: Simulation = load_lotr_file(filename);
 
@@ -34,8 +34,15 @@ fn main() {
         );
     }
     println!("--- TRACKING ---");
-    
-    simulation.track(Some(String::from(None)));
+
+    let outfile = if args.len() > 2 {
+        Some(String::from(&args[2]))
+    } else {
+        None
+    };
+
+    simulation.track(outfile);
+
     println!("---  OUTPUT  ---");
 
     for e_num in 0..num_electrons {
