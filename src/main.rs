@@ -8,15 +8,18 @@ mod elements;
 mod parse_lotr;
 
 fn usage() {
-    println!("Please give the name of the LOTR file to use.");
+    println!("Please give the name of the LOTR file to use.\n
+    Optionally, providing an additional file name will run the program in data preservation mode, outputting all data to that file.");
 }
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
+    if !args[1].ends_with(".lotr") || args.len() < 2 || args.len() > 3 {
         usage();
         exit(1);
     }
+
+    
     let filename = &args[1];
     let mut simulation: Simulation = load_lotr_file(filename);
 
@@ -31,7 +34,8 @@ fn main() {
         );
     }
     println!("--- TRACKING ---");
-    simulation.track();
+    
+    simulation.track(Some(String::from(None)));
     println!("---  OUTPUT  ---");
 
     for e_num in 0..num_electrons {

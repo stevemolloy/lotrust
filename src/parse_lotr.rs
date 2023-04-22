@@ -1,6 +1,7 @@
 use crate::beam::{gamma_2_beta, ke_2_gamma};
 use crate::elements::*;
-use ndarray::Array2;
+use ndarray::{Array2, Array3, s};
+use ndarray_npy::write_npy;
 use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
@@ -11,9 +12,24 @@ pub struct Simulation {
 }
 
 impl Simulation {
-    pub fn track(&mut self) {
-        for element in self.elements.iter() {
-            element.track(&mut self.beam);
+    pub fn track(&mut self, outfile: Option<String>) {
+        // outfile not None. Save all data during computation and write it to an .npy
+        if let Some(outfile) = outfile {
+            let mut beam_data = Array3::<f64>::zeros((self.elements.len()+1, self.beam.nrows(), self.beam.ncols()));
+            beam_data.slice_mut(s![0, .., ..]).assign(&self.beam);
+            for (idx, element) in self.elements.iter().enumerate() {
+                element.track(&mut self.beam);
+                beam_data.slice_mut(s![idx+1, .., ..]).assign(&self.beam);
+            }
+
+            write_npy(outfile, &beam_data).unwrap();
+
+        // outfile is None, don't save data. 
+        } else {
+            for element in self.elements.iter() {
+                element.track(&mut self.beam);
+            }
+            
         }
     }
 }
