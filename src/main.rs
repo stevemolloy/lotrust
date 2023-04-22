@@ -1,11 +1,14 @@
 use crate::beam::print_beam;
+use crate::parse_elegant::load_elegant_file;
 use crate::parse_lotr::{load_lotr_file, Simulation};
 use std::env;
 use std::process::exit;
 
 mod beam;
 mod elements;
+mod parse_elegant;
 mod parse_lotr;
+mod elegant_rpn;
 
 fn usage() {
     println!("Please give the name of the LOTR file to use.\n
@@ -23,7 +26,11 @@ fn main() {
     let filename = &args[1];
 
     // TODO(#8): Should be able to read elegant lte files
-    let mut simulation: Simulation = load_lotr_file(filename);
+    let mut simulation: Simulation = if filename.ends_with(".lte") {
+        load_elegant_file(filename)
+    } else {
+        load_lotr_file(filename)
+    };
 
     println!("---   INPUT  ---");
     print_beam(&simulation.beam);
