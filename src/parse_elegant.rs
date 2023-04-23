@@ -359,6 +359,14 @@ fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) 
             println!("Ignoring a CHARGE element...");
             *ind += 6;
         }
+        "MALIGN" => {
+            println!("Ignoring a MALIGN element...");
+            *ind += 2;
+        }
+        "MAGNIFY" => {
+            println!("Ignoring a MAGNIFY element...");
+            *ind += 2;
+        }
         "drift" => {
             assert!(token_list[*ind + 3].token_type == Comma);
             assert!(token_list[*ind + 4].token_type == Word);
@@ -372,7 +380,7 @@ fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) 
                     token_list[*ind + 6].value.parse::<f64>().unwrap(),
                 )]),
             };
-            store.insert(token_list[*ind + 4].value.clone(), ele);
+            store.insert(token_list[*ind].value.clone(), ele);
             println!("Store = {:?}", store);
             *ind += 6;
         }
