@@ -4,11 +4,11 @@ use std::process::exit;
 #[derive(Default, Debug)]
 pub struct RpnCalculator {
     stack: Vec<f64>,
-    pub mem: HashMap::<String, f64>,
+    pub mem: HashMap<String, f64>,
 }
 
 impl RpnCalculator {
-    pub fn interpret_string(&mut self, input: &String) -> (String, f64) {
+    pub fn interpret_string(&mut self, input: &String) {
         let mut store = false;
         for word in input.split_ascii_whitespace() {
             if let Ok(val) = word.parse::<f64>() {
@@ -37,13 +37,10 @@ impl RpnCalculator {
             } else if store {
                 let a = self.stack.pop().unwrap();
                 self.mem.insert(word.to_string(), a);
-                return (word.to_string(), a);
             } else {
                 eprintln!("Unrecognised token in rpnstr: {}", word);
                 exit(1);
             }
         }
-        todo!();
     }
 }
-
