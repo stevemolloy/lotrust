@@ -9,7 +9,6 @@ mod elegant_rpn;
 mod elements;
 mod parse_elegant;
 mod parse_lotr;
-mod elegant_rpn;
 
 fn usage() {
     println!("Please give the name of the LOTR file to use.\n
