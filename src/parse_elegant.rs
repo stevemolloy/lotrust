@@ -1,11 +1,30 @@
-// use crate::beam::{gamma_2_beta, ke_2_gamma};
+// use crate::beam::gamma_2_beta;
+use crate::elegant_rpn::RpnCalculator;
 use crate::elements::*;
 use crate::parse_lotr::Simulation;
-use crate::elegant_rpn::RpnCalculator;
 use ndarray::Array2;
+use std::collections::HashMap;
 use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
+
+type Library = HashMap<String, ElegantElement>;
+
+#[derive(Debug)]
+struct ElegantElement {
+    intermed_type: IntermedType,
+    params: HashMap<String, f64>,
+}
+
+#[derive(Debug)]
+enum IntermedType {
+    Drift,
+    AccCav,
+    Dipole,
+    Quad,
+    Sext,
+    Line,
+}
 
 pub fn load_elegant_file(filename: &str) -> Simulation {
     let tokens = tokenize_file_contents(filename);
@@ -32,7 +51,6 @@ enum TokenType {
     Colon,
     EleStr,
     RpnExpr,
-    LineJoin,
 }
 
 impl fmt::Display for TokenType {
@@ -230,15 +248,15 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             col += 1;
         } else if contents.starts_with('&') {
             chop_character(&mut contents);
-            tokens.push(Token {
-                token_type: TokenType::LineJoin,
-                value: "&".to_string(),
-                loc: FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
-            });
+            //tokens.push(Token {
+            //    token_type: TokenType::LineJoin,
+            //    value: "&".to_string(),
+            //    loc: FileLoc {
+            //        row,
+            //        col,
+            //        filename: filename.to_string(),
+            //    },
+            //});
             col += 1;
         } else if contents.starts_with(',') {
             chop_character(&mut contents);
@@ -329,26 +347,71 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
     tokens
 }
 
+fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) {
+    use TokenType::*;
+    assert!(token_list[*ind + 0].token_type == Word);
+    assert!(token_list[*ind + 1].token_type == Colon);
+    assert!(token_list[*ind + 2].token_type == Word);
+
+    let elegant_type = &token_list[*ind + 2];
+    match elegant_type.value.as_str() {
+        "CHARGE" => {
+            println!("Ignoring a CHARGE element...");
+            *ind += 6;
+        }
+        "drift" => {
+            assert!(token_list[*ind + 3].token_type == Comma);
+            assert!(token_list[*ind + 4].token_type == Word);
+            assert!(token_list[*ind + 4].value == "l");
+            assert!(token_list[*ind + 5].token_type == Assign);
+            assert!(token_list[*ind + 6].token_type == Value);
+            let ele = ElegantElement {
+                intermed_type: IntermedType::Drift,
+                params: HashMap::<String, f64>::from([(
+                    "l".to_string(),
+                    token_list[*ind + 6].value.parse::<f64>().unwrap(),
+                )]),
+            };
+            store.insert(token_list[*ind + 4].value.clone(), ele);
+            println!("Store = {:?}", store);
+            *ind += 6;
+        }
+        _ => {
+            eprintln!(
+                "{}:{}:{} Unrecognised elegant type: '{}'",
+                elegant_type.loc.filename,
+                elegant_type.loc.row,
+                elegant_type.loc.col,
+                elegant_type.value
+            );
+            exit(1);
+        }
+    }
+}
+
 fn parse_tokens(token_list: &[Token]) -> Simulation {
     use TokenType::*;
     let mut calc: RpnCalculator = Default::default();
-    let mut acc = Simulation {
+    let mut element_store: Library = Default::default();
+    let acc = Simulation {
         elements: vec![],
         beam: Array2::from(vec![[]]),
     };
     // let mut beam_vec: Vec<[f64; 2]> = vec![];
     // let mut sync_ke: f64;
-    // let mut design_ke: f64;
-    // let mut design_beta: f64;
+    // let design_gamma = 182f64;
+    // let design_beta = gamma_2_beta(design_gamma);
     let mut ind: usize = 0;
     while ind < token_list.len() {
         let tok = &token_list[ind];
         if tok.token_type == RpnExpr {
-            let (varname, varval) = calc.interpret_string(&tok.value);
-            println!("tok = {tok:?}");
-            println!("{:?}", calc.mem);
+            calc.interpret_string(&tok.value);
+        } else if tok.token_type == Word && token_list[ind + 1].token_type == Colon {
+            add_ele_to_store(&token_list, &mut ind, &mut element_store);
+        } else {
+            eprintln!("tok = {tok:?}");
+            exit(1);
         }
-        // println!("tok = {tok:?}");
         ind += 1;
     }
     acc
