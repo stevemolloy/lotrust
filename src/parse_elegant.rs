@@ -367,6 +367,11 @@ fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) 
             println!("Ignoring a MAGNIFY element...");
             *ind += 2;
         }
+        "line" => {
+            assert!(token_list[*ind + 3].token_type == Assign);
+            assert!(token_list[*ind + 4].token_type == Oparen);
+            todo!();
+        }
         "drift" => {
             assert!(token_list[*ind + 3].token_type == Comma);
             assert!(token_list[*ind + 4].token_type == Word);
