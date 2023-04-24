@@ -19,7 +19,6 @@ fn main() {
         exit(1);
     }
 
-
     let filename = &args[1];
     let mut simulation: Simulation = load_lotr_file(filename);
 
