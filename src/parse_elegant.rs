@@ -1,6 +1,6 @@
 // use crate::beam::gamma_2_beta;
 use crate::elegant_rpn::RpnCalculator;
-use crate::elements::*;
+// use crate::elements::*;
 use crate::parse_lotr::Simulation;
 use ndarray::Array2;
 use std::collections::HashMap;
@@ -8,7 +8,26 @@ use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
 
-type Library = HashMap<String, ElegantElement>;
+#[derive(Debug, Default)]
+struct Library {
+    elements: HashMap<String, ElegantElement>,
+    ignored: Vec<String>,
+    lines: HashMap<String, Vec<String>>,
+}
+
+impl Library {
+    fn add_element(&mut self, key: String, value: ElegantElement) {
+        self.elements.insert(key, value);
+    }
+
+    fn ignore(&mut self, name: String) {
+        self.ignored.push(name);
+    }
+
+    fn add_line(&mut self, name: String, elements: Vec<String>) {
+        self.lines.insert(name, elements);
+    }
+}
 
 #[derive(Debug)]
 struct ElegantElement {
@@ -19,11 +38,10 @@ struct ElegantElement {
 #[derive(Debug)]
 enum IntermedType {
     Drift,
-    AccCav,
-    Dipole,
-    Quad,
-    Sext,
-    Line,
+    // AccCav,
+    // Dipole,
+    // Quad,
+    // Sext,
 }
 
 pub fn load_elegant_file(filename: &str) -> Simulation {
@@ -87,13 +105,12 @@ fn parse_word(input: &mut String, loc: FileLoc) -> Token {
 fn parse_string(input: &mut String, loc: FileLoc) -> Token {
     let mut name: String = chop_character(input).to_string();
     while !input.is_empty() {
+        name.push(chop_character(input));
         if input.starts_with(|c: char| c == '"') {
             break;
-        } else {
-            name.push(chop_character(input));
         }
     }
-    chop_character(input);
+    name.push(chop_character(input));
     Token {
         token_type: TokenType::EleStr,
         value: name,
@@ -199,8 +216,8 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             col += tok.value.len();
             tokens.push(tok);
         } else if contents.starts_with(|c: char| c == '"') {
-            chop_character(&mut contents);
-            col += 1;
+            // chop_character(&mut contents);
+            // col += 1;
             let tok = parse_string(
                 &mut contents,
                 FileLoc {
@@ -349,28 +366,41 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
 
 fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) {
     use TokenType::*;
-    assert!(token_list[*ind + 0].token_type == Word);
+    assert!(token_list[*ind + 0].token_type == Word || token_list[*ind + 0].token_type == EleStr);
     assert!(token_list[*ind + 1].token_type == Colon);
     assert!(token_list[*ind + 2].token_type == Word);
 
     let elegant_type = &token_list[*ind + 2];
     match elegant_type.value.as_str() {
         "CHARGE" => {
-            println!("Ignoring a CHARGE element...");
+            store.ignore(token_list[*ind].value.clone());
             *ind += 6;
         }
         "MALIGN" => {
-            println!("Ignoring a MALIGN element...");
+            store.ignore(token_list[*ind].value.clone());
             *ind += 2;
         }
         "MAGNIFY" => {
-            println!("Ignoring a MAGNIFY element...");
+            store.ignore(token_list[*ind].value.clone());
             *ind += 2;
+        }
+        "WATCH" => {
+            store.ignore(token_list[*ind].value.clone());
+            *ind += 6;
         }
         "line" => {
             assert!(token_list[*ind + 3].token_type == Assign);
             assert!(token_list[*ind + 4].token_type == Oparen);
-            todo!();
+            let mut offset = 5;
+            let mut params: Vec<String> = vec![];
+            while token_list[*ind + offset].token_type != Cparen {
+                if token_list[*ind + offset].token_type == Word {
+                    params.push(token_list[*ind + offset].value.clone());
+                }
+                offset += 1;
+            }
+            store.add_line(token_list[*ind].value.clone(), params);
+            *ind += offset;
         }
         "drift" => {
             assert!(token_list[*ind + 3].token_type == Comma);
@@ -385,9 +415,26 @@ fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) 
                     token_list[*ind + 6].value.parse::<f64>().unwrap(),
                 )]),
             };
-            store.insert(token_list[*ind].value.clone(), ele);
-            println!("Store = {:?}", store);
+            store.add_element(token_list[*ind].value.clone(), ele);
             *ind += 6;
+        }
+        "marker" => {
+            let mut params = HashMap::<String, f64>::new();
+            if token_list[*ind + 3].token_type == Comma {
+                params.insert(
+                    token_list[*ind + 4].value.clone(),
+                    token_list[*ind + 6].value.parse::<f64>().unwrap(),
+                );
+                *ind += 6;
+            } else {
+                *ind += 2;
+            }
+            let ele = ElegantElement {
+                intermed_type: IntermedType::Drift,
+                params: HashMap::<String, f64>::from([("l".to_string(), 0f64)]),
+            };
+            store.add_element(token_list[*ind].value.clone(), ele);
+            println!("{:?}", store);
         }
         _ => {
             eprintln!(
@@ -421,21 +468,16 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
             calc.interpret_string(&tok.value);
         } else if tok.token_type == Word && token_list[ind + 1].token_type == Colon {
             add_ele_to_store(&token_list, &mut ind, &mut element_store);
+        } else if tok.token_type == EleStr && token_list[ind + 1].token_type == Colon {
+            add_ele_to_store(&token_list, &mut ind, &mut element_store);
         } else {
-            eprintln!("tok = {tok:?}");
+            eprintln!(
+                "{}:{}:{} Cannot handle '{}' with value '{}'",
+                tok.loc.filename, tok.loc.row, tok.loc.col, tok.token_type, tok.value
+            );
             exit(1);
         }
         ind += 1;
     }
     acc
-}
-
-fn token_check(tok: &Token, expected: TokenType) {
-    if tok.token_type != expected {
-        eprintln!(
-            "{}:{}:{} Expected '{}', got '{}'",
-            tok.loc.filename, tok.loc.row, tok.loc.col, expected, tok.value,
-        );
-        exit(1);
-    }
 }
