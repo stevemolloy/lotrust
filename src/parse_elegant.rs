@@ -140,6 +140,7 @@ fn parse_rpn_expr(input: &mut String, mut loc: FileLoc) -> Token {
 }
 
 fn parse_digit(input: &mut String, loc: FileLoc) -> Token {
+    let mut actually_a_word: bool = false;
     let mut already_decimal: bool = false;
     let mut already_exp: bool = false;
     let mut value: String = chop_character(input).to_string();
@@ -154,7 +155,7 @@ fn parse_digit(input: &mut String, loc: FileLoc) -> Token {
             value.push(chop_character(input));
             value.push(chop_character(input));
         } else if input.starts_with('e') {
-            if already_exp {
+            if already_exp && !actually_a_word {
                 panic!("Attempt to add 'e' to a digit twice");
             }
             already_exp = true;
@@ -165,15 +166,28 @@ fn parse_digit(input: &mut String, loc: FileLoc) -> Token {
             }
             already_decimal = true;
             value.push(chop_character(input));
+        } else if input.starts_with(|c: char| c.is_ascii_alphabetic()) {
+            actually_a_word = true;
+            value.push(chop_character(input));
         } else {
             break;
         }
     }
-    Token {
-        token_type: TokenType::Value,
-        value,
-        loc,
+    let tok: Token;
+    if actually_a_word {
+        tok = Token {
+            token_type: TokenType::Word,
+            value,
+            loc,
+        }
+    } else {
+        tok = Token {
+            token_type: TokenType::Value,
+            value,
+            loc,
+        }
     }
+    tok
 }
 
 fn chop_character(input: &mut String) -> char {
