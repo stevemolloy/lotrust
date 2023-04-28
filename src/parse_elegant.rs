@@ -39,8 +39,9 @@ struct ElegantElement {
 enum IntermedType {
     Drift,
     AccCav,
+    Kick,
     // Dipole,
-    // Quad,
+    Quad,
     // Sext,
 }
 
@@ -90,9 +91,9 @@ struct Token {
 fn parse_word(input: &mut String, loc: FileLoc) -> Token {
     let mut name: String = chop_character(input).to_string();
     while !input.is_empty() {
-        if input
-            .starts_with(|c: char| c == '_' || c.is_ascii_alphanumeric() || c == '.' || c == '$')
-        {
+        if input.starts_with(|c: char| {
+            c == '_' || c.is_ascii_alphanumeric() || c == '.' || c == '$' || c == '-'
+        }) {
             name.push(chop_character(input));
         } else {
             break;
@@ -511,6 +512,87 @@ fn add_ele_to_store(
             };
             store.add_element(token_list[*ind].value.clone(), ele);
         }
+        "Kquad" => {
+            let mut params = HashMap::<String, f64>::new();
+            let mut offset = 3;
+            assert_tokentype_at(token_list, *ind + offset, Comma);
+            offset += 1;
+            while token_list[*ind + offset].token_type != LineEnd {
+                assert_tokentype_at(token_list, *ind + offset + 0, Word);
+                assert_tokentype_at(token_list, *ind + offset + 1, Assign);
+                let key = token_list[*ind + offset].value.clone();
+                if key == "SYSTEMATIC_MULTIPOLES" {
+                    offset += 3;
+                    if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+                        break;
+                    }
+                    offset += 1;
+                    if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+                        offset += 1;
+                    }
+                    continue;
+                }
+                let val: f64;
+                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                } else {
+                    let store_key = token_list[*ind + offset + 2]
+                        .value
+                        .clone()
+                        .replace("\"", "");
+                    val = calc.interpret_string(&store_key).unwrap();
+                }
+                params.insert(key, val);
+                offset += 3;
+                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+                    break;
+                }
+                offset += 1;
+                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+                    offset += 1;
+                }
+            }
+            let ele = ElegantElement {
+                intermed_type: IntermedType::Quad,
+                params,
+            };
+            store.add_element(token_list[*ind].value.clone(), ele);
+        }
+        "HKICK" | "VKICK" => {
+            let mut params = HashMap::<String, f64>::new();
+            let mut offset = 3;
+            assert_tokentype_at(token_list, *ind + offset, Comma);
+            offset += 1;
+            while token_list[*ind + offset].token_type != LineEnd {
+                assert_tokentype_at(token_list, *ind + offset + 0, Word);
+                assert_tokentype_at(token_list, *ind + offset + 1, Assign);
+                let key = token_list[*ind + offset].value.clone();
+                let val: f64;
+                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                } else {
+                    let store_key = token_list[*ind + offset + 2]
+                        .value
+                        .clone()
+                        .replace("\"", "");
+                    val = calc.interpret_string(&store_key).unwrap();
+                }
+                params.insert(key, val);
+                offset += 3;
+                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+                    break;
+                }
+                offset += 1;
+                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+                    offset += 1;
+                }
+            }
+            let ele = ElegantElement {
+                intermed_type: IntermedType::Kick,
+                params,
+            };
+            store.add_element(token_list[*ind].value.clone(), ele);
+        }
         _ => {
             for ele in &store.elements {
                 println!("{ele:?}");
@@ -551,6 +633,9 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Simulation {
         {
             add_ele_to_store(&token_list, &mut ind, &mut element_store, calc);
         } else {
+            println!("{tok:?}", tok = token_list[ind - 1]);
+            println!("{tok:?}");
+            println!("{tok:?}", tok = token_list[ind + 1]);
             eprintln!(
                 "{}:{}:{} Cannot handle '{}' with value '{}'",
                 tok.loc.filename, tok.loc.row, tok.loc.col, tok.token_type, tok.value
