@@ -448,7 +448,21 @@ fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) 
                 params: HashMap::<String, f64>::from([("l".to_string(), 0f64)]),
             };
             store.add_element(token_list[*ind].value.clone(), ele);
-            println!("{:?}", store);
+            // println!("{:?}", store);
+        }
+        "rfcw" => {
+            let mut params = HashMap::<String, f64>::new();
+            let mut offset = 3;
+            assert_eq!(token_list[*ind + offset].token_type, Comma);
+            offset += 1;
+            loop {
+                let isparam = token_list[*ind + offset].token_type == Word
+                    && token_list[*ind + offset + 1].token_type == Assign;
+                if !isparam {
+                    break;
+                }
+                if token_list[*ind + offset].token_type = Value
+            }
         }
         _ => {
             eprintln!(
