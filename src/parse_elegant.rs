@@ -40,6 +40,7 @@ enum IntermedType {
     Drift,
     AccCav,
     Kick,
+    Moni,
     // Dipole,
     Quad,
     // Sext,
@@ -386,6 +387,20 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             while next != '\n' {
                 next = chop_character(&mut contents);
             }
+            if !tokens.is_empty()
+                && (tokens.last().unwrap().token_type != TokenType::LineJoin
+                    && tokens.last().unwrap().token_type != TokenType::LineEnd)
+            {
+                tokens.push(Token {
+                    token_type: TokenType::LineEnd,
+                    value: "LineEnd".to_string(),
+                    loc: FileLoc {
+                        row,
+                        col,
+                        filename: filename.to_string(),
+                    },
+                });
+            }
             row += 1;
             col = 1;
         } else {
@@ -407,8 +422,8 @@ fn add_ele_to_store(
         compare_tokentype_at(token_list, *ind, Word)
             || compare_tokentype_at(token_list, *ind, EleStr)
     );
-    assert_tokentype_at(token_list, *ind + 1, Colon);
-    assert_tokentype_at(token_list, *ind + 2, Word);
+    assert!(compare_tokentype_at(token_list, *ind + 1, Colon));
+    assert!(compare_tokentype_at(token_list, *ind + 2, Word));
 
     let elegant_type = &token_list[*ind + 2];
     match elegant_type.value.as_str() {
@@ -416,8 +431,8 @@ fn add_ele_to_store(
             store.ignore(token_list[*ind].value.clone());
         }
         "line" => {
-            assert_tokentype_at(token_list, *ind + 3, Assign);
-            assert_tokentype_at(token_list, *ind + 4, Oparen);
+            assert!(compare_tokentype_at(token_list, *ind + 3, Assign));
+            assert!(compare_tokentype_at(token_list, *ind + 4, Oparen));
             let mut offset = 5;
             let mut params: Vec<String> = vec![];
             while token_list[*ind + offset].token_type != Cparen {
@@ -429,11 +444,11 @@ fn add_ele_to_store(
             store.add_line(token_list[*ind].value.clone(), params);
         }
         "drift" => {
-            assert_tokentype_at(token_list, *ind + 3, Comma);
-            assert_tokentype_at(token_list, *ind + 4, Word);
+            assert!(compare_tokentype_at(token_list, *ind + 3, Comma));
+            assert!(compare_tokentype_at(token_list, *ind + 4, Word));
             assert!(token_list[*ind + 4].value == "l");
-            assert_tokentype_at(token_list, *ind + 5, Assign);
-            assert_tokentype_at(token_list, *ind + 6, Value);
+            assert!(compare_tokentype_at(token_list, *ind + 5, Assign));
+            assert!(compare_tokentype_at(token_list, *ind + 6, Value));
             let ele = ElegantElement {
                 intermed_type: IntermedType::Drift,
                 params: HashMap::<String, f64>::from([(
@@ -463,11 +478,11 @@ fn add_ele_to_store(
         "rfcw" => {
             let mut params = HashMap::<String, f64>::new();
             let mut offset = 3;
-            assert_tokentype_at(token_list, *ind + offset, Comma);
+            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert_tokentype_at(token_list, *ind + offset + 0, Word);
-                assert_tokentype_at(token_list, *ind + offset + 1, Assign);
+                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
                 if key == "zwakefile"
                     || key == "trwakefile"
@@ -515,11 +530,11 @@ fn add_ele_to_store(
         "Kquad" => {
             let mut params = HashMap::<String, f64>::new();
             let mut offset = 3;
-            assert_tokentype_at(token_list, *ind + offset, Comma);
+            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert_tokentype_at(token_list, *ind + offset + 0, Word);
-                assert_tokentype_at(token_list, *ind + offset + 1, Assign);
+                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
                 if key == "SYSTEMATIC_MULTIPOLES" {
                     offset += 3;
@@ -561,11 +576,11 @@ fn add_ele_to_store(
         "HKICK" | "VKICK" => {
             let mut params = HashMap::<String, f64>::new();
             let mut offset = 3;
-            assert_tokentype_at(token_list, *ind + offset, Comma);
+            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert_tokentype_at(token_list, *ind + offset + 0, Word);
-                assert_tokentype_at(token_list, *ind + offset + 1, Assign);
+                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
                 let val: f64;
                 if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
@@ -589,6 +604,51 @@ fn add_ele_to_store(
             }
             let ele = ElegantElement {
                 intermed_type: IntermedType::Kick,
+                params,
+            };
+            store.add_element(token_list[*ind].value.clone(), ele);
+        }
+        "monitor" => {
+            let mut params = HashMap::<String, f64>::new();
+            let mut offset = 3;
+            println!("\n");
+            println!("{:?}", token_list[*ind + 0]);
+            println!("{:?}", token_list[*ind + 1]);
+            println!("{:?}", token_list[*ind + 2]);
+            println!("{:?}", token_list[*ind + 3]);
+            println!("{:?}", token_list[*ind + 4]);
+            println!("{:?}", token_list[*ind + 5]);
+            println!("{:?}", token_list[*ind + 6]);
+            println!("{:?}", token_list[*ind + 7]);
+            println!("\n");
+            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
+            offset += 1;
+            while token_list[*ind + offset].token_type != LineEnd {
+                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
+                let key = token_list[*ind + offset].value.clone();
+                let val: f64;
+                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                } else {
+                    let store_key = token_list[*ind + offset + 2]
+                        .value
+                        .clone()
+                        .replace("\"", "");
+                    val = calc.interpret_string(&store_key).unwrap();
+                }
+                params.insert(key, val);
+                offset += 3;
+                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+                    break;
+                }
+                offset += 1;
+                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+                    offset += 1;
+                }
+            }
+            let ele = ElegantElement {
+                intermed_type: IntermedType::Moni,
                 params,
             };
             store.add_element(token_list[*ind].value.clone(), ele);
