@@ -38,7 +38,7 @@ struct ElegantElement {
 #[derive(Debug)]
 enum IntermedType {
     Drift,
-    // AccCav,
+    AccCav,
     // Dipole,
     // Quad,
     // Sext,
@@ -399,7 +399,7 @@ fn add_ele_to_store(
     token_list: &[Token],
     ind: &mut usize,
     store: &mut Library,
-    calc: &RpnCalculator,
+    calc: &mut RpnCalculator,
 ) {
     use TokenType::*;
     assert!(
@@ -468,13 +468,32 @@ fn add_ele_to_store(
                 assert_tokentype_at(token_list, *ind + offset + 0, Word);
                 assert_tokentype_at(token_list, *ind + offset + 1, Assign);
                 let key = token_list[*ind + offset].value.clone();
+                if key == "zwakefile"
+                    || key == "trwakefile"
+                    || key == "tColumn"
+                    || key == "wzColumn"
+                    || key == "wxColumn"
+                    || key == "wyColumn"
+                {
+                    offset += 3;
+                    if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+                        break;
+                    }
+                    offset += 1;
+                    if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+                        offset += 1;
+                    }
+                    continue;
+                }
                 let val: f64;
                 if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
                     val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
                 } else {
-                    let store_key = token_list[*ind + offset].value.clone();
-                    // val = store.elements.get(store_key);
-                    val = 0f64;
+                    let store_key = token_list[*ind + offset + 2]
+                        .value
+                        .clone()
+                        .replace("\"", "");
+                    val = calc.interpret_string(&store_key).unwrap();
                 }
                 params.insert(key, val);
                 offset += 3;
@@ -486,8 +505,16 @@ fn add_ele_to_store(
                     offset += 1;
                 }
             }
+            let ele = ElegantElement {
+                intermed_type: IntermedType::AccCav,
+                params,
+            };
+            store.add_element(token_list[*ind].value.clone(), ele);
         }
         _ => {
+            for ele in &store.elements {
+                println!("{ele:?}");
+            }
             eprintln!(
                 "{}:{}:{} Unrecognised elegant type: '{}'",
                 elegant_type.loc.filename,
@@ -522,7 +549,7 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Simulation {
         } else if (tok.token_type == Word || tok.token_type == EleStr)
             && compare_tokentype_at(token_list, ind + 1, Colon)
         {
-            add_ele_to_store(&token_list, &mut ind, &mut element_store, &calc);
+            add_ele_to_store(&token_list, &mut ind, &mut element_store, calc);
         } else {
             eprintln!(
                 "{}:{}:{} Cannot handle '{}' with value '{}'",
