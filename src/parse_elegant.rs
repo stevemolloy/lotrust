@@ -45,8 +45,9 @@ enum IntermedType {
 }
 
 pub fn load_elegant_file(filename: &str) -> Simulation {
+    let mut calc: RpnCalculator = Default::default();
     let tokens = tokenize_file_contents(filename);
-    parse_tokens(&tokens)
+    parse_tokens(&tokens, &mut calc)
 }
 
 #[derive(Debug)]
@@ -69,6 +70,8 @@ enum TokenType {
     Colon,
     EleStr,
     RpnExpr,
+    LineEnd,
+    LineJoin,
 }
 
 impl fmt::Display for TokenType {
@@ -211,6 +214,20 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             let c = chop_character(&mut contents);
             match c {
                 '\n' => {
+                    if !tokens.is_empty()
+                        && (tokens.last().unwrap().token_type != TokenType::LineJoin
+                            && tokens.last().unwrap().token_type != TokenType::LineEnd)
+                    {
+                        tokens.push(Token {
+                            token_type: TokenType::LineEnd,
+                            value: "LineEnd".to_string(),
+                            loc: FileLoc {
+                                row,
+                                col,
+                                filename: filename.to_string(),
+                            },
+                        });
+                    }
                     row += 1;
                     col = 1;
                 }
@@ -279,15 +296,15 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             col += 1;
         } else if contents.starts_with('&') {
             chop_character(&mut contents);
-            //tokens.push(Token {
-            //    token_type: TokenType::LineJoin,
-            //    value: "&".to_string(),
-            //    loc: FileLoc {
-            //        row,
-            //        col,
-            //        filename: filename.to_string(),
-            //    },
-            //});
+            tokens.push(Token {
+                token_type: TokenType::LineJoin,
+                value: "&".to_string(),
+                loc: FileLoc {
+                    row,
+                    col,
+                    filename: filename.to_string(),
+                },
+            });
             col += 1;
         } else if contents.starts_with(',') {
             chop_character(&mut contents);
@@ -378,50 +395,44 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
     tokens
 }
 
-fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) {
+fn add_ele_to_store(
+    token_list: &[Token],
+    ind: &mut usize,
+    store: &mut Library,
+    calc: &RpnCalculator,
+) {
     use TokenType::*;
-    assert!(token_list[*ind + 0].token_type == Word || token_list[*ind + 0].token_type == EleStr);
-    assert!(token_list[*ind + 1].token_type == Colon);
-    assert!(token_list[*ind + 2].token_type == Word);
+    assert!(
+        compare_tokentype_at(token_list, *ind, Word)
+            || compare_tokentype_at(token_list, *ind, EleStr)
+    );
+    assert_tokentype_at(token_list, *ind + 1, Colon);
+    assert_tokentype_at(token_list, *ind + 2, Word);
 
     let elegant_type = &token_list[*ind + 2];
     match elegant_type.value.as_str() {
-        "CHARGE" => {
+        "CHARGE" | "MAGNIFY" | "MALIGN" | "WATCH" => {
             store.ignore(token_list[*ind].value.clone());
-            *ind += 6;
-        }
-        "MALIGN" => {
-            store.ignore(token_list[*ind].value.clone());
-            *ind += 2;
-        }
-        "MAGNIFY" => {
-            store.ignore(token_list[*ind].value.clone());
-            *ind += 2;
-        }
-        "WATCH" => {
-            store.ignore(token_list[*ind].value.clone());
-            *ind += 6;
         }
         "line" => {
-            assert!(token_list[*ind + 3].token_type == Assign);
-            assert!(token_list[*ind + 4].token_type == Oparen);
+            assert_tokentype_at(token_list, *ind + 3, Assign);
+            assert_tokentype_at(token_list, *ind + 4, Oparen);
             let mut offset = 5;
             let mut params: Vec<String> = vec![];
             while token_list[*ind + offset].token_type != Cparen {
-                if token_list[*ind + offset].token_type == Word {
+                if compare_tokentype_at(token_list, *ind + offset, Word) {
                     params.push(token_list[*ind + offset].value.clone());
                 }
                 offset += 1;
             }
             store.add_line(token_list[*ind].value.clone(), params);
-            *ind += offset;
         }
         "drift" => {
-            assert!(token_list[*ind + 3].token_type == Comma);
-            assert!(token_list[*ind + 4].token_type == Word);
+            assert_tokentype_at(token_list, *ind + 3, Comma);
+            assert_tokentype_at(token_list, *ind + 4, Word);
             assert!(token_list[*ind + 4].value == "l");
-            assert!(token_list[*ind + 5].token_type == Assign);
-            assert!(token_list[*ind + 6].token_type == Value);
+            assert_tokentype_at(token_list, *ind + 5, Assign);
+            assert_tokentype_at(token_list, *ind + 6, Value);
             let ele = ElegantElement {
                 intermed_type: IntermedType::Drift,
                 params: HashMap::<String, f64>::from([(
@@ -430,11 +441,10 @@ fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) 
                 )]),
             };
             store.add_element(token_list[*ind].value.clone(), ele);
-            *ind += 6;
         }
         "marker" => {
             let mut params = HashMap::<String, f64>::new();
-            if token_list[*ind + 3].token_type == Comma {
+            if compare_tokentype_at(token_list, *ind + 3, Comma) {
                 params.insert(
                     token_list[*ind + 4].value.clone(),
                     token_list[*ind + 6].value.parse::<f64>().unwrap(),
@@ -448,20 +458,33 @@ fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) 
                 params: HashMap::<String, f64>::from([("l".to_string(), 0f64)]),
             };
             store.add_element(token_list[*ind].value.clone(), ele);
-            // println!("{:?}", store);
         }
         "rfcw" => {
             let mut params = HashMap::<String, f64>::new();
             let mut offset = 3;
-            assert_eq!(token_list[*ind + offset].token_type, Comma);
+            assert_tokentype_at(token_list, *ind + offset, Comma);
             offset += 1;
-            loop {
-                let isparam = token_list[*ind + offset].token_type == Word
-                    && token_list[*ind + offset + 1].token_type == Assign;
-                if !isparam {
+            while token_list[*ind + offset].token_type != LineEnd {
+                assert_tokentype_at(token_list, *ind + offset + 0, Word);
+                assert_tokentype_at(token_list, *ind + offset + 1, Assign);
+                let key = token_list[*ind + offset].value.clone();
+                let val: f64;
+                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                } else {
+                    let store_key = token_list[*ind + offset].value.clone();
+                    // val = store.elements.get(store_key);
+                    val = 0f64;
+                }
+                params.insert(key, val);
+                offset += 3;
+                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
                     break;
                 }
-                if token_list[*ind + offset].token_type = Value
+                offset += 1;
+                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+                    offset += 1;
+                }
             }
         }
         _ => {
@@ -475,11 +498,13 @@ fn add_ele_to_store(token_list: &[Token], ind: &mut usize, store: &mut Library) 
             exit(1);
         }
     }
+    while token_list[*ind].token_type != TokenType::LineEnd {
+        *ind += 1;
+    }
 }
 
-fn parse_tokens(token_list: &[Token]) -> Simulation {
+fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Simulation {
     use TokenType::*;
-    let mut calc: RpnCalculator = Default::default();
     let mut element_store: Library = Default::default();
     let acc = Simulation {
         elements: vec![],
@@ -494,10 +519,10 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
         let tok = &token_list[ind];
         if tok.token_type == RpnExpr {
             calc.interpret_string(&tok.value);
-        } else if tok.token_type == Word && token_list[ind + 1].token_type == Colon {
-            add_ele_to_store(&token_list, &mut ind, &mut element_store);
-        } else if tok.token_type == EleStr && token_list[ind + 1].token_type == Colon {
-            add_ele_to_store(&token_list, &mut ind, &mut element_store);
+        } else if (tok.token_type == Word || tok.token_type == EleStr)
+            && compare_tokentype_at(token_list, ind + 1, Colon)
+        {
+            add_ele_to_store(&token_list, &mut ind, &mut element_store, &calc);
         } else {
             eprintln!(
                 "{}:{}:{} Cannot handle '{}' with value '{}'",
@@ -506,6 +531,17 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
             exit(1);
         }
         ind += 1;
+        while compare_tokentype_at(token_list, ind, LineEnd) {
+            ind += 1;
+        }
     }
     acc
+}
+
+fn compare_tokentype_at(token_list: &[Token], ind: usize, tok_type: TokenType) -> bool {
+    token_list[ind].token_type == tok_type
+}
+
+fn assert_tokentype_at(token_list: &[Token], ind: usize, tok_type: TokenType) {
+    assert!(compare_tokentype_at(token_list, ind, tok_type))
 }
