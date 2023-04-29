@@ -426,8 +426,8 @@ fn add_ele_to_store(
     assert!(compare_tokentype_at(token_list, *ind + 2, Word));
 
     let elegant_type = &token_list[*ind + 2];
-    match elegant_type.value.as_str() {
-        "CHARGE" | "MAGNIFY" | "MALIGN" | "WATCH" => {
+    match elegant_type.value.to_lowercase().as_str() {
+        "charge" | "magnify" | "malign" | "watch" | "watchpoint" | "mark" => {
             store.ignore(token_list[*ind].value.clone());
         }
         "line" => {
@@ -446,7 +446,7 @@ fn add_ele_to_store(
         "drift" => {
             assert!(compare_tokentype_at(token_list, *ind + 3, Comma));
             assert!(compare_tokentype_at(token_list, *ind + 4, Word));
-            assert!(token_list[*ind + 4].value == "l");
+            assert!(token_list[*ind + 4].value.to_lowercase() == "l");
             assert!(compare_tokentype_at(token_list, *ind + 5, Assign));
             assert!(compare_tokentype_at(token_list, *ind + 6, Value));
             let ele = ElegantElement {
@@ -527,7 +527,59 @@ fn add_ele_to_store(
             };
             store.add_element(token_list[*ind].value.clone(), ele);
         }
-        "Kquad" | "kquad" => {
+        "rfdf" => {
+            let mut params = HashMap::<String, f64>::new();
+            let mut offset = 3;
+            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
+            offset += 1;
+            while token_list[*ind + offset].token_type != LineEnd {
+                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
+                let key = token_list[*ind + offset].value.clone();
+                if key == "zwakefile"
+                    || key == "trwakefile"
+                    || key == "tColumn"
+                    || key == "wzColumn"
+                    || key == "wxColumn"
+                    || key == "wyColumn"
+                {
+                    offset += 3;
+                    if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+                        break;
+                    }
+                    offset += 1;
+                    if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+                        offset += 1;
+                    }
+                    continue;
+                }
+                let val: f64;
+                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                } else {
+                    let store_key = token_list[*ind + offset + 2]
+                        .value
+                        .clone()
+                        .replace("\"", "");
+                    val = calc.interpret_string(&store_key).unwrap();
+                }
+                params.insert(key, val);
+                offset += 3;
+                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+                    break;
+                }
+                offset += 1;
+                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+                    offset += 1;
+                }
+            }
+            let ele = ElegantElement {
+                intermed_type: IntermedType::AccCav,
+                params,
+            };
+            store.add_element(token_list[*ind].value.clone(), ele);
+        }
+        "kquad" => {
             let mut params = HashMap::<String, f64>::new();
             let mut offset = 3;
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
@@ -573,7 +625,7 @@ fn add_ele_to_store(
             };
             store.add_element(token_list[*ind].value.clone(), ele);
         }
-        "HKICK" | "VKICK" => {
+        "hkick" | "vkick" => {
             let mut params = HashMap::<String, f64>::new();
             let mut offset = 3;
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
@@ -608,7 +660,7 @@ fn add_ele_to_store(
             };
             store.add_element(token_list[*ind].value.clone(), ele);
         }
-        "csrcsbend" => {
+        "wiggler" | "csrcsbend" | "rben" | "sben" | "sbend" => {
             let mut params = HashMap::<String, f64>::new();
             let mut offset = 3;
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
@@ -617,6 +669,17 @@ fn add_ele_to_store(
                 assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
+                if key == "output_file" {
+                    offset += 3;
+                    if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+                        break;
+                    }
+                    offset += 1;
+                    if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+                        offset += 1;
+                    }
+                    continue;
+                }
                 let val: f64;
                 if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
                     val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
@@ -643,7 +706,7 @@ fn add_ele_to_store(
             };
             store.add_element(token_list[*ind].value.clone(), ele);
         }
-        "Ksext" => {
+        "ksext" => {
             let mut params = HashMap::<String, f64>::new();
             let mut offset = 3;
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
@@ -689,7 +752,7 @@ fn add_ele_to_store(
             };
             store.add_element(token_list[*ind].value.clone(), ele);
         }
-        "scraper" => {
+        "scraper" | "ecol" => {
             let mut params = HashMap::<String, f64>::new();
             let mut offset = 3;
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
@@ -735,7 +798,7 @@ fn add_ele_to_store(
             };
             store.add_element(token_list[*ind].value.clone(), ele);
         }
-        "monitor" => {
+        "monitor" | "moni" => {
             let mut params = HashMap::<String, f64>::new();
             let mut offset = 3;
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
@@ -820,6 +883,9 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Simulation {
             exit(1);
         }
         ind += 1;
+        if ind >= token_list.len() {
+            break;
+        }
         while compare_tokentype_at(token_list, ind, LineEnd) {
             ind += 1;
         }
