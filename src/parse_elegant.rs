@@ -190,21 +190,19 @@ fn parse_digit(input: &mut String, loc: FileLoc) -> Token {
             break;
         }
     }
-    let tok: Token;
     if actually_a_word {
-        tok = Token {
+        Token {
             token_type: TokenType::Word,
             value,
             loc,
         }
     } else {
-        tok = Token {
+        Token {
             token_type: TokenType::Value,
             value,
             loc,
         }
     }
-    tok
 }
 
 fn chop_character(input: &mut String) -> char {
@@ -380,7 +378,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
                 },
             });
             col += 1;
-        } else if contents.starts_with("%") && col == 1 {
+        } else if contents.starts_with('%') && col == 1 {
             chop_character(&mut contents);
             col += 1;
             let tok = parse_rpn_expr(
@@ -394,7 +392,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             col = 1;
             row += 1;
             tokens.push(tok);
-        } else if contents.starts_with("!") {
+        } else if contents.starts_with('!') {
             let mut next = chop_character(&mut contents);
             while next != '\n' {
                 next = chop_character(&mut contents);
@@ -440,7 +438,7 @@ fn add_ele_to_store(
     let elegant_type = &token_list[*ind + 2];
     match elegant_type.value.to_lowercase().as_str() {
         "charge" | "magnify" | "malign" | "watch" | "watchpoint" | "mark" => {
-            let str_to_ignore = token_list[*ind].value.to_lowercase().replace("\"", "");
+            let str_to_ignore = token_list[*ind].value.to_lowercase().replace('"', "");
             store.ignore(str_to_ignore);
         }
         "line" => {
@@ -495,7 +493,7 @@ fn add_ele_to_store(
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
                 if key == "zwakefile"
@@ -515,16 +513,12 @@ fn add_ele_to_store(
                     }
                     continue;
                 }
-                let val: f64;
-                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
                 } else {
-                    let store_key = token_list[*ind + offset + 2]
-                        .value
-                        .clone()
-                        .replace("\"", "");
-                    val = calc.interpret_string(&store_key).unwrap();
-                }
+                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+                    calc.interpret_string(&store_key).unwrap()
+                };
                 params.insert(key, val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
@@ -547,7 +541,7 @@ fn add_ele_to_store(
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
                 if key == "zwakefile"
@@ -567,16 +561,12 @@ fn add_ele_to_store(
                     }
                     continue;
                 }
-                let val: f64;
-                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
                 } else {
-                    let store_key = token_list[*ind + offset + 2]
-                        .value
-                        .clone()
-                        .replace("\"", "");
-                    val = calc.interpret_string(&store_key).unwrap();
-                }
+                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+                    calc.interpret_string(&store_key).unwrap()
+                };
                 params.insert(key, val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
@@ -599,7 +589,7 @@ fn add_ele_to_store(
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
                 if key == "SYSTEMATIC_MULTIPOLES" {
@@ -613,16 +603,12 @@ fn add_ele_to_store(
                     }
                     continue;
                 }
-                let val: f64;
-                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
                 } else {
-                    let store_key = token_list[*ind + offset + 2]
-                        .value
-                        .clone()
-                        .replace("\"", "");
-                    val = calc.interpret_string(&store_key).unwrap();
-                }
+                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+                    calc.interpret_string(&store_key).unwrap()
+                };
                 params.insert(key, val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
@@ -645,19 +631,15 @@ fn add_ele_to_store(
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
-                let val: f64;
-                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
                 } else {
-                    let store_key = token_list[*ind + offset + 2]
-                        .value
-                        .clone()
-                        .replace("\"", "");
-                    val = calc.interpret_string(&store_key).unwrap();
-                }
+                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+                    calc.interpret_string(&store_key).unwrap()
+                };
                 params.insert(key, val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
@@ -680,7 +662,7 @@ fn add_ele_to_store(
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
                 if key == "output_file" {
@@ -694,16 +676,12 @@ fn add_ele_to_store(
                     }
                     continue;
                 }
-                let val: f64;
-                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
                 } else {
-                    let store_key = token_list[*ind + offset + 2]
-                        .value
-                        .clone()
-                        .replace("\"", "");
-                    val = calc.interpret_string(&store_key).unwrap();
-                }
+                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+                    calc.interpret_string(&store_key).unwrap()
+                };
                 params.insert(key, val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
@@ -726,7 +704,7 @@ fn add_ele_to_store(
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
                 if key == "SYSTEMATIC_MULTIPOLES" {
@@ -740,16 +718,12 @@ fn add_ele_to_store(
                     }
                     continue;
                 }
-                let val: f64;
-                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
                 } else {
-                    let store_key = token_list[*ind + offset + 2]
-                        .value
-                        .clone()
-                        .replace("\"", "");
-                    val = calc.interpret_string(&store_key).unwrap();
-                }
+                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+                    calc.interpret_string(&store_key).unwrap()
+                };
                 params.insert(key, val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
@@ -772,7 +746,7 @@ fn add_ele_to_store(
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
                 if key == "insert_from" {
@@ -786,16 +760,12 @@ fn add_ele_to_store(
                     }
                     continue;
                 }
-                let val: f64;
-                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
                 } else {
-                    let store_key = token_list[*ind + offset + 2]
-                        .value
-                        .clone()
-                        .replace("\"", "");
-                    val = calc.interpret_string(&store_key).unwrap();
-                }
+                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+                    calc.interpret_string(&store_key).unwrap()
+                };
                 params.insert(key, val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
@@ -818,19 +788,15 @@ fn add_ele_to_store(
             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
             offset += 1;
             while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset + 0, Word));
+                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
                 let key = token_list[*ind + offset].value.clone();
-                let val: f64;
-                if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    val = token_list[*ind + offset + 2].value.parse::<f64>().unwrap();
+                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
                 } else {
-                    let store_key = token_list[*ind + offset + 2]
-                        .value
-                        .clone()
-                        .replace("\"", "");
-                    val = calc.interpret_string(&store_key).unwrap();
-                }
+                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+                    calc.interpret_string(&store_key).unwrap()
+                };
                 params.insert(key, val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
@@ -877,7 +843,7 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Library {
         } else if (tok.token_type == Word || tok.token_type == EleStr)
             && compare_tokentype_at(token_list, ind + 1, Colon)
         {
-            add_ele_to_store(&token_list, &mut ind, &mut element_store, calc);
+            add_ele_to_store(token_list, &mut ind, &mut element_store, calc);
         } else {
             println!("{tok:?}", tok = token_list[ind - 1]);
             println!("{tok:?}");

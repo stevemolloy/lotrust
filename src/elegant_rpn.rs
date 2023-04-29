@@ -8,9 +8,9 @@ pub struct RpnCalculator {
 }
 
 impl RpnCalculator {
-    pub fn interpret_string(&mut self, input: &String) -> Option<f64> {
+    pub fn interpret_string(&mut self, input: &str) -> Option<f64> {
         let mut store = false;
-        for word in input.replace(",", " ").split_ascii_whitespace() {
+        for word in input.replace(',', " ").split_ascii_whitespace() {
             if let Ok(val) = word.parse::<f64>() {
                 self.stack.push(val);
             } else if word == "sto" {
