@@ -10,7 +10,7 @@ pub struct RpnCalculator {
 impl RpnCalculator {
     pub fn interpret_string(&mut self, input: &String) -> Option<f64> {
         let mut store = false;
-        for word in input.split_ascii_whitespace() {
+        for word in input.replace(",", " ").split_ascii_whitespace() {
             if let Ok(val) = word.parse::<f64>() {
                 self.stack.push(val);
             } else if word == "sto" {
@@ -38,6 +38,7 @@ impl RpnCalculator {
                 let a = self.stack.pop().unwrap();
                 self.mem.insert(word.to_string(), a);
             } else {
+                println!("{:?}", self.mem);
                 eprintln!("Unrecognised token in rpnstr: {}", word);
                 exit(1);
             }
