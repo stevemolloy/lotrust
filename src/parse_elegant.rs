@@ -50,9 +50,10 @@ enum IntermedType {
 
 pub fn load_elegant_file(filename: &str) -> Simulation {
     let mut calc: RpnCalculator = Default::default();
+    let mut line: Line = vec![];
     let tokens = tokenize_file_contents(filename);
     let inter_repr = parse_tokens(&tokens, &mut calc);
-    let line = intermed_to_line(inter_repr, "SPF");
+    intermed_to_line(&mut line, &inter_repr, "SPF");
     line_to_simulation(line)
 }
 
@@ -432,7 +433,7 @@ fn add_ele_to_store(
     let elegant_type = &token_list[*ind + 2];
     match elegant_type.value.to_lowercase().as_str() {
         "charge" | "magnify" | "malign" | "watch" | "watchpoint" | "mark" => {
-            store.ignore(token_list[*ind].value.clone());
+            store.ignore(token_list[*ind].value.to_lowercase());
         }
         "line" => {
             assert!(compare_tokentype_at(token_list, *ind + 3, Assign));
@@ -445,7 +446,7 @@ fn add_ele_to_store(
                 }
                 offset += 1;
             }
-            store.add_line(token_list[*ind].value.clone(), params);
+            store.add_line(token_list[*ind].value.to_lowercase(), params);
         }
         "drift" => {
             assert!(compare_tokentype_at(token_list, *ind + 3, Comma));
@@ -460,10 +461,11 @@ fn add_ele_to_store(
                     token_list[*ind + 6].value.parse::<f64>().unwrap(),
                 )]),
             };
-            store.add_element(token_list[*ind].value.clone(), ele);
+            store.add_element(token_list[*ind].value.to_lowercase(), ele);
         }
         "marker" => {
             let mut params = HashMap::<String, f64>::new();
+            let name = token_list[*ind].value.to_lowercase();
             if compare_tokentype_at(token_list, *ind + 3, Comma) {
                 params.insert(
                     token_list[*ind + 4].value.clone(),
@@ -477,7 +479,7 @@ fn add_ele_to_store(
                 intermed_type: IntermedType::Drift,
                 params: HashMap::<String, f64>::from([("l".to_string(), 0f64)]),
             };
-            store.add_element(token_list[*ind].value.clone(), ele);
+            store.add_element(name, ele);
         }
         "rfcw" => {
             let mut params = HashMap::<String, f64>::new();
@@ -529,7 +531,7 @@ fn add_ele_to_store(
                 intermed_type: IntermedType::AccCav,
                 params,
             };
-            store.add_element(token_list[*ind].value.clone(), ele);
+            store.add_element(token_list[*ind].value.to_lowercase(), ele);
         }
         "rfdf" => {
             let mut params = HashMap::<String, f64>::new();
@@ -581,7 +583,7 @@ fn add_ele_to_store(
                 intermed_type: IntermedType::AccCav,
                 params,
             };
-            store.add_element(token_list[*ind].value.clone(), ele);
+            store.add_element(token_list[*ind].value.to_lowercase(), ele);
         }
         "kquad" => {
             let mut params = HashMap::<String, f64>::new();
@@ -627,7 +629,7 @@ fn add_ele_to_store(
                 intermed_type: IntermedType::Quad,
                 params,
             };
-            store.add_element(token_list[*ind].value.clone(), ele);
+            store.add_element(token_list[*ind].value.to_lowercase(), ele);
         }
         "hkick" | "vkick" => {
             let mut params = HashMap::<String, f64>::new();
@@ -662,7 +664,7 @@ fn add_ele_to_store(
                 intermed_type: IntermedType::Kick,
                 params,
             };
-            store.add_element(token_list[*ind].value.clone(), ele);
+            store.add_element(token_list[*ind].value.to_lowercase(), ele);
         }
         "wiggler" | "csrcsbend" | "rben" | "sben" | "sbend" => {
             let mut params = HashMap::<String, f64>::new();
@@ -708,7 +710,7 @@ fn add_ele_to_store(
                 intermed_type: IntermedType::Bend,
                 params,
             };
-            store.add_element(token_list[*ind].value.clone(), ele);
+            store.add_element(token_list[*ind].value.to_lowercase(), ele);
         }
         "ksext" => {
             let mut params = HashMap::<String, f64>::new();
@@ -754,7 +756,7 @@ fn add_ele_to_store(
                 intermed_type: IntermedType::Sext,
                 params,
             };
-            store.add_element(token_list[*ind].value.clone(), ele);
+            store.add_element(token_list[*ind].value.to_lowercase(), ele);
         }
         "scraper" | "ecol" => {
             let mut params = HashMap::<String, f64>::new();
@@ -800,7 +802,7 @@ fn add_ele_to_store(
                 intermed_type: IntermedType::Drift,
                 params,
             };
-            store.add_element(token_list[*ind].value.clone(), ele);
+            store.add_element(token_list[*ind].value.to_lowercase(), ele);
         }
         "monitor" | "moni" => {
             let mut params = HashMap::<String, f64>::new();
@@ -835,7 +837,7 @@ fn add_ele_to_store(
                 intermed_type: IntermedType::Moni,
                 params,
             };
-            store.add_element(token_list[*ind].value.clone(), ele);
+            store.add_element(token_list[*ind].value.to_lowercase(), ele);
         }
         _ => {
             for ele in &store.elements {
@@ -886,23 +888,42 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Library {
             ind += 1;
         }
     }
-    println!(
-        "Element_store holds {} elements",
-        element_store.elements.len()
-    );
-    println!("Element_store holds {} lines", element_store.lines.len());
-    println!(
-        "Element_store holds {} ignored",
-        element_store.ignored.len()
-    );
-    println!("The lines are called:");
-    for line in element_store.lines.keys() {
-        println!("\t{}", line);
-    }
+    // println!(
+    //     "Element_store holds {} elements",
+    //     element_store.elements.len()
+    // );
+    // println!("Element_store holds {} lines", element_store.lines.len());
+    // println!(
+    //     "Element_store holds {} ignored",
+    //     element_store.ignored.len()
+    // );
+    // println!("The elements are called:");
+    // for line in element_store.elements.keys() {
+    //     println!("\t{}", line);
+    // }
     element_store
 }
 
-fn intermed_to_line(intermed: Library, line: &str) -> Line {
+fn intermed_to_line(line: &mut Line, intermed: &Library, line_name: &str) {
+    println!("Called with {line_name}");
+    let line_name = &line_name.to_lowercase();
+    println!("\tSearching for {line_name}");
+    if let Some(line_defn) = intermed.lines.get(line_name) {
+        for subline in line_defn {
+            intermed_to_line(line, intermed, subline);
+        }
+    } else if intermed.ignored.contains(&line_name.to_string()) {
+        println!("Ignoring {line_name}");
+    } else if let Some(ele) = intermed.elements.get(line_name) {
+        println!("Found {ele:?}!");
+    } else {
+        println!("{:#?}", intermed.lines.keys());
+        eprintln!("Trying to expand the line called {line_name} but it cannot be found");
+        exit(1);
+    }
+}
+
+fn line_to_simulation(line: Line) -> Simulation {
     // let acc = Simulation {
     //     elements: vec![],
     //     beam: Array2::from(vec![[]]),
@@ -911,10 +932,6 @@ fn intermed_to_line(intermed: Library, line: &str) -> Line {
     // let mut sync_ke: f64;
     // let design_gamma = 182f64;
     // let design_beta = gamma_2_beta(design_gamma);
-    todo!("Convert intermed to line")
-}
-
-fn line_to_simulation(line: Line) -> Simulation {
     todo!("Convert line to simulation")
 }
 
