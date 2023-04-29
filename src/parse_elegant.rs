@@ -433,7 +433,8 @@ fn add_ele_to_store(
     let elegant_type = &token_list[*ind + 2];
     match elegant_type.value.to_lowercase().as_str() {
         "charge" | "magnify" | "malign" | "watch" | "watchpoint" | "mark" => {
-            store.ignore(token_list[*ind].value.to_lowercase());
+            let str_to_ignore = token_list[*ind].value.to_lowercase().replace("\"", "");
+            store.ignore(str_to_ignore);
         }
         "line" => {
             assert!(compare_tokentype_at(token_list, *ind + 3, Assign));
@@ -905,9 +906,7 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Library {
 }
 
 fn intermed_to_line(line: &mut Line, intermed: &Library, line_name: &str) {
-    println!("Called with {line_name}");
     let line_name = &line_name.to_lowercase();
-    println!("\tSearching for {line_name}");
     if let Some(line_defn) = intermed.lines.get(line_name) {
         for subline in line_defn {
             intermed_to_line(line, intermed, subline);
@@ -917,7 +916,7 @@ fn intermed_to_line(line: &mut Line, intermed: &Library, line_name: &str) {
     } else if let Some(ele) = intermed.elements.get(line_name) {
         println!("Found {ele:?}!");
     } else {
-        println!("{:#?}", intermed.lines.keys());
+        println!("{:#?}", intermed.ignored);
         eprintln!("Trying to expand the line called {line_name} but it cannot be found");
         exit(1);
     }
