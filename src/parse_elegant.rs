@@ -2,7 +2,7 @@
 use crate::elegant_rpn::RpnCalculator;
 // use crate::elements::*;
 use crate::parse_lotr::Simulation;
-use ndarray::Array2;
+// use ndarray::Array2;
 use std::collections::HashMap;
 use std::fmt;
 use std::fs::read_to_string;
@@ -31,13 +31,13 @@ impl Library {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ElegantElement {
     intermed_type: IntermedType,
     params: HashMap<String, f64>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum IntermedType {
     Drift,
     AccCav,
@@ -49,11 +49,18 @@ enum IntermedType {
 }
 
 pub fn load_elegant_file(filename: &str) -> Simulation {
+    let line_to_expand = "SPF";
     let mut calc: RpnCalculator = Default::default();
     let mut line: Line = vec![];
     let tokens = tokenize_file_contents(filename);
     let inter_repr = parse_tokens(&tokens, &mut calc);
-    intermed_to_line(&mut line, &inter_repr, "SPF");
+    intermed_to_line(&mut line, &inter_repr, line_to_expand);
+    println!("{:#?}", line);
+    println!(
+        "The line derived from {} has {} elements.",
+        line_to_expand,
+        line.len()
+    );
     line_to_simulation(line)
 }
 
@@ -912,9 +919,8 @@ fn intermed_to_line(line: &mut Line, intermed: &Library, line_name: &str) {
             intermed_to_line(line, intermed, subline);
         }
     } else if intermed.ignored.contains(&line_name.to_string()) {
-        println!("Ignoring {line_name}");
     } else if let Some(ele) = intermed.elements.get(line_name) {
-        println!("Found {ele:?}!");
+        line.push(ele.clone());
     } else {
         println!("{:#?}", intermed.ignored);
         eprintln!("Trying to expand the line called {line_name} but it cannot be found");
