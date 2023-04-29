@@ -8,6 +8,8 @@ use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
 
+type Line = Vec<ElegantElement>;
+
 #[derive(Debug, Default)]
 struct Library {
     elements: HashMap<String, ElegantElement>,
@@ -49,7 +51,9 @@ enum IntermedType {
 pub fn load_elegant_file(filename: &str) -> Simulation {
     let mut calc: RpnCalculator = Default::default();
     let tokens = tokenize_file_contents(filename);
-    parse_tokens(&tokens, &mut calc)
+    let inter_repr = parse_tokens(&tokens, &mut calc);
+    let line = intermed_to_line(inter_repr, "SPF");
+    line_to_simulation(line)
 }
 
 #[derive(Debug)]
@@ -852,17 +856,9 @@ fn add_ele_to_store(
     }
 }
 
-fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Simulation {
+fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Library {
     use TokenType::*;
     let mut element_store: Library = Default::default();
-    let acc = Simulation {
-        elements: vec![],
-        beam: Array2::from(vec![[]]),
-    };
-    // let mut beam_vec: Vec<[f64; 2]> = vec![];
-    // let mut sync_ke: f64;
-    // let design_gamma = 182f64;
-    // let design_beta = gamma_2_beta(design_gamma);
     let mut ind: usize = 0;
     while ind < token_list.len() {
         let tok = &token_list[ind];
@@ -890,7 +886,36 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Simulation {
             ind += 1;
         }
     }
-    acc
+    println!(
+        "Element_store holds {} elements",
+        element_store.elements.len()
+    );
+    println!("Element_store holds {} lines", element_store.lines.len());
+    println!(
+        "Element_store holds {} ignored",
+        element_store.ignored.len()
+    );
+    println!("The lines are called:");
+    for line in element_store.lines.keys() {
+        println!("\t{}", line);
+    }
+    element_store
+}
+
+fn intermed_to_line(intermed: Library, line: &str) -> Line {
+    // let acc = Simulation {
+    //     elements: vec![],
+    //     beam: Array2::from(vec![[]]),
+    // };
+    // let mut beam_vec: Vec<[f64; 2]> = vec![];
+    // let mut sync_ke: f64;
+    // let design_gamma = 182f64;
+    // let design_beta = gamma_2_beta(design_gamma);
+    todo!("Convert intermed to line")
+}
+
+fn line_to_simulation(line: Line) -> Simulation {
+    todo!("Convert line to simulation")
 }
 
 fn compare_tokentype_at(token_list: &[Token], ind: usize, tok_type: TokenType) -> bool {
