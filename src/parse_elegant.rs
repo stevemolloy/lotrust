@@ -713,7 +713,3 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Simulation {
 fn compare_tokentype_at(token_list: &[Token], ind: usize, tok_type: TokenType) -> bool {
     token_list[ind].token_type == tok_type
 }
-
-fn assert_tokentype_at(token_list: &[Token], ind: usize, tok_type: TokenType) {
-    assert!(compare_tokentype_at(token_list, ind, tok_type))
-}
