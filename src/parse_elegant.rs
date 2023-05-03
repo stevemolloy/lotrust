@@ -1,8 +1,7 @@
-// use crate::beam::gamma_2_beta;
 use crate::elegant_rpn::RpnCalculator;
-// use crate::elements::*;
+use crate::elements;
 use crate::parse_lotr::Simulation;
-// use ndarray::Array2;
+use ndarray::Array2;
 use std::collections::HashMap;
 use std::fmt;
 use std::fs::read_to_string;
@@ -55,12 +54,6 @@ pub fn load_elegant_file(filename: &str) -> Simulation {
     let tokens = tokenize_file_contents(filename);
     let inter_repr = parse_tokens(&tokens, &mut calc);
     intermed_to_line(&mut line, &inter_repr, line_to_expand);
-    println!("{:#?}", line);
-    println!(
-        "The line derived from {} has {} elements.",
-        line_to_expand,
-        line.len()
-    );
     line_to_simulation(line)
 }
 
@@ -895,14 +888,41 @@ fn intermed_to_line(line: &mut Line, intermed: &Library, line_name: &str) {
 }
 
 fn line_to_simulation(line: Line) -> Simulation {
-    // let acc = Simulation {
-    //     elements: vec![],
-    //     beam: Array2::from(vec![[]]),
-    // };
+    let mut acc = Simulation {
+        elements: vec![],
+        beam: Array2::from(vec![[]]),
+    };
     // let mut beam_vec: Vec<[f64; 2]> = vec![];
     // let mut sync_ke: f64;
-    // let design_gamma = 182f64;
-    // let design_beta = gamma_2_beta(design_gamma);
+    let design_gamma = 182f64;
+    for ele in line {
+        match ele.intermed_type {
+            IntermedType::Drift | IntermedType::Quad | IntermedType::Kick | IntermedType::Moni => {
+                acc.elements.push(Box::new(elements::Drift::new(
+                    *ele.params.get("l").unwrap(),
+                    design_gamma,
+                )))
+            }
+            IntermedType::AccCav => {
+                // new(l: f64, v: f64, freq: f64, phi: f64, g: f64)
+                acc.elements.push(Box::new(elements::AccCav::new(
+                    *ele.params.get("l").unwrap(),
+                    *ele.params.get("volt").unwrap(),
+                    *ele.params.get("freq").unwrap(),
+                    *ele.params.get("phase").unwrap(),
+                    design_gamma,
+                )))
+            }
+            IntermedType::Bend => {
+                // new(b: f64, angle: f64, g: f64)
+                println!("{:#?}", ele);
+            }
+            _ => {
+                eprintln!("Unmatched {:?}", ele.intermed_type);
+                exit(1);
+            }
+        }
+    }
     todo!("Convert line to simulation")
 }
 
