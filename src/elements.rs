@@ -3,10 +3,13 @@ use ndarray::{arr2, Array2};
 use std::f64::consts::PI;
 use std::process::exit;
 
+// TODO(#2): Beam should (?) be resorted when tracked by an element that may reorder things.
+// Which elements could reorder particles? Dipoles.  AccCavs, but not in the linear approx.
 pub trait Tracking {
     fn track(&self, beam: &mut Beam);
 }
 
+// TODO(#3): Add various diag elements that act on the beam as drifts, but produce side-effects.
 pub struct Drift {
     t_matrix: Array2<f64>,
 }
@@ -74,6 +77,7 @@ impl Tracking for Dipole {
     }
 }
 
+// TODO(#4): Accelerating cavities need to have wakefields in their physics.
 pub struct AccCav {
     drift_matrix: Array2<f64>,
     kick_matrix: Array2<f64>,
@@ -94,6 +98,7 @@ impl AccCav {
     }
 }
 
+// TODO(#5): Instead of sorting the particles by z all the time, perhaps only do it here?
 impl Tracking for AccCav {
     fn track(&self, beam: &mut Beam) {
         *beam = beam.dot(&self.drift_matrix.t());
@@ -141,7 +146,7 @@ mod tests {
             for z in [-5e-3, -1e-3, 0.0, 1e-3, 5e-3] {
                 let mut beam_vec = Array2::from(vec![[z, (1f64 / beta0) * rel_e_err]]);
                 dipole.track(&mut beam_vec);
-                // TODO: Why does this test need max_relative = 1e-5 ?
+                // TODO(#6): Why does this test need max_relative = 1e-5 ?
                 assert_relative_eq!(
                     beam_vec[[0, 0]],
                     z + delta_z,

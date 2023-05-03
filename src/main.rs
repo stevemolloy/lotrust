@@ -1,5 +1,5 @@
+use crate::beam::print_beam;
 use crate::parse_lotr::{load_lotr_file, Simulation};
-use ndarray::{s, Axis};
 use std::env;
 use std::process::exit;
 
@@ -20,18 +20,12 @@ fn main() {
     }
 
     let filename = &args[1];
+
+    // TODO(#8): Should be able to read elegant lte files
     let mut simulation: Simulation = load_lotr_file(filename);
 
     println!("---   INPUT  ---");
-    let num_electrons = simulation.beam.len_of(Axis(0));
-    for e_num in 0..num_electrons {
-        let this_electron = simulation.beam.slice(s![e_num, ..]);
-        println!(
-            "{:0.3} mm :: {:0.3}",
-            this_electron[0] * 1e3,
-            this_electron[1]
-        );
-    }
+    print_beam(&simulation.beam);
     println!("--- TRACKING ---");
 
     let outfile = if args.len() > 2 {
@@ -43,13 +37,8 @@ fn main() {
     simulation.track(outfile);
 
     println!("---  OUTPUT  ---");
+    print_beam(&simulation.beam);
+    println!("---   DONE   ---");
 
-    for e_num in 0..num_electrons {
-        let this_electron = simulation.beam.slice(s![e_num, ..]);
-        println!(
-            "{:0.3} mm :: {:0.3}",
-            this_electron[0] * 1e3,
-            this_electron[1]
-        );
-    }
+    // TODO(#7): The output definition of energy error is different from the input. Fix this.
 }
