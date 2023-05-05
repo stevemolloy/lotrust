@@ -8,15 +8,17 @@ mod elements;
 mod parse_lotr;
 
 fn usage() {
-    println!("Please give the name of the LOTR file to use.");
+    println!("Please give the name of the LOTR file to use.\n
+    Optionally, providing an additional file name will run the program in data preservation mode, outputting all data to that file.");
 }
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
+    if !args[1].ends_with(".lotr") || args.len() < 2 || args.len() > 3 {
         usage();
         exit(1);
     }
+
     let filename = &args[1];
 
     // TODO(#8): Should be able to read elegant lte files
@@ -25,7 +27,15 @@ fn main() {
     println!("---   INPUT  ---");
     print_beam(&simulation.beam);
     println!("--- TRACKING ---");
-    simulation.track();
+
+    let outfile = if args.len() > 2 {
+        Some(String::from(&args[2]))
+    } else {
+        None
+    };
+
+    simulation.track(outfile);
+
     println!("---  OUTPUT  ---");
     print_beam(&simulation.beam);
     println!("---   DONE   ---");

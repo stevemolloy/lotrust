@@ -41,3 +41,8 @@ cargo run myfile.lotr
 
 This is a basic design for a bunch compressor.  The input particles have no energy error but are located at different `z` positions.  After off-crest acceleration and tracking through a dipole chicane the particles each have the same (roughly) longitudinal position, with non-zero energy spreads.
 
+Optionally, you can provide an additional file for output. If provided, the `z` position and energy deviation of all particles between all components are written to this file as a three-dimensional numpy array. For example
+
+```bash
+cargo run myfile.lotr out.npy
+```
