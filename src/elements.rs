@@ -2,17 +2,25 @@ use crate::beam::{gamma_2_beta, Beam, C, MASS};
 use core::fmt::Debug;
 use ndarray::{arr2, Array2};
 use std::f64::consts::PI;
+use std::fmt::{Display, Formatter, Result};
 use std::process::exit;
 
 // TODO(#2): Beam should (?) be resorted when tracked by an element that may reorder things.
 // Which elements could reorder particles? Dipoles.  AccCavs, but not in the linear approx.
 pub trait Tracking {
     fn track(&self, beam: &mut Beam);
+    fn ele_type(&self) -> &'static str;
+}
+
+impl Display for dyn Tracking {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "{}", self.ele_type())
+    }
 }
 
 impl Debug for dyn Tracking {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "Hello")
+        write!(f, "{:}", self.ele_type())
     }
 }
 
@@ -35,6 +43,10 @@ impl Drift {
 impl Tracking for Drift {
     fn track(&self, beam: &mut Beam) {
         *beam = beam.dot(&self.t_matrix.t());
+    }
+
+    fn ele_type(&self) -> &'static str {
+        "Drift"
     }
 }
 
@@ -67,6 +79,10 @@ impl Tracking for Dipole {
     fn track(&self, beam: &mut Beam) {
         *beam = beam.dot(&self.t_matrix.t());
     }
+
+    fn ele_type(&self) -> &'static str {
+        "Dipole"
+    }
 }
 
 // TODO(#4): Accelerating cavities need to have wakefields in their physics.
@@ -96,6 +112,10 @@ impl Tracking for AccCav {
         *beam = beam.dot(&self.drift_matrix.t());
         *beam = beam.dot(&self.kick_matrix.t());
         *beam = beam.dot(&self.drift_matrix.t());
+    }
+
+    fn ele_type(&self) -> &'static str {
+        "AccCav"
     }
 }
 
