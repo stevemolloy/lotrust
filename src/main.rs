@@ -32,6 +32,8 @@ fn main() {
         load_lotr_file(filename)
     };
 
+    println!("{:#?}", simulation.elements);
+
     println!("---   INPUT  ---");
     print_beam(&simulation.beam);
     println!("--- TRACKING ---");

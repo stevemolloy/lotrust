@@ -6,8 +6,10 @@ use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
 
+type LineElement = Box<dyn Tracking>;
+
 pub struct Simulation {
-    pub elements: Vec<Box<dyn Tracking>>,
+    pub elements: Vec<LineElement>,
     pub beam: Array2<f64>,
 }
 

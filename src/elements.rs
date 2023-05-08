@@ -1,4 +1,5 @@
 use crate::beam::{gamma_2_beta, Beam, C, MASS};
+use core::fmt::Debug;
 use ndarray::{arr2, Array2};
 use std::f64::consts::PI;
 use std::process::exit;
@@ -7,6 +8,12 @@ use std::process::exit;
 // Which elements could reorder particles? Dipoles.  AccCavs, but not in the linear approx.
 pub trait Tracking {
     fn track(&self, beam: &mut Beam);
+}
+
+impl Debug for dyn Tracking {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Hello")
+    }
 }
 
 // TODO(#3): Add various diag elements that act on the beam as drifts, but produce side-effects.
