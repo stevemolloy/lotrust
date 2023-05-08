@@ -897,12 +897,14 @@ fn line_to_simulation(line: Line) -> Simulation {
     let design_gamma = 182f64;
     for ele in line {
         match ele.intermed_type {
-            IntermedType::Drift | IntermedType::Quad | IntermedType::Kick | IntermedType::Moni => {
-                acc.elements.push(Box::new(elements::Drift::new(
-                    *ele.params.get("l").unwrap(),
-                    design_gamma,
-                )))
-            }
+            IntermedType::Drift
+            | IntermedType::Quad
+            | IntermedType::Kick
+            | IntermedType::Moni
+            | IntermedType::Sext => acc.elements.push(Box::new(elements::Drift::new(
+                *ele.params.get("l").unwrap(),
+                design_gamma,
+            ))),
             IntermedType::AccCav => {
                 // new(l: f64, v: f64, freq: f64, phi: f64, g: f64)
                 acc.elements.push(Box::new(elements::AccCav::new(
