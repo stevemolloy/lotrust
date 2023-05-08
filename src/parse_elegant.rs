@@ -914,8 +914,11 @@ fn line_to_simulation(line: Line) -> Simulation {
                 )))
             }
             IntermedType::Bend => {
-                // new(b: f64, angle: f64, g: f64)
-                println!("{:#?}", ele);
+                acc.elements.push(Box::new(elements::Dipole::new(
+                    *ele.params.get("l").unwrap(),
+                    *ele.params.get("angle").unwrap(),
+                    design_gamma,
+                )));
             }
             _ => {
                 eprintln!("Unmatched {:?}", ele.intermed_type);
