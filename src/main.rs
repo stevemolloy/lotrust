@@ -14,7 +14,8 @@ fn usage() {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if !args[1].ends_with(".lotr") || args.len() < 2 || args.len() > 3 {
+    let valid_filename = args[1].ends_with(".lotr") || args[1].ends_with(".lte");
+    if !valid_filename || args.len() < 2 || args.len() > 3 {
         usage();
         exit(1);
     }
