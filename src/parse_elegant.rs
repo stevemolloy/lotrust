@@ -901,26 +901,51 @@ fn line_to_simulation(line: Line) -> Simulation {
             | IntermedType::Quad
             | IntermedType::Kick
             | IntermedType::Moni
-            | IntermedType::Sext => acc.elements.push(Box::new(elements::Drift::new(
-                *ele.params.get("l").unwrap(),
-                design_gamma,
-            ))),
+            | IntermedType::Sext => {
+                let l = match ele.params.get("l") {
+                    Some(l) => *l,
+                    None => 0f64,
+                };
+                acc.elements
+                    .push(Box::new(elements::Drift::new(l, design_gamma)))
+            }
             IntermedType::AccCav => {
                 // new(l: f64, v: f64, freq: f64, phi: f64, g: f64)
+                let l = match ele.params.get("l") {
+                    Some(x) => *x,
+                    None => 0f64,
+                };
+                let volt = match ele.params.get("volt") {
+                    Some(x) => *x,
+                    None => 0f64,
+                };
+                let freq = match ele.params.get("freq") {
+                    Some(x) => *x,
+                    None => 0f64,
+                };
+                let phase = match ele.params.get("phase") {
+                    Some(x) => *x,
+                    None => 0f64,
+                };
                 acc.elements.push(Box::new(elements::AccCav::new(
-                    *ele.params.get("l").unwrap(),
-                    *ele.params.get("volt").unwrap(),
-                    *ele.params.get("freq").unwrap(),
-                    *ele.params.get("phase").unwrap(),
+                    l,
+                    volt,
+                    freq,
+                    phase,
                     design_gamma,
                 )))
             }
             IntermedType::Bend => {
-                acc.elements.push(Box::new(elements::Dipole::new(
-                    *ele.params.get("l").unwrap(),
-                    *ele.params.get("angle").unwrap(),
-                    design_gamma,
-                )));
+                let l = match ele.params.get("l") {
+                    Some(x) => *x,
+                    None => 0f64,
+                };
+                let angle = match ele.params.get("angle") {
+                    Some(x) => *x,
+                    None => 0f64,
+                };
+                acc.elements
+                    .push(Box::new(elements::Dipole::new(l, angle, design_gamma)));
             }
             _ => {
                 eprintln!("Unmatched {:?}", ele.intermed_type);
@@ -928,7 +953,7 @@ fn line_to_simulation(line: Line) -> Simulation {
             }
         }
     }
-    todo!("Convert line to simulation")
+    acc
 }
 
 fn compare_tokentype_at(token_list: &[Token], ind: usize, tok_type: TokenType) -> bool {
