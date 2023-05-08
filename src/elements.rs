@@ -40,28 +40,17 @@ pub struct Dipole {
 }
 
 impl Dipole {
-    pub fn new(b: f64, angle: f64, g: f64) -> Dipole {
-        if b == 0f64 {
-            eprintln!("Value of 'b' for a dipole must not be zero.");
-            exit(1);
-        }
+    pub fn new(l: f64, angle: f64, g: f64) -> Dipole {
         if angle == 0f64 {
             eprintln!("Value of 'angle' for a dipole must not be zero.");
             exit(1);
         }
-        let pc = (g.powi(2) - 1.0).sqrt() * MASS;
-        let rho = pc / (C * b.abs());
-        assert!(
-            rho > 0f64,
-            "Radius of curvature of a dipole should not be negative or zero"
-        );
-        let omega = 1f64 / rho;
-        let l = rho * angle.abs();
-        assert!(
-            l > 0f64,
-            "Path length through a dipole should not be negative or zero"
-        );
-        let omega_l = omega * l;
+        if l == 0f64 {
+            eprintln!("Path length through a dipole should not be negative or zero");
+            exit(1);
+        }
+        let omega = angle / l;
+        let omega_l = angle;
         let beta_sq = gamma_2_beta(g).powi(2);
         let gamma_sq = g.powi(2);
         let r56 = l / (beta_sq * gamma_sq) - (omega_l - omega_l.sin()) / (omega * beta_sq);
@@ -129,18 +118,15 @@ mod tests {
 
     #[test]
     fn dipole_alters_z_correctly() {
-        let b_field = 2.0;
+        let length = 0.75;
         let angle = 0.7;
-        let dipole = Dipole::new(b_field, angle, GAMMA0);
+        let dipole = Dipole::new(length, angle, GAMMA0);
         let beta0 = gamma_2_beta(GAMMA0);
         for rel_e_err in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
             let gamma_delta = rel_e_err;
-            let pc = (GAMMA0.powi(2) - 1.0).sqrt() * MASS;
-            let rho = pc / (C * b_field.abs());
-            let dipole_l = rho * angle.abs();
-            let omega = 1f64 / rho;
+            let omega = angle / length;
             let omega_l = angle.abs();
-            let first_term = dipole_l * (gamma_delta / (GAMMA0.powi(2) * beta0.powi(3)));
+            let first_term = length * (gamma_delta / (GAMMA0.powi(2) * beta0.powi(3)));
             let second_term = (omega_l - omega_l.sin()) / (omega * beta0.powi(2));
             let delta_z = (first_term - second_term) * rel_e_err / beta0;
             for z in [-5e-3, -1e-3, 0.0, 1e-3, 5e-3] {

@@ -19,12 +19,12 @@ accelerator {
     drift: 1.0
     acccav: 6.0 20e6 3e9 -0.085
     drift: 2.0
-    dipole: 2.0 -1.0
+    dipole: 0.625 -1.0
     drift: 10.0
-    dipole: 2.0 -1.0
+    dipole: 0.625 -1.0
     drift: 10.0
-    dipole: 2.0 -1.0
+    dipole: 0.625 -1.0
     drift: 10.0
-    dipole: 2.0 1.0
+    dipole: 0.625 1.0
     drift: 2.0
 }
