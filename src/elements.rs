@@ -41,10 +41,6 @@ pub struct Dipole {
 
 impl Dipole {
     pub fn new(l: f64, angle: f64, g: f64) -> Dipole {
-        if angle == 0f64 {
-            eprintln!("Value of 'angle' for a dipole must not be zero.");
-            exit(1);
-        }
         if l == 0f64 {
             eprintln!("Path length through a dipole should not be negative or zero");
             exit(1);
