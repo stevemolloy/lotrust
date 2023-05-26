@@ -9,7 +9,7 @@ use std::process::exit;
 // Which elements could reorder particles? Dipoles.  AccCavs, but not in the linear approx.
 pub trait Tracking {
     fn track(&self, beam: &mut Beam);
-    fn ele_type(&self) -> &'static str;
+    fn ele_type(&self) -> String;
 }
 
 impl Display for dyn Tracking {
@@ -25,7 +25,10 @@ impl Debug for dyn Tracking {
 }
 
 // TODO(#3): Add various diag elements that act on the beam as drifts, but produce side-effects.
+#[derive(Default)]
 pub struct Drift {
+    name: String,
+    l: f64,
     t_matrix: Array2<f64>,
 }
 
@@ -35,6 +38,8 @@ impl Drift {
         let gamma_sq = g.powi(2);
         let r56 = l / (beta_sq * gamma_sq);
         Drift {
+            name: "drift_name".to_string(),
+            l,
             t_matrix: arr2(&[[1f64, r56], [0f64, 1f64]]),
         }
     }
@@ -45,8 +50,8 @@ impl Tracking for Drift {
         *beam = beam.dot(&self.t_matrix.t());
     }
 
-    fn ele_type(&self) -> &'static str {
-        "Drift"
+    fn ele_type(&self) -> String {
+        format!("Drift ({}: l->{})", self.name, self.l)
     }
 }
 
@@ -55,7 +60,10 @@ pub type Quad = Drift;
 pub type Sext = Drift;
 
 pub struct Dipole {
+    name: String,
     t_matrix: Array2<f64>,
+    l: f64,
+    angle: f64,
 }
 
 impl Dipole {
@@ -70,7 +78,10 @@ impl Dipole {
         let gamma_sq = g.powi(2);
         let r56 = l / (beta_sq * gamma_sq) - (omega_l - omega_l.sin()) / (omega * beta_sq);
         Dipole {
+            name: "dipole_name".to_string(),
             t_matrix: arr2(&[[1f64, r56], [0f64, 1f64]]),
+            l,
+            angle,
         }
     }
 }
@@ -80,13 +91,21 @@ impl Tracking for Dipole {
         *beam = beam.dot(&self.t_matrix.t());
     }
 
-    fn ele_type(&self) -> &'static str {
-        "Dipole"
+    fn ele_type(&self) -> String {
+        format!(
+            "Dipole ({}: l->{}, angle->{})",
+            self.name, self.l, self.angle
+        )
     }
 }
 
 // TODO(#4): Accelerating cavities need to have wakefields in their physics.
 pub struct AccCav {
+    name: String,
+    l: f64,
+    v: f64,
+    freq: f64,
+    phi: f64,
     drift_matrix: Array2<f64>,
     kick_matrix: Array2<f64>,
 }
@@ -100,6 +119,11 @@ impl AccCav {
         let k = 2f64 * PI * freq / C;
         let r65_kick = -k * l * v * phi.sin() / (g * MASS);
         AccCav {
+            name: "acccav_name".to_string(),
+            l,
+            v,
+            freq,
+            phi,
             drift_matrix: arr2(&[[1f64, r56_drift], [0f64, 1f64]]),
             kick_matrix: arr2(&[[1f64, 0f64], [r65_kick, 1f64]]),
         }
@@ -114,8 +138,11 @@ impl Tracking for AccCav {
         *beam = beam.dot(&self.drift_matrix.t());
     }
 
-    fn ele_type(&self) -> &'static str {
-        "AccCav"
+    fn ele_type(&self) -> String {
+        format!(
+            "AccCav ({}: l->{}, v->{}, freq->{}, phi->{})",
+            self.name, self.l, self.v, self.freq, self.phi
+        )
     }
 }
 
