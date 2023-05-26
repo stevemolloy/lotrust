@@ -947,10 +947,6 @@ fn line_to_simulation(line: Line) -> Simulation {
                 acc.elements
                     .push(Box::new(elements::Dipole::new(l, angle, design_gamma)));
             }
-            _ => {
-                eprintln!("Unmatched {:?}", ele.intermed_type);
-                exit(1);
-            }
         }
     }
     acc
