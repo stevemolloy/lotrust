@@ -32,6 +32,7 @@ impl Library {
 
 #[derive(Debug, Clone)]
 struct ElegantElement {
+    name: String,
     intermed_type: IntermedType,
     params: HashMap<String, f64>,
 }
@@ -252,8 +253,6 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             col += tok.value.len();
             tokens.push(tok);
         } else if contents.starts_with(|c: char| c == '"') {
-            // chop_character(&mut contents);
-            // col += 1;
             let tok = parse_string(
                 &mut contents,
                 FileLoc {
@@ -429,6 +428,7 @@ fn add_ele_to_store(
     assert!(compare_tokentype_at(token_list, *ind + 2, Word));
 
     let elegant_type = &token_list[*ind + 2];
+    let elegant_name = &token_list[*ind].value;
     match elegant_type.value.to_lowercase().as_str() {
         "charge" | "magnify" | "malign" | "watch" | "watchpoint" | "mark" => {
             let str_to_ignore = token_list[*ind].value.to_lowercase().replace('"', "");
@@ -454,6 +454,7 @@ fn add_ele_to_store(
             assert!(compare_tokentype_at(token_list, *ind + 5, Assign));
             assert!(compare_tokentype_at(token_list, *ind + 6, Value));
             let ele = ElegantElement {
+                name: elegant_name.to_string(),
                 intermed_type: IntermedType::Drift,
                 params: HashMap::<String, f64>::from([(
                     "l".to_string(),
@@ -475,6 +476,7 @@ fn add_ele_to_store(
                 *ind += 2;
             }
             let ele = ElegantElement {
+                name: elegant_name.to_string(),
                 intermed_type: IntermedType::Drift,
                 params: HashMap::<String, f64>::from([("l".to_string(), 0f64)]),
             };
@@ -523,6 +525,7 @@ fn add_ele_to_store(
                 }
             }
             let ele = ElegantElement {
+                name: elegant_name.to_string(),
                 intermed_type: IntermedType::AccCav,
                 params,
             };
@@ -571,6 +574,7 @@ fn add_ele_to_store(
                 }
             }
             let ele = ElegantElement {
+                name: elegant_name.to_string(),
                 intermed_type: IntermedType::AccCav,
                 params,
             };
@@ -613,6 +617,7 @@ fn add_ele_to_store(
                 }
             }
             let ele = ElegantElement {
+                name: elegant_name.to_string(),
                 intermed_type: IntermedType::Quad,
                 params,
             };
@@ -644,6 +649,7 @@ fn add_ele_to_store(
                 }
             }
             let ele = ElegantElement {
+                name: elegant_name.to_string(),
                 intermed_type: IntermedType::Kick,
                 params,
             };
@@ -686,6 +692,7 @@ fn add_ele_to_store(
                 }
             }
             let ele = ElegantElement {
+                name: elegant_name.to_string(),
                 intermed_type: IntermedType::Bend,
                 params,
             };
@@ -728,6 +735,7 @@ fn add_ele_to_store(
                 }
             }
             let ele = ElegantElement {
+                name: elegant_name.to_string(),
                 intermed_type: IntermedType::Sext,
                 params,
             };
@@ -770,6 +778,7 @@ fn add_ele_to_store(
                 }
             }
             let ele = ElegantElement {
+                name: elegant_name.to_string(),
                 intermed_type: IntermedType::Drift,
                 params,
             };
@@ -801,6 +810,7 @@ fn add_ele_to_store(
                 }
             }
             let ele = ElegantElement {
+                name: elegant_name.to_string(),
                 intermed_type: IntermedType::Moni,
                 params,
             };
@@ -855,19 +865,6 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Library {
             ind += 1;
         }
     }
-    // println!(
-    //     "Element_store holds {} elements",
-    //     element_store.elements.len()
-    // );
-    // println!("Element_store holds {} lines", element_store.lines.len());
-    // println!(
-    //     "Element_store holds {} ignored",
-    //     element_store.ignored.len()
-    // );
-    // println!("The elements are called:");
-    // for line in element_store.elements.keys() {
-    //     println!("\t{}", line);
-    // }
     element_store
 }
 
@@ -906,11 +903,13 @@ fn line_to_simulation(line: Line) -> Simulation {
                     Some(l) => *l,
                     None => 0f64,
                 };
-                acc.elements
-                    .push(Box::new(elements::Drift::new(l, design_gamma)))
+                acc.elements.push(Box::new(elements::Drift::new(
+                    ele.name.to_string(),
+                    l,
+                    design_gamma,
+                )))
             }
             IntermedType::AccCav => {
-                // new(l: f64, v: f64, freq: f64, phi: f64, g: f64)
                 let l = match ele.params.get("l") {
                     Some(x) => *x,
                     None => 0f64,
@@ -928,6 +927,7 @@ fn line_to_simulation(line: Line) -> Simulation {
                     None => 0f64,
                 };
                 acc.elements.push(Box::new(elements::AccCav::new(
+                    ele.name.to_string(),
                     l,
                     volt,
                     freq,
@@ -944,8 +944,12 @@ fn line_to_simulation(line: Line) -> Simulation {
                     Some(x) => *x,
                     None => 0f64,
                 };
-                acc.elements
-                    .push(Box::new(elements::Dipole::new(l, angle, design_gamma)));
+                acc.elements.push(Box::new(elements::Dipole::new(
+                    ele.name.to_string(),
+                    l,
+                    angle,
+                    design_gamma,
+                )));
             }
         }
     }

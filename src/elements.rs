@@ -33,12 +33,12 @@ pub struct Drift {
 }
 
 impl Drift {
-    pub fn new(l: f64, g: f64) -> Drift {
+    pub fn new(name: String, l: f64, g: f64) -> Drift {
         let beta_sq = gamma_2_beta(g).powi(2);
         let gamma_sq = g.powi(2);
         let r56 = l / (beta_sq * gamma_sq);
         Drift {
-            name: "drift_name".to_string(),
+            name,
             l,
             t_matrix: arr2(&[[1f64, r56], [0f64, 1f64]]),
         }
@@ -67,7 +67,7 @@ pub struct Dipole {
 }
 
 impl Dipole {
-    pub fn new(l: f64, angle: f64, g: f64) -> Dipole {
+    pub fn new(name: String, l: f64, angle: f64, g: f64) -> Dipole {
         if l == 0f64 {
             eprintln!("Path length through a dipole should not be negative or zero");
             exit(1);
@@ -78,7 +78,7 @@ impl Dipole {
         let gamma_sq = g.powi(2);
         let r56 = l / (beta_sq * gamma_sq) - (omega_l - omega_l.sin()) / (omega * beta_sq);
         Dipole {
-            name: "dipole_name".to_string(),
+            name,
             t_matrix: arr2(&[[1f64, r56], [0f64, 1f64]]),
             l,
             angle,
@@ -111,7 +111,7 @@ pub struct AccCav {
 }
 
 impl AccCav {
-    pub fn new(l: f64, v: f64, freq: f64, phi: f64, g: f64) -> AccCav {
+    pub fn new(name: String, l: f64, v: f64, freq: f64, phi: f64, g: f64) -> AccCav {
         let beta_sq = gamma_2_beta(g).powi(2);
         let gamma_sq = g.powi(2);
         let r56_drift = l / (beta_sq * gamma_sq);
@@ -119,7 +119,7 @@ impl AccCav {
         let k = 2f64 * PI * freq / C;
         let r65_kick = -k * l * v * phi.sin() / (g * MASS);
         AccCav {
-            name: "acccav_name".to_string(),
+            name,
             l,
             v,
             freq,
@@ -156,7 +156,7 @@ mod tests {
     fn dipole_does_not_affect_energy_error() {
         let b_field = 2.0;
         let angle = 0.7;
-        let dipole = Dipole::new(b_field, angle, GAMMA0);
+        let dipole = Dipole::new("dipole".to_string(), b_field, angle, GAMMA0);
         for e_error in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
             for z in [-5e-3, -1e-3, 0.0, 1e-3, 5e-3] {
                 let mut beam_vec = Array2::from(vec![[z, (1f64 / gamma_2_beta(GAMMA0)) * e_error]]);
@@ -170,7 +170,7 @@ mod tests {
     fn dipole_alters_z_correctly() {
         let length = 0.75;
         let angle = 0.7;
-        let dipole = Dipole::new(length, angle, GAMMA0);
+        let dipole = Dipole::new("dipole".to_string(), length, angle, GAMMA0);
         let beta0 = gamma_2_beta(GAMMA0);
         for rel_e_err in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
             let gamma_delta = rel_e_err;
@@ -195,7 +195,7 @@ mod tests {
 
     #[test]
     fn drift_does_not_affect_energy_error() {
-        let drift = Drift::new(2f64, 10f64);
+        let drift = Drift::new("drift".to_string(), 2f64, 10f64);
         for e_error in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
             for z in [-5e-3, -1e-3, 0.0, 1e-3, 5e-3] {
                 let mut beam_vec = Array2::from(vec![[z, e_error]]);
@@ -209,7 +209,7 @@ mod tests {
     fn drift_alters_z_correctly() {
         let drift_l = 1f64;
         let beta0 = gamma_2_beta(GAMMA0);
-        let drift = Drift::new(drift_l, GAMMA0);
+        let drift = Drift::new("drift".to_string(), drift_l, GAMMA0);
         for rel_e_err in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
             let gamma_delta = rel_e_err;
             let delta_z = drift_l * (gamma_delta / (GAMMA0.powi(2) * beta0.powi(3)));
@@ -228,7 +228,7 @@ mod tests {
 
     #[test]
     fn quad_does_not_affect_energy_error() {
-        let quad = Quad::new(2f64, 10f64);
+        let quad = Quad::new("quad".to_string(), 2f64, 10f64);
         for e_error in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
             for z in [-5e-3, -1e-3, 0.0, 1e-3, 5e-3] {
                 let mut beam_vec = Array2::from(vec![[z, e_error]]);
@@ -242,7 +242,7 @@ mod tests {
     fn quad_alters_z_correctly() {
         let quad_l = 1f64;
         let beta0 = gamma_2_beta(GAMMA0);
-        let quad = Quad::new(quad_l, GAMMA0);
+        let quad = Quad::new("quad".to_string(), quad_l, GAMMA0);
         for rel_e_err in [-0.01, -0.005, -0.001, 0.0, 0.001, 0.005, 0.01] {
             let gamma_delta = rel_e_err;
             let delta_z = quad_l * (gamma_delta / (GAMMA0.powi(2) * beta0.powi(3)));
