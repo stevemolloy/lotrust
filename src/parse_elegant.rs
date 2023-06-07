@@ -890,7 +890,7 @@ fn line_to_simulation(line: Line) -> Simulation {
     };
     // let mut beam_vec: Vec<[f64; 2]> = vec![];
     // let mut sync_ke: f64;
-    let design_gamma = 204.80244139169827f64;
+    let mut design_gamma = 204.80244139169827f64;
     for ele in line {
         match ele.intermed_type {
             IntermedType::Drift
@@ -925,6 +925,7 @@ fn line_to_simulation(line: Line) -> Simulation {
                     Some(x) => *x,
                     None => 0f64,
                 };
+                design_gamma += l * volt * phase.cos();
                 acc.elements.push(Box::new(elements::AccCav::new(
                     ele.name.to_string(),
                     l,
