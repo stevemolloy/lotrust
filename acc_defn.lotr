@@ -3,14 +3,18 @@ beam { // Beam definitions
     particles { // Define each particle individually
         // z (m) energy_error (eV)
         // -3e-3 -0.25e6
-        -3e-3 0e6
         // -3e-3 0.25e6
         // 0 -0.25e6
-        0 0e6
         // 0 0.25e6
         // 3e-3 -0.25e6
-        3e-3 0e6
         // 3e-3 0.25e6
+        -3e-3 0e6
+        -2e-3 0e6
+        -1e-3 0e6
+        0     0e6
+        1e-3  0e6
+        2e-3  0e6
+        3e-3  0e6
     }
 }
 
