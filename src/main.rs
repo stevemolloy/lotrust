@@ -16,19 +16,25 @@ struct Options {
     input_filename: String,
     elegant: bool,
     elegant_line: String,
+    beam_defined: bool,
+    beam_filename: String,
     save_file: bool,
     save_filename: String,
 }
 
 fn usage(program_name: String) {
-    println!("{program_name} <input_file> [-e line_name] [-s <output_file>]");
+    println!("{program_name} <input_file> [-e line_name] [-b <beam_defn_file>] [-s <output_file>]");
     println!("\tinputfile: The file containing the description of the lattice");
     println!("\t-e: Indicates that the input file is in elegant format. The name of the line to expand must be given");
+    println!("\t-b: Overrides any beam definition with that found in <beam_defn_file>");
     println!("\t-s: Saves the output into <output_file>");
 }
 
 fn check_options(opts: &Options) -> bool {
     if opts.save_file && opts.save_filename.is_empty() || opts.input_filename.is_empty() {
+        return false;
+    }
+    if opts.beam_defined && opts.beam_filename.is_empty() {
         return false;
     }
     true
@@ -47,6 +53,15 @@ fn main() {
                 if let Some(linename) = args.pop_front() {
                     options.elegant = true;
                     options.elegant_line = linename;
+                } else {
+                    usage(program_name);
+                    exit(1);
+                }
+            }
+            "-b" => {
+                if let Some(beamfile) = args.pop_front() {
+                    options.beam_defined = true;
+                    options.beam_filename = beamfile;
                 } else {
                     usage(program_name);
                     exit(1);
@@ -76,6 +91,11 @@ fn main() {
     } else {
         load_lotr_file(&options.input_filename)
     };
+
+    if options.beam_defined {
+        let newsim: Simulation = load_lotr_file(&options.beam_filename);
+        simulation.beam = newsim.beam;
+    }
 
     // println!("{:#?}", simulation.elements);
 
