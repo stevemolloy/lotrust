@@ -48,8 +48,7 @@ enum IntermedType {
     Sext,
 }
 
-pub fn load_elegant_file(filename: &str) -> Simulation {
-    let line_to_expand = "SPF";
+pub fn load_elegant_file(filename: &str, line_to_expand: &str) -> Simulation {
     let mut calc: RpnCalculator = Default::default();
     let mut line: Line = vec![];
     let tokens = tokenize_file_contents(filename);
@@ -887,11 +886,11 @@ fn intermed_to_line(line: &mut Line, intermed: &Library, line_name: &str) {
 fn line_to_simulation(line: Line) -> Simulation {
     let mut acc = Simulation {
         elements: vec![],
-        beam: Array2::from(vec![[]]),
+        beam: Array2::from(vec![[0f64, 0f64]]),
     };
     // let mut beam_vec: Vec<[f64; 2]> = vec![];
     // let mut sync_ke: f64;
-    let design_gamma = 182f64;
+    let design_gamma = 204.80244139169827f64;
     for ele in line {
         match ele.intermed_type {
             IntermedType::Drift

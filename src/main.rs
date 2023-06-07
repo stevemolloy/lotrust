@@ -14,13 +14,17 @@ mod parse_lotr;
 #[derive(Default)]
 struct Options {
     input_filename: String,
-    elegant_file: bool,
+    elegant: bool,
+    elegant_line: String,
     save_file: bool,
     save_filename: String,
 }
 
 fn usage(program_name: String) {
-    println!("{program_name} <input_file> [-e] [-s <output_file>]");
+    println!("{program_name} <input_file> [-e line_name] [-s <output_file>]");
+    println!("\tinputfile: The file containing the description of the lattice");
+    println!("\t-e: Indicates that the input file is in elegant format. The name of the line to expand must be given");
+    println!("\t-s: Saves the output into <output_file>");
 }
 
 fn check_options(opts: &Options) -> bool {
@@ -39,7 +43,15 @@ fn main() {
     while !args.is_empty() {
         let next = args.pop_front().unwrap();
         match next.as_str() {
-            "-e" => options.elegant_file = true,
+            "-e" => {
+                if let Some(linename) = args.pop_front() {
+                    options.elegant = true;
+                    options.elegant_line = linename;
+                } else {
+                    usage(program_name);
+                    exit(1);
+                }
+            }
             "-s" => {
                 if let Some(outfile) = args.pop_front() {
                     options.save_file = true;
@@ -59,13 +71,13 @@ fn main() {
     }
 
     // TODO(#8): Should be able to read elegant lte files
-    let mut simulation: Simulation = if options.elegant_file {
-        load_elegant_file(&options.input_filename)
+    let mut simulation: Simulation = if options.elegant {
+        load_elegant_file(&options.input_filename, &options.elegant_line)
     } else {
         load_lotr_file(&options.input_filename)
     };
 
-    println!("{:#?}", simulation.elements);
+    // println!("{:#?}", simulation.elements);
 
     println!("---   INPUT  ---");
     print_beam(&simulation.beam);
