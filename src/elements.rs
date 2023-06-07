@@ -72,16 +72,23 @@ impl Dipole {
             eprintln!("Path length through a dipole should not be negative or zero");
             exit(1);
         }
-        let omega = angle / l;
-        let omega_l = angle;
+        let angle_fixed = if angle == 0f64 {
+            f64::MIN_POSITIVE
+        } else {
+            angle
+        };
+        let omega = angle_fixed / l;
         let beta_sq = gamma_2_beta(g).powi(2);
         let gamma_sq = g.powi(2);
-        let r56 = l / (beta_sq * gamma_sq) - (omega_l - omega_l.sin()) / (omega * beta_sq);
+        let r56 = l / (beta_sq * gamma_sq) - (angle_fixed - angle_fixed.sin()) / (omega * beta_sq);
+        if angle_fixed == 0f64 {
+            println!("r56 for zero angle_fixed bend = {}", r56);
+        }
         Dipole {
             name,
             t_matrix: arr2(&[[1f64, r56], [0f64, 1f64]]),
             l,
-            angle,
+            angle: angle_fixed,
         }
     }
 }
