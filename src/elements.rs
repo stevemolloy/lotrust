@@ -5,6 +5,8 @@ use std::f64::consts::PI;
 use std::fmt::{Display, Formatter, Result};
 use std::process::exit;
 
+const E_CHARGE: f64 = 1.60217663e-19;
+
 // TODO(#2): Beam should (?) be resorted when tracked by an element that may reorder things.
 // Which elements could reorder particles? Dipoles.  AccCavs, but not in the linear approx.
 pub trait Tracking {
@@ -124,7 +126,7 @@ impl AccCav {
         let r56_drift = l / (beta_sq * gamma_sq);
 
         let k = 2f64 * PI * freq / C;
-        let r65_kick = -k * l * v * phi.sin() / (g * MASS);
+        let r65_kick = -k * v * phi.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS / E_CHARGE);
         AccCav {
             name,
             l,
