@@ -1,8 +1,10 @@
+use crate::beam::MASS;
 use crate::elegant_rpn::RpnCalculator;
 use crate::elements;
 use crate::parse_lotr::Simulation;
 use ndarray::Array2;
 use std::collections::HashMap;
+use std::f64::consts::PI;
 use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
@@ -922,10 +924,10 @@ fn line_to_simulation(line: Line) -> Simulation {
                     None => 0f64,
                 };
                 let phase = match ele.params.get("phase") {
-                    Some(x) => *x,
+                    Some(x) => (*x - 90f64) * PI / 180f64,
                     None => 0f64,
                 };
-                design_gamma += l * volt * phase.cos();
+                design_gamma += (volt * phase.cos()) / MASS;
                 acc.elements.push(Box::new(elements::AccCav::new(
                     ele.name.to_string(),
                     l,
