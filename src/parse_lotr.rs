@@ -10,7 +10,8 @@ type LineElement = Box<dyn Tracking>;
 
 pub struct Simulation {
     pub elements: Vec<LineElement>,
-    pub beam: Array2<f64>,
+    pub input_beam: Array2<f64>,
+    pub output_beam: Array2<f64>,
 }
 
 impl Simulation {
@@ -19,21 +20,25 @@ impl Simulation {
         if let Some(outfile) = outfile {
             let mut beam_data = Array3::<f64>::zeros((
                 self.elements.len() + 1,
-                self.beam.nrows(),
-                self.beam.ncols(),
+                self.output_beam.nrows(),
+                self.output_beam.ncols(),
             ));
-            beam_data.slice_mut(s![0, .., ..]).assign(&self.beam);
+            beam_data.slice_mut(s![0, .., ..]).assign(&self.output_beam);
             for (idx, element) in self.elements.iter().enumerate() {
-                element.track(&mut self.beam);
-                beam_data.slice_mut(s![idx + 1, .., ..]).assign(&self.beam);
+                element.track(&mut self.output_beam);
+                beam_data
+                    .slice_mut(s![idx + 1, .., ..])
+                    .assign(&self.output_beam);
             }
 
             write_npy(outfile, &beam_data).unwrap();
 
         // outfile is None, don't save data.
         } else {
+            println!("Tracking");
+            self.output_beam = self.input_beam.clone();
             for element in self.elements.iter() {
-                element.track(&mut self.beam);
+                element.track(&mut self.output_beam);
             }
         }
     }
@@ -229,7 +234,8 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
     use TokenType::*;
     let mut acc = Simulation {
         elements: vec![],
-        beam: Array2::from(vec![[]]),
+        input_beam: Array2::from(vec![[]]),
+        output_beam: Array2::from(vec![[]]),
     };
     let mut beam_vec: Vec<[f64; 2]> = vec![];
     let mut ind: usize = 0;
@@ -278,7 +284,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                 }
                 ind += 1;
             }
-            acc.beam = Array2::from(beam_vec.clone());
+            acc.input_beam = Array2::from(beam_vec.clone());
         }
         if tok.token_type == Word && tok.value == "accelerator" {
             ind += 1;

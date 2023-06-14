@@ -18,6 +18,7 @@ enum Token {
     Exit,
     Track,
     Error,
+    Print,
 }
 
 #[derive(Default)]
@@ -40,6 +41,7 @@ fn lex(text: &str) -> Token {
     match text {
         "exit" | "quit" => Token::Exit,
         "track" => Token::Track,
+        "print" => Token::Print,
         _ => {
             println!("ERROR: Cannot understand token: {}", text);
             Token::Error
@@ -48,18 +50,33 @@ fn lex(text: &str) -> Token {
 }
 
 fn parse_input(text: &str, mut state: State) -> State {
-    for item in text.split_whitespace() {
+    let mut items: VecDeque<&str> = text.split_whitespace().collect();
+    while !items.is_empty() {
+        let item = items.pop_front().unwrap();
         match lex(item) {
             Token::Error => break,
             Token::Exit => state.running = false,
             Token::Track => {
                 println!(
                     "Tracking {} particles through {} accelerator elements...",
-                    state.simulation.beam.len(),
+                    state.simulation.input_beam.len(),
                     state.simulation.elements.len()
                 );
                 state.simulation.track(None);
                 println!("Done!");
+            }
+            Token::Print => {
+                if let Some(print_what) = items.pop_front() {
+                    println!("print_what = {print_what}");
+                    match print_what {
+                        "input_beam" => println!("{:?}", state.simulation.input_beam),
+                        "output_beam" => println!("{:?}", state.simulation.output_beam),
+                        "accelerator" => println!("{:?}", state.simulation.elements),
+                        _ => println!("ERROR: Cannot understand '{print_what}'"),
+                    }
+                } else {
+                    println!("ERROR: Expected additional input after the 'print' command");
+                }
             }
         }
     }
@@ -138,7 +155,7 @@ fn main() {
 
     if options.beam_defined {
         let newsim: Simulation = load_lotr_file(&options.beam_filename);
-        simulation.beam = newsim.beam;
+        simulation.input_beam = newsim.input_beam;
     }
 
     let mut stdout = io::stdout();
