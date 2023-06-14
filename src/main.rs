@@ -59,7 +59,7 @@ fn parse_input(text: &str, mut state: State) -> State {
             Token::Track => {
                 println!(
                     "Tracking {} particles through {} accelerator elements...",
-                    state.simulation.input_beam.len(),
+                    state.simulation.input_beam.shape()[0],
                     state.simulation.elements.len()
                 );
                 state.simulation.track(None);
@@ -67,10 +67,9 @@ fn parse_input(text: &str, mut state: State) -> State {
             }
             Token::Print => {
                 if let Some(print_what) = items.pop_front() {
-                    println!("print_what = {print_what}");
                     match print_what {
-                        "input_beam" => println!("{:?}", state.simulation.input_beam),
-                        "output_beam" => println!("{:?}", state.simulation.output_beam),
+                        "input_beam" => print_beam(&state.simulation.input_beam),
+                        "output_beam" => print_beam(&state.simulation.output_beam),
                         "accelerator" => println!("{:?}", state.simulation.elements),
                         _ => println!("ERROR: Cannot understand '{print_what}'"),
                     }

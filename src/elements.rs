@@ -31,17 +31,20 @@ impl Debug for dyn Tracking {
 pub struct Drift {
     name: String,
     l: f64,
+    gamma: f64,
     t_matrix: Array2<f64>,
 }
 
 impl Drift {
     pub fn new(name: String, l: f64, g: f64) -> Drift {
+        println!("gamma for the Drift = {g}");
         let beta_sq = gamma_2_beta(g).powi(2);
         let gamma_sq = g.powi(2);
         let r56 = l / (beta_sq * gamma_sq);
         Drift {
             name,
             l,
+            gamma: g,
             t_matrix: arr2(&[[1f64, r56], [0f64, 1f64]]),
         }
     }
@@ -53,7 +56,7 @@ impl Tracking for Drift {
     }
 
     fn ele_type(&self) -> String {
-        format!("Drift ({}: l->{})", self.name, self.l)
+        format!("Drift ({}: l->{}, g->{})", self.name, self.l, self.gamma)
     }
 }
 
@@ -65,6 +68,7 @@ pub struct Dipole {
     name: String,
     t_matrix: Array2<f64>,
     l: f64,
+    gamma: f64,
     angle: f64,
 }
 
@@ -90,6 +94,7 @@ impl Dipole {
             name,
             t_matrix: arr2(&[[1f64, r56], [0f64, 1f64]]),
             l,
+            gamma: g,
             angle: angle_fixed,
         }
     }
@@ -102,8 +107,8 @@ impl Tracking for Dipole {
 
     fn ele_type(&self) -> String {
         format!(
-            "Dipole ({}: l->{}, angle->{})",
-            self.name, self.l, self.angle
+            "Dipole ({}: l->{}, angle->{}, g->{})",
+            self.name, self.l, self.angle, self.gamma
         )
     }
 }
@@ -115,6 +120,7 @@ pub struct AccCav {
     v: f64,
     freq: f64,
     phi: f64,
+    gamma: f64,
     drift_matrix: Array2<f64>,
     kick_matrix: Array2<f64>,
 }
@@ -133,6 +139,7 @@ impl AccCav {
             v,
             freq,
             phi,
+            gamma: g,
             drift_matrix: arr2(&[[1f64, r56_drift], [0f64, 1f64]]),
             kick_matrix: arr2(&[[1f64, 0f64], [r65_kick, 1f64]]),
         }
@@ -149,8 +156,8 @@ impl Tracking for AccCav {
 
     fn ele_type(&self) -> String {
         format!(
-            "AccCav ({}: l->{}, v->{}, freq->{}, phi->{})",
-            self.name, self.l, self.v, self.freq, self.phi
+            "AccCav ({}: l->{}, v->{}, freq->{}, phi->{}, g->{})",
+            self.name, self.l, self.v, self.freq, self.phi, self.gamma
         )
     }
 }
