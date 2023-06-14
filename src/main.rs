@@ -14,8 +14,9 @@ mod parse_elegant;
 mod parse_lotr;
 
 #[derive(Clone, PartialEq)]
-enum TokenType {
-    Keyword,
+enum Token {
+    Exit,
+    Track,
     Error,
 }
 
@@ -32,14 +33,16 @@ struct Options {
 
 struct State {
     running: bool,
+    simulation: Simulation,
 }
 
-fn lex(text: &str) -> TokenType {
+fn lex(text: &str) -> Token {
     match text {
-        "exit" | "quit" => TokenType::Keyword,
+        "exit" | "quit" => Token::Exit,
+        "track" => Token::Track,
         _ => {
             println!("ERROR: Cannot understand token: {}", text);
-            TokenType::Error
+            Token::Error
         }
     }
 }
@@ -47,13 +50,17 @@ fn lex(text: &str) -> TokenType {
 fn parse_input(text: &str, mut state: State) -> State {
     for item in text.split_whitespace() {
         match lex(item) {
-            TokenType::Error => break,
-            TokenType::Keyword => match item {
-                "exit" | "quit" => {
-                    state.running = false;
-                }
-                _ => println!("ERROR: Unknown keyword: {}", item),
-            },
+            Token::Error => break,
+            Token::Exit => state.running = false,
+            Token::Track => {
+                println!(
+                    "Tracking {} particles through {} accelerator elements...",
+                    state.simulation.beam.len(),
+                    state.simulation.elements.len()
+                );
+                state.simulation.track(None);
+                println!("Done!");
+            }
         }
     }
 
@@ -143,7 +150,10 @@ fn main() {
         .execute(cursor::MoveTo(0, 0))
         .unwrap();
 
-    let mut state = State { running: true };
+    let mut state = State {
+        running: true,
+        simulation,
+    };
 
     println!("Welcome to LOTR! A Rust powered particle tracker.");
 
