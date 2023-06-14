@@ -41,6 +41,17 @@ struct State {
     simulation: Simulation,
 }
 
+fn out_energyprofile(sink: &mut impl Write, state: &State) {
+    let mut z = 0f64;
+    for (ind, ele) in state.simulation.elements.iter().enumerate() {
+        if let Err(e) = writeln!(sink, "{}, {}, {}", ind, z, ele.gamma()) {
+            println!("{}", e);
+            break;
+        }
+        z += ele.length();
+    }
+}
+
 fn lex(text: &str) -> Token {
     match text {
         "exit" | "quit" => Token::Exit,
@@ -76,13 +87,7 @@ fn parse_input(text: &str, mut state: State) -> State {
                         "input_beam" => print_beam(&state.simulation.input_beam),
                         "output_beam" => print_beam(&state.simulation.output_beam),
                         "accelerator" => println!("{:?}", state.simulation.elements),
-                        "energy_profile" => {
-                            let mut z = 0f64;
-                            for (ind, ele) in state.simulation.elements.iter().enumerate() {
-                                println!("{}, {}, {}", ind, z, ele.gamma());
-                                z += ele.length();
-                            }
-                        }
+                        "energy_profile" => out_energyprofile(&mut io::stdout(), &state),
                         _ => println!("ERROR: Cannot understand '{print_what}'"),
                     }
                 } else {
@@ -97,6 +102,7 @@ fn parse_input(text: &str, mut state: State) -> State {
                         "accelerator" => todo!(),
                         "energy_profile" => {
                             if let Ok(mut file) = File::create(ENERGYPROFFILENAME) {
+                                out_energyprofile(&mut file, &state);
                                 let mut z = 0f64;
                                 for (ind, ele) in state.simulation.elements.iter().enumerate() {
                                     if let Err(e) =
