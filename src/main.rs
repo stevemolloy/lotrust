@@ -1,15 +1,23 @@
 use crate::beam::print_beam;
 use crate::parse_elegant::load_elegant_file;
 use crate::parse_lotr::{load_lotr_file, Simulation};
+use crossterm::{cursor, terminal, ExecutableCommand};
 use std::collections::VecDeque;
-use std::env;
+use std::io::Write;
 use std::process::exit;
+use std::{env, io};
 
 mod beam;
 mod elegant_rpn;
 mod elements;
 mod parse_elegant;
 mod parse_lotr;
+
+#[derive(Clone, PartialEq)]
+enum TokenType {
+    Keyword,
+    Error,
+}
 
 #[derive(Default)]
 struct Options {
@@ -22,6 +30,35 @@ struct Options {
     save_filename: String,
 }
 
+struct State {
+    running: bool,
+}
+
+fn lex(text: &str) -> TokenType {
+    match text {
+        "exit" | "quit" => TokenType::Keyword,
+        _ => {
+            println!("ERROR: Cannot understand token: {}", text);
+            TokenType::Error
+        }
+    }
+}
+
+fn parse_input(text: &str, mut state: State) -> State {
+    for item in text.split_whitespace() {
+        match lex(item) {
+            TokenType::Error => break,
+            TokenType::Keyword => match item {
+                "exit" | "quit" => {
+                    state.running = false;
+                }
+                _ => println!("ERROR: Unknown keyword: {}", item),
+            },
+        }
+    }
+
+    state
+}
 fn usage(program_name: String) {
     println!("{program_name} <input_file> [-e line_name] [-b <beam_defn_file>] [-s <output_file>]");
     println!("\tinputfile: The file containing the description of the lattice");
@@ -97,23 +134,50 @@ fn main() {
         simulation.beam = newsim.beam;
     }
 
+    let mut stdout = io::stdout();
+    let stdin = io::stdin();
+
+    stdout
+        .execute(terminal::Clear(terminal::ClearType::All))
+        .unwrap()
+        .execute(cursor::MoveTo(0, 0))
+        .unwrap();
+
+    let mut state = State { running: true };
+
+    println!("Welcome to LOTR! A Rust powered particle tracker.");
+
+    loop {
+        stdout.write_all(b"> ").unwrap();
+        stdout.flush().unwrap();
+
+        let mut input = String::new();
+        stdin.read_line(&mut input).unwrap();
+
+        state = parse_input(&input, state);
+
+        if !state.running {
+            break;
+        }
+    }
+
     // println!("{:#?}", simulation.elements);
 
-    println!("---   INPUT  ---");
-    print_beam(&simulation.beam);
-    println!("--- TRACKING ---");
-
-    let outfile = if args.len() > 2 {
-        Some(String::from(&args[2]))
-    } else {
-        None
-    };
-
-    simulation.track(outfile);
-
-    println!("---  OUTPUT  ---");
-    print_beam(&simulation.beam);
-    println!("---   DONE   ---");
+    // println!("---   INPUT  ---");
+    // print_beam(&simulation.beam);
+    // println!("--- TRACKING ---");
+    //
+    // let outfile = if args.len() > 2 {
+    //     Some(String::from(&args[2]))
+    // } else {
+    //     None
+    // };
+    //
+    // simulation.track(outfile);
+    //
+    // println!("---  OUTPUT  ---");
+    // print_beam(&simulation.beam);
+    // println!("---   DONE   ---");
 
     // TODO(#7): The output definition of energy error is different from the input. Fix this.
 }
