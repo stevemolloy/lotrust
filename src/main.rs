@@ -23,6 +23,8 @@ enum Token {
     Error,
     Print,
     Save,
+    LoadLattice,
+    LoadBeam,
 }
 
 #[derive(Default)]
@@ -58,6 +60,8 @@ fn lex(text: &str) -> Token {
         "track" => Token::Track,
         "print" => Token::Print,
         "save" => Token::Save,
+        "load_lattice" => Token::LoadLattice,
+        "load_beam" => Token::LoadBeam,
         _ => {
             println!("ERROR: Cannot understand token: {}", text);
             Token::Error
@@ -81,6 +85,27 @@ fn parse_input(text: &str, mut state: State) -> State {
                 state.simulation.track(None);
                 println!("Done!");
             }
+            Token::LoadLattice => {
+                if let Some(filename) = items.pop_front() {
+                    let newsim: Simulation;
+                    if filename.ends_with("lte") {
+                        if let Some(elegant_line) = items.pop_front() {
+                            newsim = load_elegant_file(filename, &elegant_line);
+                            state.simulation.elements = newsim.elements;
+                        } else {
+                            println!("ERROR: Loading an elegant file requires also specifying which line to use.");
+                            println!("       load_lattice <elegantfilename> <elegant_line>");
+                        }
+                    } else {
+                        newsim = load_lotr_file(filename);
+                        state.simulation.elements = newsim.elements;
+                    };
+                } else {
+                    println!("ERROR: Loading an elegant file requires specifying a filename.");
+                    println!("       load_lattice <filename> [elegant_line]");
+                }
+            }
+            Token::LoadBeam => todo!(),
             Token::Print => {
                 if let Some(print_what) = items.pop_front() {
                     match print_what {
