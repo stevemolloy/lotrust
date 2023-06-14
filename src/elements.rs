@@ -12,6 +12,8 @@ const E_CHARGE: f64 = 1.60217663e-19;
 pub trait Tracking {
     fn track(&self, beam: &mut Beam);
     fn ele_type(&self) -> String;
+    fn gamma(&self) -> f64;
+    fn length(&self) -> f64;
 }
 
 impl Display for dyn Tracking {
@@ -57,6 +59,14 @@ impl Tracking for Drift {
 
     fn ele_type(&self) -> String {
         format!("Drift ({}: l->{}, g->{})", self.name, self.l, self.gamma)
+    }
+
+    fn gamma(&self) -> f64 {
+        self.gamma
+    }
+
+    fn length(&self) -> f64 {
+        self.l
     }
 }
 
@@ -111,6 +121,14 @@ impl Tracking for Dipole {
             self.name, self.l, self.angle, self.gamma
         )
     }
+
+    fn gamma(&self) -> f64 {
+        self.gamma
+    }
+
+    fn length(&self) -> f64 {
+        self.l
+    }
 }
 
 // TODO(#4): Accelerating cavities need to have wakefields in their physics.
@@ -159,6 +177,14 @@ impl Tracking for AccCav {
             "AccCav ({}: l->{}, v->{}, freq->{}, phi->{}, g->{})",
             self.name, self.l, self.v, self.freq, self.phi, self.gamma
         )
+    }
+
+    fn gamma(&self) -> f64 {
+        self.gamma
+    }
+
+    fn length(&self) -> f64 {
+        self.l
     }
 }
 

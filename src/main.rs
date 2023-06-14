@@ -3,6 +3,7 @@ use crate::parse_elegant::load_elegant_file;
 use crate::parse_lotr::{load_lotr_file, Simulation};
 use crossterm::{cursor, terminal, ExecutableCommand};
 use std::collections::VecDeque;
+use std::fs::File;
 use std::io::Write;
 use std::process::exit;
 use std::{env, io};
@@ -13,12 +14,15 @@ mod elements;
 mod parse_elegant;
 mod parse_lotr;
 
+const ENERGYPROFFILENAME: &str = "energy_profile.out";
+
 #[derive(Clone, PartialEq)]
 enum Token {
     Exit,
     Track,
     Error,
     Print,
+    Save,
 }
 
 #[derive(Default)]
@@ -42,6 +46,7 @@ fn lex(text: &str) -> Token {
         "exit" | "quit" => Token::Exit,
         "track" => Token::Track,
         "print" => Token::Print,
+        "save" => Token::Save,
         _ => {
             println!("ERROR: Cannot understand token: {}", text);
             Token::Error
@@ -71,6 +76,41 @@ fn parse_input(text: &str, mut state: State) -> State {
                         "input_beam" => print_beam(&state.simulation.input_beam),
                         "output_beam" => print_beam(&state.simulation.output_beam),
                         "accelerator" => println!("{:?}", state.simulation.elements),
+                        "energy_profile" => {
+                            let mut z = 0f64;
+                            for (ind, ele) in state.simulation.elements.iter().enumerate() {
+                                println!("{}, {}, {}", ind, z, ele.gamma());
+                                z += ele.length();
+                            }
+                        }
+                        _ => println!("ERROR: Cannot understand '{print_what}'"),
+                    }
+                } else {
+                    println!("ERROR: Expected additional input after the 'print' command");
+                }
+            }
+            Token::Save => {
+                if let Some(print_what) = items.pop_front() {
+                    match print_what {
+                        "input_beam" => todo!(),
+                        "output_beam" => todo!(),
+                        "accelerator" => todo!(),
+                        "energy_profile" => {
+                            if let Ok(mut file) = File::create(ENERGYPROFFILENAME) {
+                                let mut z = 0f64;
+                                for (ind, ele) in state.simulation.elements.iter().enumerate() {
+                                    if let Err(e) =
+                                        writeln!(file, "{}, {}, {}", ind, z, ele.gamma())
+                                    {
+                                        println!("{}", e);
+                                        break;
+                                    }
+                                    z += ele.length();
+                                }
+                            } else {
+                                println!("ERROR: Could not write the file");
+                            }
+                        }
                         _ => println!("ERROR: Cannot understand '{print_what}'"),
                     }
                 } else {
