@@ -1,6 +1,6 @@
 use crate::beam::MASS;
 use crate::elegant_rpn::RpnCalculator;
-use crate::elements;
+use crate::elements::{make_acccav, make_dipole, make_drift};
 use crate::parse_lotr::Simulation;
 use ndarray::Array2;
 use std::collections::HashMap;
@@ -905,11 +905,8 @@ fn line_to_simulation(line: Line) -> Simulation {
                     Some(l) => *l,
                     None => 0f64,
                 };
-                acc.elements.push(Box::new(elements::Drift::new(
-                    ele.name.to_string(),
-                    l,
-                    design_gamma,
-                )))
+                acc.elements
+                    .push(make_drift(ele.name.to_string(), l, design_gamma))
             }
             IntermedType::AccCav => {
                 let l = match ele.params.get("l") {
@@ -929,14 +926,14 @@ fn line_to_simulation(line: Line) -> Simulation {
                     None => 0f64,
                 };
                 design_gamma += (volt * phase.cos()) / MASS;
-                acc.elements.push(Box::new(elements::AccCav::new(
+                acc.elements.push(make_acccav(
                     ele.name.to_string(),
                     l,
                     volt,
                     freq,
                     phase,
                     design_gamma,
-                )))
+                ))
             }
             IntermedType::Bend => {
                 let l = match ele.params.get("l") {
@@ -947,12 +944,8 @@ fn line_to_simulation(line: Line) -> Simulation {
                     Some(x) => *x,
                     None => 0f64,
                 };
-                acc.elements.push(Box::new(elements::Dipole::new(
-                    ele.name.to_string(),
-                    l,
-                    angle,
-                    design_gamma,
-                )));
+                acc.elements
+                    .push(make_dipole(ele.name.to_string(), l, angle, design_gamma));
             }
         }
     }

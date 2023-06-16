@@ -46,11 +46,11 @@ struct State {
 fn out_energyprofile(sink: &mut impl Write, state: &State) {
     let mut z = 0f64;
     for (ind, ele) in state.simulation.elements.iter().enumerate() {
-        if let Err(e) = writeln!(sink, "{}, {}, {}", ind, z, ele.gamma()) {
+        if let Err(e) = writeln!(sink, "{}, {}, {}", ind, z, ele.gamma) {
             println!("{}", e);
             break;
         }
-        z += ele.length();
+        z += ele.length;
     }
 }
 
@@ -130,13 +130,12 @@ fn parse_input(text: &str, mut state: State) -> State {
                                 out_energyprofile(&mut file, &state);
                                 let mut z = 0f64;
                                 for (ind, ele) in state.simulation.elements.iter().enumerate() {
-                                    if let Err(e) =
-                                        writeln!(file, "{}, {}, {}", ind, z, ele.gamma())
+                                    if let Err(e) = writeln!(file, "{}, {}, {}", ind, z, ele.gamma)
                                     {
                                         println!("{}", e);
                                         break;
                                     }
-                                    z += ele.length();
+                                    z += ele.length;
                                 }
                             } else {
                                 println!("ERROR: Could not write the file");

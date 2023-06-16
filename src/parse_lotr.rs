@@ -1,15 +1,13 @@
 use crate::beam::{gamma_2_beta, ke_2_gamma};
-use crate::elements::*;
+use crate::elements::{make_acccav, make_dipole, make_drift, Element};
 use ndarray::{s, Array2, Array3};
 use ndarray_npy::write_npy;
 use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
 
-type LineElement = Box<dyn Tracking>;
-
 pub struct Simulation {
-    pub elements: Vec<LineElement>,
+    pub elements: Vec<Element>,
     pub input_beam: Array2<f64>,
     pub output_beam: Array2<f64>,
 }
@@ -316,11 +314,11 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         ind += 1;
                         token_check(&token_list[ind], Value);
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
-                        acc.elements.push(Box::new(Drift::new(
+                        acc.elements.push(make_drift(
                             "drift_name".to_string(),
                             drift_len,
                             ke_2_gamma(sync_ke),
-                        )));
+                        ));
                     }
                     "corrector" => {
                         ind += 1;
@@ -328,11 +326,11 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         ind += 1;
                         token_check(&token_list[ind], Value);
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
-                        acc.elements.push(Box::new(Corr::new(
+                        acc.elements.push(make_drift(
                             "corr_name".to_string(),
                             drift_len,
                             ke_2_gamma(sync_ke),
-                        )));
+                        ));
                     }
                     "quad" => {
                         ind += 1;
@@ -340,11 +338,11 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         ind += 1;
                         token_check(&token_list[ind], Value);
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
-                        acc.elements.push(Box::new(Quad::new(
+                        acc.elements.push(make_drift(
                             "quad_name".to_string(),
                             drift_len,
                             ke_2_gamma(sync_ke),
-                        )));
+                        ));
                     }
                     "sext" => {
                         ind += 1;
@@ -352,11 +350,11 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         ind += 1;
                         token_check(&token_list[ind], Value);
                         let drift_len = token_list[ind].value.parse::<f64>().expect("uh oh!");
-                        acc.elements.push(Box::new(Sext::new(
+                        acc.elements.push(make_drift(
                             "sext_name".to_string(),
                             drift_len,
                             ke_2_gamma(sync_ke),
-                        )));
+                        ));
                     }
                     "dipole" => {
                         ind += 1;
@@ -367,12 +365,12 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         ind += 1;
                         token_check(&token_list[ind], Value);
                         let angle = token_list[ind].value.parse::<f64>().expect("uh oh!");
-                        acc.elements.push(Box::new(Dipole::new(
+                        acc.elements.push(make_dipole(
                             "dipole_name".to_string(),
                             b_field,
                             angle,
                             ke_2_gamma(sync_ke),
-                        )));
+                        ));
                     }
                     "acccav" => {
                         ind += 1;
@@ -389,14 +387,14 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         ind += 1;
                         token_check(&token_list[ind], Value);
                         let phi = token_list[ind].value.parse::<f64>().expect("uh oh!");
-                        acc.elements.push(Box::new(AccCav::new(
+                        acc.elements.push(make_acccav(
                             "acccav_name".to_string(),
                             length,
                             voltage,
                             freq,
                             phi,
                             ke_2_gamma(sync_ke),
-                        )));
+                        ));
                         sync_ke += voltage * length * phi.cos();
                     }
                     _ => todo!("Element '{ele_type}' not defined."),
