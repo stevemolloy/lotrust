@@ -258,23 +258,5 @@ fn main() {
         }
     }
 
-    // println!("{:#?}", simulation.elements);
-
-    // println!("---   INPUT  ---");
-    // print_beam(&simulation.beam);
-    // println!("--- TRACKING ---");
-    //
-    // let outfile = if args.len() > 2 {
-    //     Some(String::from(&args[2]))
-    // } else {
-    //     None
-    // };
-    //
-    // simulation.track(outfile);
-    //
-    // println!("---  OUTPUT  ---");
-    // print_beam(&simulation.beam);
-    // println!("---   DONE   ---");
-
     // TODO(#7): The output definition of energy error is different from the input. Fix this.
 }
