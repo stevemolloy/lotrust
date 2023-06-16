@@ -1,6 +1,6 @@
 use crate::beam::MASS;
 use crate::elegant_rpn::RpnCalculator;
-use crate::elements::{make_acccav, make_dipole, make_drift};
+use crate::elements::{make_acccav, make_dipole, make_drift, make_quad};
 use crate::parse_lotr::Simulation;
 use ndarray::Array2;
 use std::collections::HashMap;
@@ -896,17 +896,21 @@ fn line_to_simulation(line: Line) -> Simulation {
     let mut design_gamma = 204.80244139169827f64;
     for ele in line {
         match ele.intermed_type {
-            IntermedType::Drift
-            | IntermedType::Quad
-            | IntermedType::Kick
-            | IntermedType::Moni
-            | IntermedType::Sext => {
+            IntermedType::Drift | IntermedType::Kick | IntermedType::Moni | IntermedType::Sext => {
                 let l = match ele.params.get("l") {
                     Some(l) => *l,
                     None => 0f64,
                 };
                 acc.elements
                     .push(make_drift(ele.name.to_string(), l, design_gamma))
+            }
+            IntermedType::Quad => {
+                let l = match ele.params.get("l") {
+                    Some(l) => *l,
+                    None => 0f64,
+                };
+                acc.elements
+                    .push(make_quad(ele.name.to_string(), l, design_gamma))
             }
             IntermedType::AccCav => {
                 let l = match ele.params.get("l") {
