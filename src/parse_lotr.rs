@@ -1,7 +1,6 @@
 use crate::beam::{gamma_2_beta, ke_2_gamma};
 use crate::elements::{make_acccav, make_dipole, make_drift, Element};
-use ndarray::{s, Array2, Array3};
-use ndarray_npy::write_npy;
+use ndarray::Array2;
 use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
@@ -10,35 +9,50 @@ pub struct Simulation {
     pub elements: Vec<Element>,
     pub input_beam: Array2<f64>,
     pub output_beam: Array2<f64>,
+    pub breakpoints: Vec<usize>,
+    pub breakpoints_passed: Vec<usize>,
+    pub current: usize,
 }
 
 impl Simulation {
-    pub fn track(&mut self, outfile: Option<String>) {
-        // outfile not None. Save all data during computation and write it to an .npy
-        if let Some(outfile) = outfile {
-            let mut beam_data = Array3::<f64>::zeros((
-                self.elements.len() + 1,
-                self.output_beam.nrows(),
-                self.output_beam.ncols(),
-            ));
-            beam_data.slice_mut(s![0, .., ..]).assign(&self.output_beam);
-            for (idx, element) in self.elements.iter().enumerate() {
-                element.track(&mut self.output_beam);
-                beam_data
-                    .slice_mut(s![idx + 1, .., ..])
-                    .assign(&self.output_beam);
-            }
-
-            write_npy(outfile, &beam_data).unwrap();
-
-        // outfile is None, don't save data.
-        } else {
-            println!("Tracking");
+    pub fn track(&mut self) {
+        if self.current == self.elements.len() {
+            println!("ERROR: Have already tracked to the last element. Consider using `reset`.");
+            return;
+        }
+        if self.current == 0 {
             self.output_beam = self.input_beam.clone();
-            for element in self.elements.iter() {
-                element.track(&mut self.output_beam);
+        }
+        let mut eles_to_track = self.elements.len() - self.current;
+        for bp in self.breakpoints.iter() {
+            if bp > &self.current {
+                eles_to_track = bp - self.current;
+                break;
             }
         }
+        println!(
+            "Tracking {} particles through {} accelerator elements...",
+            self.input_beam.shape()[0],
+            eles_to_track
+        );
+        for element in self.elements[self.current..].iter() {
+            if self.breakpoints.contains(&self.current)
+                && !self.breakpoints_passed.contains(&self.current)
+            {
+                println!(
+                    "Stopping at element {} ({}) due to a breakpoint",
+                    self.current, element.name
+                );
+                self.breakpoints_passed.push(self.current);
+                break;
+            }
+            self.current += 1;
+            element.track(&mut self.output_beam);
+        }
+    }
+
+    pub fn find_element_by_name(&self, searchterm: String) -> Option<usize> {
+        self.elements.iter().position(|x| x.name == searchterm)
     }
 }
 
@@ -234,6 +248,9 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
         elements: vec![],
         input_beam: Array2::from(vec![[]]),
         output_beam: Array2::from(vec![[]]),
+        breakpoints: Vec::new(),
+        breakpoints_passed: Vec::new(),
+        current: 0,
     };
     let mut beam_vec: Vec<[f64; 2]> = vec![];
     let mut ind: usize = 0;

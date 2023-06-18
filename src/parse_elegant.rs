@@ -890,6 +890,9 @@ fn line_to_simulation(line: Line) -> Simulation {
         elements: vec![],
         input_beam: Array2::from(vec![[0f64, 0f64]]),
         output_beam: Array2::from(vec![[0f64, 0f64]]),
+        breakpoints: Vec::new(),
+        breakpoints_passed: Vec::new(),
+        current: 0,
     };
     // let mut beam_vec: Vec<[f64; 2]> = vec![];
     // let mut sync_ke: f64;

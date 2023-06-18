@@ -26,6 +26,8 @@ enum Token {
     Save,
     LoadLattice,
     LoadBeam,
+    AddBreakPoint,
+    Reset,
 }
 
 #[derive(Default)]
@@ -63,6 +65,8 @@ fn lex(text: &str) -> Token {
         "save" => Token::Save,
         "load_lattice" => Token::LoadLattice,
         "load_beam" => Token::LoadBeam,
+        "break" => Token::AddBreakPoint,
+        "reset" => Token::Reset,
         _ => {
             println!("ERROR: Cannot understand token: {}", text);
             Token::Error
@@ -78,13 +82,7 @@ fn parse_input(text: &str, mut state: State) -> State {
             Token::Error => break,
             Token::Exit => state.running = false,
             Token::Track => {
-                println!(
-                    "Tracking {} particles through {} accelerator elements...",
-                    state.simulation.input_beam.shape()[0],
-                    state.simulation.elements.len()
-                );
-                state.simulation.track(None);
-                println!("Done!");
+                state.simulation.track();
             }
             Token::LoadLattice => {
                 if items.is_empty() {
@@ -101,7 +99,7 @@ fn parse_input(text: &str, mut state: State) -> State {
                         break;
                     }
                     let elegant_line = items.pop_front().unwrap();
-                    newsim = load_elegant_file(filename, &elegant_line);
+                    newsim = load_elegant_file(filename, elegant_line);
                     state.simulation.elements = newsim.elements;
                 } else {
                     newsim = load_lotr_file(filename);
@@ -157,11 +155,32 @@ fn parse_input(text: &str, mut state: State) -> State {
                     _ => println!("ERROR: Cannot understand '{save_what}'"),
                 }
             }
+            Token::AddBreakPoint => {
+                if items.is_empty() {
+                    println!("ERROR: Expected additional input after the 'break' command");
+                    break;
+                }
+                let breakpoint_name = items.pop_front().unwrap().to_string();
+                if let Some(pos) = state.simulation.find_element_by_name(breakpoint_name) {
+                    state.simulation.breakpoints.push(pos);
+                    println!(
+                        "Break point added at element #{pos} ({})",
+                        state.simulation.elements.get(pos).unwrap().name
+                    );
+                }
+            }
+            Token::Reset => {
+                state.simulation.breakpoints_passed = Vec::new();
+                state.simulation.breakpoints = Vec::new();
+                state.simulation.current = 0;
+                state.simulation.output_beam = state.simulation.input_beam.clone();
+            }
         }
     }
 
     state
 }
+
 fn usage(program_name: String) {
     println!("{program_name} <input_file> [-e line_name] [-b <beam_defn_file>] [-s <output_file>]");
     println!("\tinputfile: The file containing the description of the lattice");
@@ -237,6 +256,8 @@ fn main() {
         simulation.input_beam = newsim.input_beam;
     }
 
+    simulation.output_beam = simulation.input_beam.clone();
+
     let mut stdout = io::stdout();
     let stdin = io::stdin();
 
@@ -254,7 +275,12 @@ fn main() {
     println!("Welcome to LOTR! A Rust powered particle tracker.");
 
     loop {
-        stdout.write_all(b"> ").unwrap();
+        let prompt = format!(
+            "lotrust (ele: {}/{})> ",
+            state.simulation.current,
+            state.simulation.elements.len()
+        );
+        stdout.write_all(prompt.as_bytes()).unwrap();
         stdout.flush().unwrap();
 
         let mut input = String::new();
