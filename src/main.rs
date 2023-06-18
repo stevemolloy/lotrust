@@ -14,7 +14,8 @@ mod elements;
 mod parse_elegant;
 mod parse_lotr;
 
-const ENERGYPROFFILENAME: &str = "energy_profile.out";
+const ENERGYPROFFILENAME: &str = "energy_profile.csv";
+const ACCELERATORFILENAME: &str = "acceleratorout.lotr";
 
 #[derive(Clone, PartialEq)]
 enum Token {
@@ -86,65 +87,74 @@ fn parse_input(text: &str, mut state: State) -> State {
                 println!("Done!");
             }
             Token::LoadLattice => {
-                if let Some(filename) = items.pop_front() {
-                    let newsim: Simulation;
-                    if filename.ends_with("lte") {
-                        if let Some(elegant_line) = items.pop_front() {
-                            newsim = load_elegant_file(filename, &elegant_line);
-                            state.simulation.elements = newsim.elements;
-                        } else {
-                            println!("ERROR: Loading an elegant file requires also specifying which line to use.");
-                            println!("       load_lattice <elegantfilename> <elegant_line>");
-                        }
-                    } else {
-                        newsim = load_lotr_file(filename);
-                        state.simulation.elements = newsim.elements;
-                    };
-                } else {
+                if items.is_empty() {
                     println!("ERROR: Loading an elegant file requires specifying a filename.");
-                    println!("       load_lattice <filename> [elegant_line]");
+                    println!("       load_lattice <elegantfilename> [<elegant_line>]");
+                    break;
                 }
+                let filename = items.pop_front().unwrap();
+                let newsim: Simulation;
+                if filename.ends_with("lte") {
+                    if items.is_empty() {
+                        println!("ERROR: Loading an elegant file requires also specifying which line to use.");
+                        println!("       load_lattice <elegantfilename> <elegant_line>");
+                        break;
+                    }
+                    let elegant_line = items.pop_front().unwrap();
+                    newsim = load_elegant_file(filename, &elegant_line);
+                    state.simulation.elements = newsim.elements;
+                } else {
+                    newsim = load_lotr_file(filename);
+                    state.simulation.elements = newsim.elements;
+                };
             }
             Token::LoadBeam => todo!(),
             Token::Print => {
-                if let Some(print_what) = items.pop_front() {
-                    match print_what {
-                        "input_beam" => print_beam(&state.simulation.input_beam),
-                        "output_beam" => print_beam(&state.simulation.output_beam),
-                        "accelerator" => println!("{:?}", state.simulation.elements),
-                        "energy_profile" => out_energyprofile(&mut io::stdout(), &state),
-                        _ => println!("ERROR: Cannot understand '{print_what}'"),
-                    }
-                } else {
+                if items.is_empty() {
                     println!("ERROR: Expected additional input after the 'print' command");
+                    break;
+                }
+                let print_what = items.pop_front().unwrap();
+                match print_what {
+                    "input_beam" => print_beam(&mut io::stdout(), &state.simulation.input_beam),
+                    "output_beam" => print_beam(&mut io::stdout(), &state.simulation.output_beam),
+                    "accelerator" => {
+                        if let Err(e) =
+                            writeln!(&mut io::stdout(), "{:?}", state.simulation.elements)
+                        {
+                            println!("Could not write to stdout...: {e}");
+                        }
+                    }
+                    "energy_profile" => out_energyprofile(&mut io::stdout(), &state),
+                    _ => println!("ERROR: Cannot understand '{print_what}'"),
                 }
             }
             Token::Save => {
-                if let Some(print_what) = items.pop_front() {
-                    match print_what {
-                        "input_beam" => todo!(),
-                        "output_beam" => todo!(),
-                        "accelerator" => todo!(),
-                        "energy_profile" => {
-                            if let Ok(mut file) = File::create(ENERGYPROFFILENAME) {
-                                out_energyprofile(&mut file, &state);
-                                let mut z = 0f64;
-                                for (ind, ele) in state.simulation.elements.iter().enumerate() {
-                                    if let Err(e) = writeln!(file, "{}, {}, {}", ind, z, ele.gamma)
-                                    {
-                                        println!("{}", e);
-                                        break;
-                                    }
-                                    z += ele.length;
-                                }
-                            } else {
-                                println!("ERROR: Could not write the file");
+                if items.is_empty() {
+                    println!("ERROR: Expected additional input after the 'save' command");
+                    break;
+                }
+                let save_what = items.pop_front().unwrap();
+                match save_what {
+                    "input_beam" => print_beam(&mut io::stdout(), &state.simulation.input_beam),
+                    "output_beam" => print_beam(&mut io::stdout(), &state.simulation.output_beam),
+                    "accelerator" => {
+                        if let Ok(mut file) = File::create(ACCELERATORFILENAME) {
+                            if let Err(e) = writeln!(&mut file, "{:?}", state.simulation.elements) {
+                                println!("ERROR: Could not write the file: {e}");
                             }
+                        } else {
+                            println!("ERROR: Could not write the file");
                         }
-                        _ => println!("ERROR: Cannot understand '{print_what}'"),
                     }
-                } else {
-                    println!("ERROR: Expected additional input after the 'print' command");
+                    "energy_profile" => {
+                        if let Ok(mut file) = File::create(ENERGYPROFFILENAME) {
+                            out_energyprofile(&mut file, &state);
+                        } else {
+                            println!("ERROR: Could not write the file");
+                        }
+                    }
+                    _ => println!("ERROR: Cannot understand '{save_what}'"),
                 }
             }
         }
