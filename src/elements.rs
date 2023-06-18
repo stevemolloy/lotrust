@@ -10,7 +10,7 @@ const E_CHARGE: f64 = 1.60217663e-19;
 #[derive(Debug)]
 pub enum TrackingMethod {
     Normal(Array2<f64>),
-    DKD(Vec<Array2<f64>>),
+    DriftKickDrift(Vec<Array2<f64>>),
 }
 
 // TODO(#2): Beam should (?) be resorted when tracked by an element that may reorder things.
@@ -31,7 +31,7 @@ impl Element {
     pub fn track(&self, beam: &mut Beam) {
         match &self.tracking_method {
             TrackingMethod::Normal(t_matrix) => *beam = beam.dot(&t_matrix.t()),
-            TrackingMethod::DKD(matrices) => {
+            TrackingMethod::DriftKickDrift(matrices) => {
                 *beam = beam.dot(&matrices[0].t());
                 *beam = beam.dot(&matrices[1].t());
                 *beam = beam.dot(&matrices[0].t());
@@ -105,7 +105,7 @@ pub fn make_acccav(name: String, length: f64, v: f64, freq: f64, phi: f64, gamma
         length,
         gamma,
         params: param_map,
-        tracking_method: TrackingMethod::DKD(vec![
+        tracking_method: TrackingMethod::DriftKickDrift(vec![
             arr2(&[[1f64, r56_drift], [0f64, 1f64]]),
             arr2(&[[1f64, 0f64], [r65_kick, 1f64]]),
         ]),
