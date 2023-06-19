@@ -28,6 +28,7 @@ enum Token {
     LoadBeam,
     AddBreakPoint,
     Reset,
+    Help,
 }
 
 #[derive(Default)]
@@ -67,6 +68,7 @@ fn lex(text: &str) -> Token {
         "load_beam" => Token::LoadBeam,
         "break" => Token::AddBreakPoint,
         "reset" => Token::Reset,
+        "help" => Token::Help,
         _ => {
             println!("ERROR: Cannot understand token: {}", text);
             Token::Error
@@ -79,6 +81,21 @@ fn parse_input(text: &str, mut state: State) -> State {
     while !items.is_empty() {
         let item = items.pop_front().unwrap();
         match lex(item) {
+            Token::Help => {
+                println!("help                    :: Print this message.");
+                println!("exit|quit               :: End the program.");
+                println!("track                   :: Track the beam through the accelerator, stopping at the first breakpoint (if defined) or the end of the accelerator.");
+                println!("load_lattice <filename> :: Load a new accelerator from 'filename'.");
+                println!("load_beam <filename>    :: Load a new input beam from 'filename'");
+                println!("break <element_name>    :: Add a breakpoint to the first element named 'element_name'");
+                println!("reset                   :: Remove all breakpoints, reset tracking status to the start of the accelerator, and reset the output beam.");
+                println!("save <param>            :: Saves 'param' to a pre-defined file.  'param' may be one of the following:");
+                println!("                                        * 'input_beam'");
+                println!("                                        * 'output_beam'");
+                println!("                                        * 'accelerator'");
+                println!("                                        * 'energy_profile'");
+                println!("print <param>           :: Prints 'param' to the screen.  'param' may be one of those defined for the 'save' command (above).");
+            }
             Token::Error => break,
             Token::Exit => state.running = false,
             Token::Track => {
