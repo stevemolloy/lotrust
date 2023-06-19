@@ -123,7 +123,16 @@ fn parse_input(text: &str, mut state: State) -> State {
                     state.simulation.elements = newsim.elements;
                 };
             }
-            Token::LoadBeam => todo!(),
+            Token::LoadBeam => {
+                if items.is_empty() {
+                    println!("ERROR: Loading a beam file requires specifying a filename.");
+                    println!("       load_beam <filename>");
+                    break;
+                }
+                let filename = items.pop_front().unwrap();
+                let newsim: Simulation = load_lotr_file(filename);
+                state.simulation.input_beam = newsim.input_beam;
+            }
             Token::Print => {
                 if items.is_empty() {
                     println!("ERROR: Expected additional input after the 'print' command");
