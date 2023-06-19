@@ -103,8 +103,8 @@ fn parse_input(text: &str, mut state: State) -> State {
             }
             Token::LoadLattice => {
                 if items.is_empty() {
-                    println!("ERROR: Loading an elegant file requires specifying a filename.");
-                    println!("       load_lattice <elegantfilename> [<elegant_line>]");
+                    println!("ERROR: Loading a lattice file requires specifying a filename.");
+                    println!("       load_lattice <filename> [<elegant_line>]");
                     break;
                 }
                 let filename = items.pop_front().unwrap();
