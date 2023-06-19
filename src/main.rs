@@ -29,6 +29,7 @@ enum Token {
     AddBreakPoint,
     Step,
     Reset,
+    SetAccEnergy,
     Help,
 }
 
@@ -70,6 +71,7 @@ fn lex(text: &str) -> Token {
         "break" => Token::AddBreakPoint,
         "step" => Token::Step,
         "reset" => Token::Reset,
+        "set_acc_energy" => Token::SetAccEnergy,
         "help" => Token::Help,
         _ => {
             println!("ERROR: Cannot understand token: {}", text);
@@ -86,22 +88,56 @@ fn parse_input(text: &str, mut state: State) -> State {
             Token::Help => {
                 println!("help                    :: Print this message.");
                 println!("exit|quit               :: End the program.");
-                println!("track                   :: Track the beam through the accelerator, stopping at the first breakpoint (if defined) or the end of the accelerator.");
+                println!("track                   :: Track the beam through the accelerator, stopping at the");
+                println!("                           first breakpoint (if defined) or the end of the line.");
                 println!("load_lattice <filename> :: Load a new accelerator from 'filename'.");
                 println!("load_beam <filename>    :: Load a new input beam from 'filename'");
                 println!("break <element_name>    :: Add a breakpoint to the first element named 'element_name'");
-                println!("reset                   :: Remove all breakpoints, reset tracking status to the start of the accelerator, and reset the output beam.");
-                println!("save <param>            :: Saves 'param' to a pre-defined file.  'param' may be one of the following:");
+                println!("reset                   :: Remove all breakpoints, reset tracking status to the start");
+                println!(
+                    "                           of the accelerator, and reset the output beam."
+                );
+                println!("save <param>            :: Saves 'param' to a pre-defined file.");
+                println!("                           'param' may be one of the following:");
                 println!("                                        * 'input_beam'");
                 println!("                                        * 'output_beam'");
                 println!("                                        * 'accelerator'");
                 println!("                                        * 'energy_profile'");
-                println!("print <param>           :: Prints 'param' to the screen.  'param' may be one of those defined for the 'save' command (above).");
+                println!("print <param>           :: Prints 'param' to the screen.  'param' may be one of");
+                println!(
+                    "                           those defined for the 'save' command (above)."
+                );
+                println!("set_acc_energy <energy> :: Sets the expected input KE of the accelerator to <energy>");
+                println!("                           recalculating the expected energy at each component");
+                println!("                           appropriately.");
+                println!("                        :: No scaling is done of the parameters of the component.");
+                println!("                        :: If <energy> is 'beam', then the KE of the input beam is used.");
             }
             Token::Error => break,
             Token::Exit => state.running = false,
             Token::Track => state.simulation.track(),
             Token::Step => state.simulation.step(),
+            Token::SetAccEnergy => {
+                if items.is_empty() {
+                    println!(
+                        "ERROR: set_acc_energy requires an argument. Either 'beam' or a float."
+                    );
+                    break;
+                }
+                match items.pop_front().unwrap() {
+                    "beam" => {
+                        let new_ke = state.simulation.input_beam_ke;
+                        state.simulation.rescale_acc_energy(new_ke);
+                    }
+                    val => {
+                        if let Ok(new_ke) = val.parse::<f64>() {
+                            state.simulation.rescale_acc_energy(new_ke);
+                        } else {
+                            println!("ERROR: '{val}' could not be parsed as a float.");
+                        }
+                    }
+                }
+            }
             Token::LoadLattice => {
                 if items.is_empty() {
                     println!("ERROR: Loading a lattice file requires specifying a filename.");

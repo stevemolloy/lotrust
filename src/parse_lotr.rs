@@ -1,5 +1,5 @@
-use crate::beam::{gamma_2_beta, ke_2_gamma};
-use crate::elements::{make_acccav, make_dipole, make_drift, Element};
+use crate::beam::{gamma_2_beta, ke_2_gamma, MASS};
+use crate::elements::{make_acccav, make_dipole, make_drift, EleType, Element};
 use ndarray::Array2;
 use std::fmt;
 use std::fs::read_to_string;
@@ -9,6 +9,7 @@ pub struct Simulation {
     pub elements: Vec<Element>,
     pub input_beam: Array2<f64>,
     pub output_beam: Array2<f64>,
+    pub input_beam_ke: f64,
     pub breakpoints: Vec<usize>,
     pub breakpoints_passed: Vec<usize>,
     pub current: usize,
@@ -69,6 +70,33 @@ impl Simulation {
 
     pub fn find_element_by_name(&self, searchterm: String) -> Option<usize> {
         self.elements.iter().position(|x| x.name == searchterm)
+    }
+
+    pub fn rescale_acc_energy(&mut self, mut new_ke: f64) {
+        for ele in self.elements.iter_mut() {
+            match ele.ele_type {
+                EleType::Drift => *ele = make_drift(ele.name.clone(), ele.length, new_ke / MASS),
+                EleType::Dipole => {
+                    *ele = make_dipole(
+                        ele.name.clone(),
+                        ele.length,
+                        ele.params["angle"],
+                        new_ke / MASS,
+                    )
+                }
+                EleType::AccCav => {
+                    new_ke += ele.params["v"] * ele.params["phi"].cos();
+                    *ele = make_acccav(
+                        ele.name.clone(),
+                        ele.length,
+                        ele.params["v"],
+                        ele.params["freq"],
+                        ele.params["phi"],
+                        new_ke / MASS,
+                    );
+                }
+            }
+        }
     }
 }
 
@@ -264,6 +292,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
         elements: vec![],
         input_beam: Array2::from(vec![[]]),
         output_beam: Array2::from(vec![[]]),
+        input_beam_ke: 100e6,
         breakpoints: Vec::new(),
         breakpoints_passed: Vec::new(),
         current: 0,
@@ -287,6 +316,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                     ind += 1;
                     token_check(&token_list[ind], Value);
                     design_ke = token_list[ind].value.parse::<f64>().expect("uh oh!");
+                    acc.input_beam_ke = design_ke;
                     design_beta = gamma_2_beta(ke_2_gamma(design_ke));
                     ind += 1;
                 }

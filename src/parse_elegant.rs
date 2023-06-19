@@ -890,13 +890,15 @@ fn line_to_simulation(line: Line) -> Simulation {
         elements: vec![],
         input_beam: Array2::from(vec![[0f64, 0f64]]),
         output_beam: Array2::from(vec![[0f64, 0f64]]),
+        input_beam_ke: 100e6,
         breakpoints: Vec::new(),
         breakpoints_passed: Vec::new(),
         current: 0,
     };
     // let mut beam_vec: Vec<[f64; 2]> = vec![];
     // let mut sync_ke: f64;
-    let mut design_gamma = 204.80244139169827f64;
+    // let mut design_gamma = 204.80244139169827f64;
+    let mut design_gamma = acc.input_beam_ke / MASS;
     for ele in line {
         match ele.intermed_type {
             IntermedType::Drift | IntermedType::Kick | IntermedType::Moni | IntermedType::Sext => {

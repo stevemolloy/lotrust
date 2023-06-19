@@ -13,17 +13,24 @@ pub enum TrackingMethod {
     DriftKickDrift(Vec<Array2<f64>>),
 }
 
+#[derive(Debug)]
+pub enum EleType {
+    Drift,
+    Dipole,
+    AccCav,
+}
+
 // TODO(#2): Beam should (?) be resorted when tracked by an element that may reorder things.
 // Which elements could reorder particles? Dipoles.  AccCavs, but not in the linear approx.
 // TODO(#3): Add various diag elements that act on the beam as drifts, but produce side-effects.
 #[derive(Debug)]
 pub struct Element {
-    pub ele_type: String,
+    pub ele_type: EleType,
     pub name: String,
     pub gamma: f64,
     pub length: f64,
     #[allow(dead_code)]
-    params: HashMap<String, f64>,
+    pub params: HashMap<String, f64>,
     tracking_method: TrackingMethod,
 }
 
@@ -47,7 +54,7 @@ pub fn make_drift(name: String, length: f64, gamma: f64) -> Element {
     let param_map = HashMap::new();
     Element {
         name,
-        ele_type: "drift".to_string(),
+        ele_type: EleType::Drift,
         length,
         gamma,
         params: param_map,
@@ -78,7 +85,7 @@ pub fn make_dipole(name: String, length: f64, angle: f64, gamma: f64) -> Element
     param_map.insert("angle".to_string(), angle);
     Element {
         name,
-        ele_type: "dipole".to_string(),
+        ele_type: EleType::Dipole,
         length,
         gamma,
         params: param_map,
@@ -101,7 +108,7 @@ pub fn make_acccav(name: String, length: f64, v: f64, freq: f64, phi: f64, gamma
     param_map.insert("phi".to_string(), phi);
     Element {
         name,
-        ele_type: "acccav".to_string(),
+        ele_type: EleType::AccCav,
         length,
         gamma,
         params: param_map,
