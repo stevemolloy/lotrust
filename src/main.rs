@@ -27,6 +27,7 @@ enum Token {
     LoadLattice,
     LoadBeam,
     AddBreakPoint,
+    Step,
     Reset,
     Help,
 }
@@ -67,6 +68,7 @@ fn lex(text: &str) -> Token {
         "load_lattice" => Token::LoadLattice,
         "load_beam" => Token::LoadBeam,
         "break" => Token::AddBreakPoint,
+        "step" => Token::Step,
         "reset" => Token::Reset,
         "help" => Token::Help,
         _ => {
@@ -98,9 +100,8 @@ fn parse_input(text: &str, mut state: State) -> State {
             }
             Token::Error => break,
             Token::Exit => state.running = false,
-            Token::Track => {
-                state.simulation.track();
-            }
+            Token::Track => state.simulation.track(),
+            Token::Step => state.simulation.step(),
             Token::LoadLattice => {
                 if items.is_empty() {
                     println!("ERROR: Loading a lattice file requires specifying a filename.");

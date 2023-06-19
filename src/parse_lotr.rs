@@ -15,6 +15,22 @@ pub struct Simulation {
 }
 
 impl Simulation {
+    pub fn step(&mut self) {
+        if self.current == self.elements.len() {
+            println!("ERROR: Have already tracked to the last element. Consider using `reset`.");
+            return;
+        }
+        if self.current == 0 {
+            self.output_beam = self.input_beam.clone();
+        }
+        println!(
+            "Stepping {} particles through a single element...",
+            self.input_beam.shape()[0]
+        );
+        self.elements[self.current].track(&mut self.output_beam);
+        self.current += 1;
+    }
+
     pub fn track(&mut self) {
         if self.current == self.elements.len() {
             println!("ERROR: Have already tracked to the last element. Consider using `reset`.");
