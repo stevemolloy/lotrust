@@ -1,0 +1,110 @@
+% 299792458	sto    c
+% 510998.918    sto    E0
+% 204.8 204.8 * 1 + sqrt E0 *    sto    Einput
+% 2.9985e9		sto rf_frequency
+% 0.033333333          sto    cav_l
+% 2998e6	       sto    frequency
+% 0.033333333 156 *    sto    section_l
+% 90 		  sto    phi_L1_INJ15
+% 90 		  sto	 phi_L1_INJ3
+% 90 26.4 +   sto    phi_L1_SPF
+% 6.44e5 156 *    sto    V_L1_INJ15
+% 6.44e5 156 *	  sto	 V_L1_INJ3
+% 6.44e5 156 * 	  sto	 V_L1_SPF
+% 90		  sto 	 phi_MDL_INJ15
+% 90		  sto 	 phi_MDL_INJ3
+% 90 5 +	  sto 	 phi_MDL_SPF
+% 6.44e5 156 *	  sto	 V_MDL_INJ15
+% 6.44e5 156 *	  sto	 V_MDL_INJ3
+% 6.44e5 156 *	  sto	 V_MDL_SPF
+% 3.0e9    sto    E_EX3
+% 1    sto    knob_I.BC1.MAG.CRDI
+% 4.4 180 / pi *    sto    nominal_DIA_ANGLE
+% -3    	    sto    nominal_DIA_K1
+% 3.13588	    sto    nominal_DIA_K2
+% 5.17189    sto    QM_K1
+% -0.5765    sto    QDEND_K1
+% 6.00634    sto    QFEND_K1
+% 56       sto    SXL_K2 
+% 1   			sto knob_I.EX1.MAG.CRDI
+% 0.02814   		sto nominal_DIH_EX1_ANGLE
+% -4.5915492957		sto nominal_DIH_EX1_B2
+% 1   			sto knob_I.TR1.MAG.CRSM
+% 1   			sto knob_I.TR1.MAG.CRDI
+% 10 180 / pi *		sto nominal_SM1_TR1_ANGLE
+% 17 180 / pi *		sto nominal_DI_TR1_ANGLE
+% 1.0   	sto  knob_I.TR1.MAG.CRQ1
+% 1.0   	sto  knob_I.TR1.MAG.CRQ2
+% 1.0   	sto  knob_I.TR1.MAG.CRQ3
+% -4.2822	sto  nominal_Q1_TR1_K1
+% 4.33752	sto  nominal_Q2_TR1_K1
+% -2.55548	sto  nominal_Q3_TR1_K1
+% 1   sto   knob_I.TR3.MAG.CRSM
+% 1   sto   knob_I.TR3.MAG.CRDI
+% 5 180 / pi *		sto nominal_SM3_TR3_ANGLE
+% 16.5 180 / pi *	sto nominal_DI_TR3_ANGLE
+% 1   sto   knob_I.TR3.MAG.CRQ1
+% 1   sto   knob_I.TR3.MAG.CRQ2
+% 1   sto   knob_I.TR3.MAG.CRQ3
+% -3.423     sto   nominal_Q1_TR3_K1
+% 3.4835     sto   nominal_Q2_TR3_K1
+% -2.0281    sto   nominal_Q3_TR3_K1
+% 1   sto   knob_I.EX3.MAG.CRDI
+% 0.02814   sto   nominal_DIH_EX3_ANGLE
+% -4.5915492957   sto   nominal_DIH_EX3_B2
+% 1    sto    knob_I.BC2.MAG.CRDI
+% 3.2 180 / pi *    sto    nominal_DIB_ANGLE
+% -0.7519	    sto    nominal_DIB_K1
+% 2.298537     sto    BC2_QM_K1_SPF
+% 1.373108     sto    BC2_Q_K1_SPF
+% -0.599175    sto    BC2_QMITT_K1_SPF
+% 2.298537     sto    BC2_QM_K1_TDC
+% 1.397896     sto    BC2_Q_K1_TDC
+% -1.245365    sto    BC2_QMITT_K1_TDC
+% 50 	     sto    SXH_K2_SPF
+% 50.011380    sto    SXH_K2_TDC
+% 90                    sto tdc_phase,
+% 0 2 /                 sto tdc_rot_angle, 
+% 61.4e6                sto tdc_voltage, 
+% 2.8 180 / pi *        sto tdc_nom_spec_dip_angle,
+% 2 E_EX3 E0 / E_EX3 E0 / * + sqrt                sto    gammaSPF
+% 0.01				      		  sto    Bpeak_spfu1
+% 0.015				      		  sto    lambda_spfu1
+% 1 c Bpeak_spfu1 * E_EX3 / /	      		  sto    rho_spfu1
+% gammaSPF lambda_spfu1 * 2 pi * rho_spfu1 * /    sto    K_spfu1
+
+test_drift: drift, l = 5.000
+test_marker: marker
+test_rfcw: rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3 2 sqrt /",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1,&
+		zwake=1, trwake=1,&
+		zwakefile="./input/wakefieldlong_interp.sdds",tColumn="t",wzColumn="W",n_bins=0,change_p0=1,&
+		trwakefile="./input/wakefieldtran_interp.sdds",tColumn="t",wxColumn="W",wyColumn="W",n_bins=0
+test_rfdf: RFDF, L=3, PHASE="tdc_phase", TILT="tdc_rot_angle", frequency="rf_frequency", VOLTAGE="tdc_voltage", N_KICKS=3000, MAGNETIC_DEFLECTION=1,
+test_kquad: Kquad, L=0.2, K1=2.981606216824745,  SYSTEMATIC_MULTIPOLES="./input/Systematic_multipole_content_QF.sdds", N_KICKS=32
+test_hkick: HKICK, l = 0.140000
+test_vkick: VKICK, l = 0.140000
+test_wiggler: wiggler, l = 4.95, K = 2.23, POLES = 328
+test_csrcsbend: CSRCSBEND, ANGLE="5.9 180 / pi * -1 *", L=0.5, TILT="3 pi * 2 /",&
+					E1="0", E2="0",&
+					K1=0, K2=0, K3=0,&
+					NONLINEAR=1, N_KICKS=550, INTEGRATION_ORDER=4,&
+					EDGE1_EFFECTS=1, EDGE2_EFFECTS=1, EDGE_ORDER=2,&
+					BINS=600, SG_HALFWIDTH=1,&
+					HGAP=0.0055, FINT=0.4,
+test_rben: rben, l = 0.4, angle= 0
+test_sben: SBEN,l = 1.027,ANGLE="nominal_SM3_TR3_ANGLE knob_I.TR3.MAG.CRSM *",TILT="0.5 pi *" 
+test_sbend: sbend, ANGLE="24.97 180 / pi *", TILT="0.5 pi *", l=2.477675, e1=0, e2=0, K1=0, K2=0
+test_ksext: KSEXT, L = 0.1, K2="SXH_K2_TDC -1 *", SYSTEMATIC_MULTIPOLES="./input/Systematic_multipole_content_SXH.sdds", N_KICKS=32
+test_scraper: scraper, l = 0.00, insert_from = "-x", position = -0.05
+test_ecol: ECOL, X_MAX=1.0, Y_MAX=1.0, DX=0, DY=0
+test_monitor: monitor, l = 0.15, weight = 1   	
+test_moni: moni, l = 0.200000, weight = 1
+
+
+DRIFT: line = ( test_drift )
+MARKER: line = ( test_marker )
+
