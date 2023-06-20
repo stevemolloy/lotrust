@@ -14,9 +14,6 @@ mod elements;
 mod parse_elegant;
 mod parse_lotr;
 
-const ENERGYPROFFILENAME: &str = "energy_profile.csv";
-const ACCELERATORFILENAME: &str = "acceleratorout.lotr";
-
 #[derive(Clone, PartialEq)]
 enum Token {
     Exit,
@@ -191,16 +188,22 @@ fn parse_input(text: &str, mut state: State) -> State {
                 }
             }
             Token::Save => {
-                if items.is_empty() {
+                if items.len() < 2 {
+                    if !items.is_empty() {
+                        items.pop_front();
+                    }
                     println!("ERROR: Expected additional input after the 'save' command");
+                    println!("       Either 'input_beam, 'output_beam', 'accelerator', or 'energy_profile',");
+                    println!("       and then the name of the file");
                     break;
                 }
                 let save_what = items.pop_front().unwrap();
+                let filename = items.pop_front().unwrap();
                 match save_what {
                     "input_beam" => print_beam(&mut io::stdout(), &state.simulation.input_beam),
                     "output_beam" => print_beam(&mut io::stdout(), &state.simulation.output_beam),
                     "accelerator" => {
-                        if let Ok(mut file) = File::create(ACCELERATORFILENAME) {
+                        if let Ok(mut file) = File::create(filename) {
                             if let Err(e) = writeln!(&mut file, "{:?}", state.simulation.elements) {
                                 println!("ERROR: Could not write the file: {e}");
                             }
@@ -209,7 +212,7 @@ fn parse_input(text: &str, mut state: State) -> State {
                         }
                     }
                     "energy_profile" => {
-                        if let Ok(mut file) = File::create(ENERGYPROFFILENAME) {
+                        if let Ok(mut file) = File::create(filename) {
                             out_energyprofile(&mut file, &state);
                         } else {
                             println!("ERROR: Could not write the file");
