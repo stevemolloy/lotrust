@@ -107,4 +107,5 @@ test_moni: moni, l = 0.200000, weight = 1
 
 DRIFT: line = ( test_drift )
 MARKER: line = ( test_marker )
+DIPOLE: line = ( test_sbend )
 
