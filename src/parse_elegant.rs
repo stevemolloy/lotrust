@@ -880,8 +880,7 @@ fn intermed_to_line(line: &mut Line, intermed: &Library, line_name: &str) {
         line.push(ele.clone());
     } else {
         println!("{:#?}", intermed.ignored);
-        eprintln!("Trying to expand the line called {line_name} but it cannot be found");
-        exit(1);
+        println!("Trying to expand the line called {line_name} but it cannot be found");
     }
 }
 
