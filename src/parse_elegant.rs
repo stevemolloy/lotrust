@@ -963,3 +963,59 @@ fn line_to_simulation(line: Line) -> Simulation {
 fn compare_tokentype_at(token_list: &[Token], ind: usize, tok_type: TokenType) -> bool {
     token_list[ind].token_type == tok_type
 }
+
+#[cfg(test)]
+mod tests {
+    use std::fs::File;
+    use std::io::Read;
+
+    use crate::{
+        beam::print_beam,
+        parse_elegant::load_elegant_file,
+        parse_lotr::{load_lotr_file, Simulation},
+    };
+
+    pub fn diff_files(f1: &mut File, f2: &mut File) -> bool {
+        let buff1: &mut [u8] = &mut [0; 1024];
+        let buff2: &mut [u8] = &mut [0; 1024];
+
+        loop {
+            match f1.read(buff1) {
+                Err(_) => return false,
+                Ok(f1_read_len) => match f2.read(buff2) {
+                    Err(_) => return false,
+                    Ok(f2_read_len) => {
+                        if f1_read_len != f2_read_len {
+                            return false;
+                        }
+                        if f1_read_len == 0 {
+                            return true;
+                        }
+                        if &buff1[0..f1_read_len] != &buff2[0..f2_read_len] {
+                            return false;
+                        }
+                    }
+                },
+            }
+        }
+    }
+
+    const ELEGANT_TESTFILE: &str = "tests/test_lines.lte";
+    const BEAM_TESTFILE: &str = "tests/test_beam.lotr";
+    const DRIFT_BEAM_TRUE: &str = "tests/drift_output.beam";
+    const DRIFT_BEAM_TEST: &str = "tests/drift_output_test.beam";
+
+    #[test]
+    fn track_thru_drift() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "DRIFT");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(DRIFT_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(DRIFT_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(DRIFT_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+}
