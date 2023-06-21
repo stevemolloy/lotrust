@@ -10,12 +10,7 @@ pub fn print_beam(sink: &mut impl Write, beam: &Beam) {
     let num_electrons = beam.len_of(Axis(0));
     for e_num in 0..num_electrons {
         let this_electron = beam.slice(s![e_num, ..]);
-        if let Err(e) = writeln!(
-            sink,
-            "{:0.3} mm :: {:0.3}",
-            this_electron[0] * 1e3,
-            this_electron[1]
-        ) {
+        if let Err(e) = writeln!(sink, "{}, {}", this_electron[0], this_electron[1]) {
             println!("ERROR: {e}");
         }
     }

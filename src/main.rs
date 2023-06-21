@@ -94,8 +94,7 @@ fn parse_input(text: &str, mut state: State) -> State {
                 println!(
                     "                           of the accelerator, and reset the output beam."
                 );
-                println!("save <param>            :: Saves 'param' to a pre-defined file.");
-                println!("                           'param' may be one of the following:");
+                println!("save <param> <filename> :: Saves 'param' to a 'filename'. 'param' may be one of the following:");
                 println!("                                        * 'input_beam'");
                 println!("                                        * 'output_beam'");
                 println!("                                        * 'accelerator'");
@@ -200,8 +199,16 @@ fn parse_input(text: &str, mut state: State) -> State {
                 let save_what = items.pop_front().unwrap();
                 let filename = items.pop_front().unwrap();
                 match save_what {
-                    "input_beam" => print_beam(&mut io::stdout(), &state.simulation.input_beam),
-                    "output_beam" => print_beam(&mut io::stdout(), &state.simulation.output_beam),
+                    "input_beam" => {
+                        if let Ok(mut file) = File::create(filename) {
+                            print_beam(&mut file, &state.simulation.input_beam);
+                        }
+                    }
+                    "output_beam" => {
+                        if let Ok(mut file) = File::create(filename) {
+                            print_beam(&mut file, &state.simulation.output_beam);
+                        }
+                    }
                     "accelerator" => {
                         if let Ok(mut file) = File::create(filename) {
                             if let Err(e) = writeln!(&mut file, "{:?}", state.simulation.elements) {
