@@ -1002,8 +1002,12 @@ mod tests {
 
     const ELEGANT_TESTFILE: &str = "tests/test_lines.lte";
     const BEAM_TESTFILE: &str = "tests/test_beam.lotr";
+
     const DRIFT_BEAM_TRUE: &str = "tests/drift_output.beam";
     const DRIFT_BEAM_TEST: &str = "tests/drift_output_test.beam";
+
+    const DIPOLE_BEAM_TRUE: &str = "tests/dipole_output.beam";
+    const DIPOLE_BEAM_TEST: &str = "tests/dipole_output_test.beam";
 
     #[test]
     fn track_thru_drift() {
@@ -1016,6 +1020,20 @@ mod tests {
 
         let mut file_true = File::open(DRIFT_BEAM_TRUE).unwrap();
         let mut file_test = File::open(DRIFT_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_dipole() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "DIPOLE");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(DIPOLE_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(DIPOLE_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(DIPOLE_BEAM_TEST).unwrap();
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 }
