@@ -1006,8 +1006,17 @@ mod tests {
     const DRIFT_BEAM_TRUE: &str = "tests/drift_output.beam";
     const DRIFT_BEAM_TEST: &str = "tests/drift_output_test.beam";
 
+    const MARKER_BEAM_TRUE: &str = "tests/marker_output.beam";
+    const MARKER_BEAM_TEST: &str = "tests/marker_output_test.beam";
+
     const DIPOLE_BEAM_TRUE: &str = "tests/dipole_output.beam";
     const DIPOLE_BEAM_TEST: &str = "tests/dipole_output_test.beam";
+
+    const HKICK_BEAM_TRUE: &str = "tests/hkick_output.beam";
+    const HKICK_BEAM_TEST: &str = "tests/hkick_output_test.beam";
+
+    const VKICK_BEAM_TRUE: &str = "tests/vkick_output.beam";
+    const VKICK_BEAM_TEST: &str = "tests/vkick_output_test.beam";
 
     #[test]
     fn track_thru_drift() {
@@ -1034,6 +1043,48 @@ mod tests {
 
         let mut file_true = File::open(DIPOLE_BEAM_TRUE).unwrap();
         let mut file_test = File::open(DIPOLE_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_marker() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "MARKER");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(MARKER_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(MARKER_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(MARKER_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_hkick() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "HKICK");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(HKICK_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(HKICK_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(HKICK_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_vkick() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "VKICk");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(VKICK_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(VKICK_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(VKICK_BEAM_TEST).unwrap();
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 }
