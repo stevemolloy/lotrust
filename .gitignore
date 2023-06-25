@@ -1,3 +1,7 @@
 /target
 *.npy
 
+tests/dipole_output_test.beam
+tests/hkick_output_test.beam
+tests/marker_output_test.beam
+tests/vkick_output_test.beam
