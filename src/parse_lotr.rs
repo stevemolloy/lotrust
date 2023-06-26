@@ -1,4 +1,4 @@
-use crate::beam::{gamma_2_beta, ke_2_gamma, MASS};
+use crate::beam::{gamma_2_beta, ke_2_gamma, Beam, MASS};
 use crate::elements::{make_acccav, make_dipole, make_drift, EleType, Element};
 use ndarray::Array2;
 use std::fmt;
@@ -7,8 +7,8 @@ use std::process::exit;
 
 pub struct Simulation {
     pub elements: Vec<Element>,
-    pub input_beam: Array2<f64>,
-    pub output_beam: Array2<f64>,
+    pub input_beam: Beam,
+    pub output_beam: Beam,
     pub input_beam_ke: f64,
     pub breakpoints: Vec<usize>,
     pub breakpoints_passed: Vec<usize>,
@@ -26,9 +26,9 @@ impl Simulation {
         }
         println!(
             "Stepping {} particles through a single element...",
-            self.input_beam.shape()[0]
+            self.input_beam.pos.shape()[0]
         );
-        self.elements[self.current].track(&mut self.output_beam);
+        self.output_beam.track(&self.elements[self.current]);
         self.current += 1;
     }
 
@@ -49,7 +49,7 @@ impl Simulation {
         }
         println!(
             "Tracking {} particles through {} accelerator elements...",
-            self.input_beam.shape()[0],
+            self.input_beam.pos.shape()[0],
             eles_to_track
         );
         for element in self.elements[self.current..].iter() {
@@ -64,7 +64,7 @@ impl Simulation {
                 break;
             }
             self.current += 1;
-            element.track(&mut self.output_beam);
+            self.output_beam.track(element);
         }
     }
 
@@ -290,8 +290,8 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
     use TokenType::*;
     let mut acc = Simulation {
         elements: vec![],
-        input_beam: Array2::from(vec![[]]),
-        output_beam: Array2::from(vec![[]]),
+        input_beam: Beam::new(Array2::from(vec![[0f64, 0f64]])),
+        output_beam: Beam::new(Array2::from(vec![[0f64, 0f64]])),
         input_beam_ke: 100e6,
         breakpoints: Vec::new(),
         breakpoints_passed: Vec::new(),
@@ -345,7 +345,7 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                 }
                 ind += 1;
             }
-            acc.input_beam = Array2::from(beam_vec.clone());
+            acc.input_beam = Beam::new(Array2::from(beam_vec.clone()));
         }
         if tok.token_type == Word && tok.value == "accelerator" {
             ind += 1;

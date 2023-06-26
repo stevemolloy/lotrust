@@ -1,15 +1,55 @@
-use ndarray::{s, Array2, Axis};
+use crate::elements::EleType;
+use ndarray::{arr2, s, Array2, Axis};
 use std::io::Write;
+
+use crate::elements::Element;
 pub const MASS: f64 = 510998.9499961642f64;
 pub const C: f64 = 299792458f64;
 
 // TODO(#1): The beam should (?) be sorted by the z coord
-pub type Beam = Array2<f64>;
+#[derive(Clone)]
+pub struct Beam {
+    pub pos: Array2<f64>,
+}
+
+impl Beam {
+    pub fn new(pos: Array2<f64>) -> Self {
+        Self { pos }
+    }
+
+    pub fn track(&mut self, ele: &Element) {
+        match ele.ele_type {
+            EleType::Drift | EleType::Dipole => {
+                let r56 = match ele.params.get("r56") {
+                    Some(val) => *val,
+                    None => 0f64,
+                };
+                let t_matrix = arr2(&[[1f64, r56], [0f64, 1f64]]);
+                self.pos = self.pos.dot(&t_matrix.t());
+            }
+            EleType::AccCav => {
+                let r56_drift = match ele.params.get("r56_drift") {
+                    Some(val) => *val,
+                    None => 0f64,
+                };
+                let drift_matrix = arr2(&[[1f64, r56_drift], [0f64, 1f64]]);
+                let r65_kick = match ele.params.get("r65_kick") {
+                    Some(val) => *val,
+                    None => 0f64,
+                };
+                let kick_matrix = arr2(&[[1f64, 0f64], [r65_kick, 1f64]]);
+                self.pos = self.pos.dot(&drift_matrix.t());
+                self.pos = self.pos.dot(&kick_matrix.t());
+                self.pos = self.pos.dot(&drift_matrix.t());
+            }
+        }
+    }
+}
 
 pub fn print_beam(sink: &mut impl Write, beam: &Beam) {
-    let num_electrons = beam.len_of(Axis(0));
+    let num_electrons = beam.pos.len_of(Axis(0));
     for e_num in 0..num_electrons {
-        let this_electron = beam.slice(s![e_num, ..]);
+        let this_electron = beam.pos.slice(s![e_num, ..]);
         if let Err(e) = writeln!(sink, "{}, {}", this_electron[0], this_electron[1]) {
             println!("ERROR: {e}");
         }

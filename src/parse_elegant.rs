@@ -1,4 +1,4 @@
-use crate::beam::MASS;
+use crate::beam::{Beam, MASS};
 use crate::elegant_rpn::RpnCalculator;
 use crate::elements::{make_acccav, make_dipole, make_drift, make_quad};
 use crate::parse_lotr::Simulation;
@@ -885,10 +885,12 @@ fn intermed_to_line(line: &mut Line, intermed: &Library, line_name: &str) {
 }
 
 fn line_to_simulation(line: Line) -> Simulation {
+    let input_beam = Beam::new(Array2::from(vec![[0f64, 0f64]]));
+    let output_beam = Beam::new(Array2::from(vec![[0f64, 0f64]]));
     let mut acc = Simulation {
         elements: vec![],
-        input_beam: Array2::from(vec![[0f64, 0f64]]),
-        output_beam: Array2::from(vec![[0f64, 0f64]]),
+        input_beam,
+        output_beam,
         input_beam_ke: 100e6,
         breakpoints: Vec::new(),
         breakpoints_passed: Vec::new(),
