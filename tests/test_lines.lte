@@ -42,8 +42,20 @@ test_moni: moni, l = 0.200000, weight = 1
 
 DRIFT: line = ( test_drift )
 MARKER: line = ( test_marker )
-DIPOLE: line = ( test_sbend )
+SBEND: line = ( test_sbend )
 HKICK: line = ( test_hkick )
 VKICK: line = ( test_vkick )
 KQUAD: line = ( test_kquad )
+RFCW: line = ( test_rfcw )
+RFDF: line = ( test_rfdf )
+WIGGLER: line = ( test_wiggler )
+CSRCSBEND: line = ( test_csrcsbend )
+RBEN: line = ( test_rben )
+SBEN: line = ( test_sben )
+KSEXT: line = ( test_ksext )
+SCRAPER: line = ( test_scraper )
+ECOL: line = ( test_ecol )
+MONITOR: line = ( test_monitor )
+MONI: line = ( test_moni )
+
 
