@@ -9,3 +9,12 @@ tests/kquad_output_test.beam
 tests/rfcw_output_test.beam
 tests/rfdf_output_test.beam
 tests/wiggler_output_test.beam
+tests/csrcsbend_output_test.beam
+tests/ecol_output_test.beam
+tests/ksext_output_test.beam
+tests/moni_output_test.beam
+tests/monitor_output_test.beam
+tests/rben_output_test.beam
+tests/sben_output_test.beam
+tests/sbend_output_test.beam
+tests/scraper_output_test.beam

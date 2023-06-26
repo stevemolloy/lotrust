@@ -442,7 +442,7 @@ fn add_ele_to_store(
             let mut params: Vec<String> = vec![];
             while token_list[*ind + offset].token_type != Cparen {
                 if compare_tokentype_at(token_list, *ind + offset, Word) {
-                    params.push(token_list[*ind + offset].value.clone());
+                    params.push(token_list[*ind + offset].value.clone().to_lowercase());
                 }
                 offset += 1;
             }
@@ -469,7 +469,7 @@ fn add_ele_to_store(
             let name = token_list[*ind].value.to_lowercase();
             if compare_tokentype_at(token_list, *ind + 3, Comma) {
                 params.insert(
-                    token_list[*ind + 4].value.clone(),
+                    token_list[*ind + 4].value.clone().to_lowercase(),
                     token_list[*ind + 6].value.parse::<f64>().unwrap(),
                 );
                 *ind += 6;
@@ -515,7 +515,7 @@ fn add_ele_to_store(
                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
                     calc.interpret_string(&store_key).unwrap()
                 };
-                params.insert(key, val);
+                params.insert(key.to_lowercase(), val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
                     break;
@@ -564,7 +564,7 @@ fn add_ele_to_store(
                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
                     calc.interpret_string(&store_key).unwrap()
                 };
-                params.insert(key, val);
+                params.insert(key.to_lowercase(), val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
                     break;
@@ -607,7 +607,7 @@ fn add_ele_to_store(
                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
                     calc.interpret_string(&store_key).unwrap()
                 };
-                params.insert(key, val);
+                params.insert(key.to_lowercase(), val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
                     break;
@@ -639,7 +639,7 @@ fn add_ele_to_store(
                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
                     calc.interpret_string(&store_key).unwrap()
                 };
-                params.insert(key, val);
+                params.insert(key.to_lowercase(), val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
                     break;
@@ -682,7 +682,7 @@ fn add_ele_to_store(
                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
                     calc.interpret_string(&store_key).unwrap()
                 };
-                params.insert(key, val);
+                params.insert(key.to_lowercase(), val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
                     break;
@@ -725,7 +725,7 @@ fn add_ele_to_store(
                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
                     calc.interpret_string(&store_key).unwrap()
                 };
-                params.insert(key, val);
+                params.insert(key.to_lowercase(), val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
                     break;
@@ -768,7 +768,7 @@ fn add_ele_to_store(
                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
                     calc.interpret_string(&store_key).unwrap()
                 };
-                params.insert(key, val);
+                params.insert(key.to_lowercase(), val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
                     break;
@@ -800,7 +800,7 @@ fn add_ele_to_store(
                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
                     calc.interpret_string(&store_key).unwrap()
                 };
-                params.insert(key, val);
+                params.insert(key.to_lowercase(), val);
                 offset += 3;
                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
                     break;
@@ -1009,8 +1009,8 @@ mod tests {
     const MARKER_BEAM_TRUE: &str = "tests/marker_output_true.beam";
     const MARKER_BEAM_TEST: &str = "tests/marker_output_test.beam";
 
-    const SBEND_BEAM_TRUE: &str = "tests/dipole_output_true.beam";
-    const SBEND_BEAM_TEST: &str = "tests/dipole_output_test.beam";
+    const SBEND_BEAM_TRUE: &str = "tests/sbend_output_true.beam";
+    const SBEND_BEAM_TEST: &str = "tests/sbend_output_test.beam";
 
     const HKICK_BEAM_TRUE: &str = "tests/hkick_output_true.beam";
     const HKICK_BEAM_TEST: &str = "tests/hkick_output_test.beam";
@@ -1030,6 +1030,30 @@ mod tests {
     const WIGGLER_BEAM_TRUE: &str = "tests/wiggler_output_true.beam";
     const WIGGLER_BEAM_TEST: &str = "tests/wiggler_output_test.beam";
 
+    const CSRCSBEND_BEAM_TRUE: &str = "tests/csrcsbend_output_true.beam";
+    const CSRCSBEND_BEAM_TEST: &str = "tests/csrcsbend_output_test.beam";
+
+    const RBEN_BEAM_TRUE: &str = "tests/rben_output_true.beam";
+    const RBEN_BEAM_TEST: &str = "tests/rben_output_test.beam";
+
+    const SBEN_BEAM_TRUE: &str = "tests/sben_output_true.beam";
+    const SBEN_BEAM_TEST: &str = "tests/sben_output_test.beam";
+
+    const KSEXT_BEAM_TRUE: &str = "tests/ksext_output_true.beam";
+    const KSEXT_BEAM_TEST: &str = "tests/ksext_output_test.beam";
+
+    const SCRAPER_BEAM_TRUE: &str = "tests/scraper_output_true.beam";
+    const SCRAPER_BEAM_TEST: &str = "tests/scraper_output_test.beam";
+
+    const ECOL_BEAM_TRUE: &str = "tests/ecol_output_true.beam";
+    const ECOL_BEAM_TEST: &str = "tests/ecol_output_test.beam";
+
+    const MONITOR_BEAM_TRUE: &str = "tests/monitor_output_true.beam";
+    const MONITOR_BEAM_TEST: &str = "tests/monitor_output_test.beam";
+
+    const MONI_BEAM_TRUE: &str = "tests/moni_output_true.beam";
+    const MONI_BEAM_TEST: &str = "tests/moni_output_test.beam";
+
     #[test]
     fn track_thru_drift() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "DRIFT");
@@ -1045,7 +1069,7 @@ mod tests {
     }
 
     #[test]
-    fn track_thru_dipole() {
+    fn track_thru_sbend() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SBEND");
         sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
         sim.track();
@@ -1153,6 +1177,121 @@ mod tests {
 
         let mut file_true = File::open(WIGGLER_BEAM_TRUE).unwrap();
         let mut file_test = File::open(WIGGLER_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_csrcsbend() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "CSRCSBEND");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(CSRCSBEND_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        if let Ok(mut file_true) = File::open(CSRCSBEND_BEAM_TRUE) {
+            let mut file_test = File::open(CSRCSBEND_BEAM_TEST).unwrap();
+            assert!(diff_files(&mut file_true, &mut file_test));
+        } else {
+            assert!(false, "No file to compare against");
+        }
+    }
+
+    #[test]
+    fn track_thru_rben() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RBEN");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(RBEN_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(RBEN_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(RBEN_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_sben() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SBEN");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(SBEN_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(SBEN_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(SBEN_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_ksext() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KSEXT");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(KSEXT_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(KSEXT_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(KSEXT_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_scraper() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SCRAPER");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(SCRAPER_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(SCRAPER_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(SCRAPER_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_ecol() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "ECOL");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(ECOL_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(ECOL_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(ECOL_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_monitor() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "MONITOR");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(MONITOR_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(MONITOR_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(MONITOR_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_moni() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "MONI");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(MONI_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(MONI_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(MONI_BEAM_TEST).unwrap();
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 }
