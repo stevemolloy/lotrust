@@ -1018,6 +1018,18 @@ mod tests {
     const VKICK_BEAM_TRUE: &str = "tests/vkick_output_true.beam";
     const VKICK_BEAM_TEST: &str = "tests/vkick_output_test.beam";
 
+    const KQUAD_BEAM_TRUE: &str = "tests/kquad_output_true.beam";
+    const KQUAD_BEAM_TEST: &str = "tests/kquad_output_test.beam";
+
+    const RFCW_BEAM_TRUE: &str = "tests/rfcw_output_true.beam";
+    const RFCW_BEAM_TEST: &str = "tests/rfcw_output_test.beam";
+
+    const RFDF_BEAM_TRUE: &str = "tests/rfdf_output_true.beam";
+    const RFDF_BEAM_TEST: &str = "tests/rfdf_output_test.beam";
+
+    const WIGGLER_BEAM_TRUE: &str = "tests/wiggler_output_true.beam";
+    const WIGGLER_BEAM_TEST: &str = "tests/wiggler_output_test.beam";
+
     #[test]
     fn track_thru_drift() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "DRIFT");
@@ -1076,7 +1088,7 @@ mod tests {
 
     #[test]
     fn track_thru_vkick() {
-        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "VKICk");
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "VKICK");
         sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
         sim.track();
         if let Ok(mut file) = File::create(VKICK_BEAM_TEST) {
@@ -1085,6 +1097,62 @@ mod tests {
 
         let mut file_true = File::open(VKICK_BEAM_TRUE).unwrap();
         let mut file_test = File::open(VKICK_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_kquad() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KQUAD");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(KQUAD_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(KQUAD_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(KQUAD_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_rfcw() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFCW");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(RFCW_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(RFCW_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(RFCW_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_rfdf() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFDF");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(RFDF_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(RFDF_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(RFDF_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_wiggler() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "WIGGLER");
+        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        sim.track();
+        if let Ok(mut file) = File::create(WIGGLER_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(WIGGLER_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(WIGGLER_BEAM_TEST).unwrap();
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 }

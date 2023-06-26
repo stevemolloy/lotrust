@@ -5,3 +5,7 @@ tests/dipole_output_test.beam
 tests/hkick_output_test.beam
 tests/marker_output_test.beam
 tests/vkick_output_test.beam
+tests/kquad_output_test.beam
+tests/rfcw_output_test.beam
+tests/rfdf_output_test.beam
+tests/wiggler_output_test.beam
