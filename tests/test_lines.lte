@@ -3,7 +3,7 @@
 % 0.033333333 sto rf_cav_l
 % 0.033333333 156 * sto rf_cell_l
 % 6.44e5 156 * sto rf_voltage
-% 90 sto rf_phase
+% 0 sto rf_phase
 % 61.4e6 sto tdc_voltage,
 % 5 180 / pi * sto bend_angle
 % 50.011380 sto sext_k2

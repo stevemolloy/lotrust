@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::process::exit;
 
-const E_CHARGE: f64 = 1.60217663e-19;
+// const E_CHARGE: f64 = 1.60217663e-19;
 
 #[derive(Debug)]
 pub enum EleType {
@@ -79,7 +79,7 @@ pub fn make_acccav(name: String, length: f64, v: f64, freq: f64, phi: f64, gamma
     let r56_drift = length / (beta_sq * gamma_sq);
 
     let k = 2f64 * PI * freq / C;
-    let r65_kick = -k * v * phi.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS / E_CHARGE);
+    let r65_kick = -k * v * phi.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
 
     let mut param_map = HashMap::new();
     param_map.insert("v".to_string(), v);
