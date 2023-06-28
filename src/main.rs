@@ -327,6 +327,8 @@ fn main() {
     if options.beam_defined {
         let newsim: Simulation = load_lotr_file(&options.beam_filename);
         simulation.input_beam = newsim.input_beam;
+        let new_ke = newsim.input_beam_ke;
+        simulation.rescale_acc_energy(new_ke);
     }
 
     simulation.output_beam = simulation.input_beam.clone();

@@ -993,7 +993,7 @@ mod tests {
                         if f1_read_len == 0 {
                             return true;
                         }
-                        if &buff1[0..f1_read_len] != &buff2[0..f2_read_len] {
+                        if buff1[0..f1_read_len] != buff2[0..f2_read_len] {
                             return false;
                         }
                     }
@@ -1059,7 +1059,9 @@ mod tests {
     #[test]
     fn track_thru_drift() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "DRIFT");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(DRIFT_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1073,7 +1075,9 @@ mod tests {
     #[test]
     fn track_thru_sbend() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SBEND");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(SBEND_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1087,7 +1091,9 @@ mod tests {
     #[test]
     fn track_thru_marker() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "MARKER");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(MARKER_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1101,7 +1107,9 @@ mod tests {
     #[test]
     fn track_thru_hkick() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "HKICK");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(HKICK_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1115,7 +1123,9 @@ mod tests {
     #[test]
     fn track_thru_vkick() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "VKICK");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(VKICK_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1129,7 +1139,9 @@ mod tests {
     #[test]
     fn track_thru_kquad() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KQUAD");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(KQUAD_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1143,7 +1155,9 @@ mod tests {
     #[test]
     fn track_thru_rfcw() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFCW");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(RFCW_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1157,7 +1171,9 @@ mod tests {
     #[test]
     fn track_thru_rfdf() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFDF");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(RFDF_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1171,7 +1187,9 @@ mod tests {
     #[test]
     fn track_thru_wiggler() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "WIGGLER");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(WIGGLER_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1185,7 +1203,9 @@ mod tests {
     #[test]
     fn track_thru_csrcsbend() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "CSRCSBEND");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(CSRCSBEND_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1195,14 +1215,16 @@ mod tests {
             let mut file_test = File::open(CSRCSBEND_BEAM_TEST).unwrap();
             assert!(diff_files(&mut file_true, &mut file_test));
         } else {
-            assert!(false, "No file to compare against");
+            panic!("No file to compare against");
         }
     }
 
     #[test]
     fn track_thru_rben() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RBEN");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(RBEN_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1216,7 +1238,9 @@ mod tests {
     #[test]
     fn track_thru_sben() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SBEN");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(SBEN_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1230,7 +1254,9 @@ mod tests {
     #[test]
     fn track_thru_ksext() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KSEXT");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(KSEXT_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1244,7 +1270,9 @@ mod tests {
     #[test]
     fn track_thru_scraper() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SCRAPER");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(SCRAPER_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1258,7 +1286,9 @@ mod tests {
     #[test]
     fn track_thru_ecol() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "ECOL");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(ECOL_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1272,7 +1302,9 @@ mod tests {
     #[test]
     fn track_thru_monitor() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "MONITOR");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(MONITOR_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
@@ -1286,7 +1318,9 @@ mod tests {
     #[test]
     fn track_thru_moni() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "MONI");
-        sim.input_beam = load_lotr_file(BEAM_TESTFILE).input_beam;
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
         if let Ok(mut file) = File::create(MONI_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
