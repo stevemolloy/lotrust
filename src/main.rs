@@ -1,10 +1,12 @@
 use crate::beam::print_beam;
 use crate::parse_elegant::load_elegant_file;
 use crate::parse_lotr::{load_lotr_file, Simulation};
-use crossterm::{cursor, terminal, ExecutableCommand};
+use rustyline::error::ReadlineError;
+use rustyline::{DefaultEditor, Result};
 use std::collections::VecDeque;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::{env, io};
 
@@ -45,6 +47,9 @@ struct State {
     running: bool,
     simulation: Simulation,
 }
+
+const HISTORYFILE: &str = "history";
+const CONFIGDIR: &str = ".config/LOTR/";
 
 fn out_energyprofile(sink: &mut impl Write, state: &State) {
     let mut z = 0f64;
@@ -272,7 +277,38 @@ fn check_options(opts: &Options) -> bool {
     true
 }
 
-fn main() {
+fn main() -> Result<()> {
+    let mut store_history = true;
+    let mut history_file_location = PathBuf::new();
+    let mut config_dir_location = PathBuf::new();
+
+    if cfg!(windows) {
+        store_history = false;
+    } else if cfg!(unix) {
+        #[allow(deprecated)]
+        let home_dir = std::env::home_dir().unwrap();
+
+        config_dir_location.push(&home_dir);
+        config_dir_location.push(CONFIGDIR);
+
+        history_file_location.push(&config_dir_location);
+        history_file_location.push(HISTORYFILE);
+
+        if !Path::new(&config_dir_location).is_dir() {
+            match fs::create_dir(&config_dir_location) {
+                Err(err) => {
+                    eprintln!(
+                        "Problem creating {}: {}",
+                        config_dir_location.to_str().unwrap(),
+                        err
+                    );
+                    store_history = false;
+                }
+                _ => {}
+            }
+        }
+    }
+
     let mut options: Options = Default::default();
     let mut args: VecDeque<String> = env::args().collect();
 
@@ -333,15 +369,6 @@ fn main() {
 
     simulation.output_beam = simulation.input_beam.clone();
 
-    let mut stdout = io::stdout();
-    let stdin = io::stdin();
-
-    stdout
-        .execute(terminal::Clear(terminal::ClearType::All))
-        .unwrap()
-        .execute(cursor::MoveTo(0, 0))
-        .unwrap();
-
     let mut state = State {
         running: true,
         simulation,
@@ -349,17 +376,32 @@ fn main() {
 
     println!("Welcome to LOTR! A Rust powered particle tracker.");
 
+    let mut rl = DefaultEditor::new()?;
+    let _ = rl.load_history(&history_file_location);
+
     loop {
         let prompt = format!(
             "lotrust (ele: {}/{})> ",
             state.simulation.current,
             state.simulation.elements.len()
         );
-        stdout.write_all(prompt.as_bytes()).unwrap();
-        stdout.flush().unwrap();
-
-        let mut input = String::new();
-        stdin.read_line(&mut input).unwrap();
+        let readline = rl.readline(&prompt);
+        let input = match readline {
+            Ok(line) => {
+                let _ = rl.add_history_entry(line.as_str());
+                line
+            }
+            Err(ReadlineError::Interrupted) => {
+                continue;
+            }
+            Err(ReadlineError::Eof) => {
+                break;
+            }
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break;
+            }
+        };
 
         state = parse_input(&input, state);
 
@@ -367,6 +409,14 @@ fn main() {
             break;
         }
     }
+
+    if store_history {
+        if rl.save_history(&history_file_location).is_err() {
+            eprintln!("History could not be saved for this session.");
+        }
+    }
+
+    Ok(())
 
     // TODO(#7): The output definition of energy error is different from the input. Fix this.
 }
