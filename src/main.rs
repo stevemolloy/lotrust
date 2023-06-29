@@ -295,16 +295,13 @@ fn main() -> Result<()> {
         history_file_location.push(HISTORYFILE);
 
         if !Path::new(&config_dir_location).is_dir() {
-            match fs::create_dir(&config_dir_location) {
-                Err(err) => {
-                    eprintln!(
-                        "Problem creating {}: {}",
-                        config_dir_location.to_str().unwrap(),
-                        err
-                    );
-                    store_history = false;
-                }
-                _ => {}
+            if let Err(err) = fs::create_dir(&config_dir_location) {
+                eprintln!(
+                    "Problem creating {}: {}",
+                    config_dir_location.to_str().unwrap(),
+                    err
+                );
+                store_history = false;
             }
         }
     }
@@ -410,10 +407,8 @@ fn main() -> Result<()> {
         }
     }
 
-    if store_history {
-        if rl.save_history(&history_file_location).is_err() {
-            eprintln!("History could not be saved for this session.");
-        }
+    if store_history && rl.save_history(&history_file_location).is_err() {
+        eprintln!("History could not be saved for this session.");
     }
 
     Ok(())
