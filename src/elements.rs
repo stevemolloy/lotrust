@@ -60,9 +60,8 @@ pub fn make_dipole(name: String, length: f64, angle: f64, gamma: f64) -> Element
     let gamma_sq = gamma.powi(2);
     // TODO: I scaled the following by -1 in order to match elegant.  I should probably try to
     // understand that.
-    let r56 = -1f64
-        * ((length / (beta_sq * gamma_sq))
-            - ((angle_fixed - angle_fixed.sin()) / (omega * beta_sq)));
+    let r56 =
+        (length / (beta_sq * gamma_sq)) - ((angle_fixed - angle_fixed.sin()) / (omega * beta_sq));
 
     let mut param_map = HashMap::new();
     param_map.insert("angle".to_string(), angle);
