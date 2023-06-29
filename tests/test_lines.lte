@@ -19,9 +19,9 @@ test_rfcw: rfcw, freq = "frequency",&
 		phase="rf_phase",&
 		change_p0=1,&
 		end1_focus=1, end2_focus=1,&
-		zwake=1, trwake=1,&
-		zwakefile="./input/wakefieldlong_interp.sdds",tColumn="t",wzColumn="W",n_bins=0,change_p0=1,&
-		trwakefile="./input/wakefieldtran_interp.sdds",tColumn="t",wxColumn="W",wyColumn="W",n_bins=0
+		zwake=0, trwake=0,&
+		n_bins=0,change_p0=1,&
+		wyColumn="W",n_bins=0
 test_rfdf: RFDF, L=3, PHASE="rf_phase", TILT=0, frequency="rf_frequency", VOLTAGE="tdc_voltage", N_KICKS=3000, MAGNETIC_DEFLECTION=1,
 test_wiggler: wiggler, l = 4.95, K = 2.23, POLES = 328
 test_csrcsbend: CSRCSBEND, ANGLE="5.9 180 / pi * -1 *", L=0.5, TILT="3 pi * 2 /",&
