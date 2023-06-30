@@ -4,6 +4,7 @@ use crate::elements::{make_acccav, make_dipole, make_drift, make_quad};
 use crate::parse_lotr::Simulation;
 use ndarray::Array2;
 use std::collections::HashMap;
+use std::f64::consts::PI;
 use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
@@ -931,7 +932,7 @@ fn line_to_simulation(line: Line) -> Simulation {
                     None => 0f64,
                 };
                 let phase = match ele.params.get("phase") {
-                    Some(x) => x.to_radians(),
+                    Some(x) => x.to_radians() - PI / 2f64, // Convert from elegant phase defn
                     None => 0f64,
                 };
                 design_gamma += (volt * phase.cos()) / MASS;
