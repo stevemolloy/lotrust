@@ -58,8 +58,6 @@ pub fn make_dipole(name: String, length: f64, angle: f64, gamma: f64) -> Element
     let omega = angle_fixed / length;
     let beta_sq = gamma_2_beta(gamma).powi(2);
     let gamma_sq = gamma.powi(2);
-    // TODO: I scaled the following by -1 in order to match elegant.  I should probably try to
-    // understand that.
     let r56 =
         (length / (beta_sq * gamma_sq)) - ((angle_fixed - angle_fixed.sin()) / (omega * beta_sq));
 

@@ -28,17 +28,24 @@ impl Beam {
                 self.pos = self.pos.dot(&t_matrix.t());
             }
             EleType::AccCav => {
+                let beam_ke = ele.gamma * MASS;
+                let new_ke = beam_ke + ele.params["v"] * ele.params["phi"].cos();
+                let e_err_mat = arr2(&[[1f64, 0f64], [0f64, beam_ke / new_ke]]);
+
                 let r56_drift = match ele.params.get("r56_drift") {
                     Some(val) => *val,
                     None => 0f64,
                 };
+
                 let drift_matrix = arr2(&[[1f64, r56_drift], [0f64, 1f64]]);
                 let r65_kick = match ele.params.get("r65_kick") {
                     Some(val) => *val,
                     None => 0f64,
                 };
                 let kick_matrix = arr2(&[[1f64, 0f64], [r65_kick, 1f64]]);
+
                 self.pos = self.pos.dot(&drift_matrix.t());
+                self.pos = self.pos.dot(&e_err_mat.t());
                 self.pos = self.pos.dot(&kick_matrix.t());
                 self.pos = self.pos.dot(&drift_matrix.t());
             }
