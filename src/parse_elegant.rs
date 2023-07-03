@@ -754,9 +754,6 @@ fn add_ele_to_store(
             store.add_element(token_list[*ind].value.to_lowercase(), ele);
         }
         _ => {
-            for ele in &store.elements {
-                println!("{ele:?}");
-            }
             eprintln!(
                 "{}:{}:{} Unrecognised elegant type: '{}'",
                 elegant_type.loc.filename,
