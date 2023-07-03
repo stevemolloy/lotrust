@@ -1002,6 +1002,7 @@ mod tests {
         }
     }
 
+    const SPF_TESTFILE: &str = "tests/elegant_example.lte";
     const ELEGANT_TESTFILE: &str = "tests/test_lines.lte";
     const BEAM_TESTFILE: &str = "tests/test_beam.lotr";
 
@@ -1055,6 +1056,9 @@ mod tests {
 
     const MONI_BEAM_TRUE: &str = "tests/moni_output_true.beam";
     const MONI_BEAM_TEST: &str = "tests/moni_output_test.beam";
+
+    const SPF_BEAM_TRUE: &str = "tests/spf_output_true.beam";
+    const SPF_BEAM_TEST: &str = "tests/spf_output_test.beam";
 
     #[test]
     fn track_thru_drift() {
@@ -1328,6 +1332,21 @@ mod tests {
 
         let mut file_true = File::open(MONI_BEAM_TRUE).unwrap();
         let mut file_test = File::open(MONI_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+    #[test]
+    fn track_thru_spf() {
+        let mut sim: Simulation = load_elegant_file(SPF_TESTFILE, "SPF");
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
+        sim.track();
+        if let Ok(mut file) = File::create(SPF_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(SPF_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(SPF_BEAM_TEST).unwrap();
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 }
