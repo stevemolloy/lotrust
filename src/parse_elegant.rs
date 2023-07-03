@@ -217,6 +217,11 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
     let mut row = 1;
     let mut col = 1;
     while !contents.is_empty() {
+        let location = FileLoc {
+            row,
+            col,
+            filename: filename.to_string(),
+        };
         if contents.starts_with(|c: char| c.is_whitespace()) {
             let c = chop_character(&mut contents);
             match c {
@@ -228,11 +233,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
                         tokens.push(Token {
                             token_type: TokenType::LineEnd,
                             value: "LineEnd".to_string(),
-                            loc: FileLoc {
-                                row,
-                                col,
-                                filename: filename.to_string(),
-                            },
+                            loc: location,
                         });
                     }
                     row += 1;
@@ -243,36 +244,15 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
                 }
             }
         } else if contents.starts_with(|c: char| c.is_ascii_alphabetic()) {
-            let tok = parse_word(
-                &mut contents,
-                FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
-            );
+            let tok = parse_word(&mut contents, location);
             col += tok.value.len();
             tokens.push(tok);
         } else if contents.starts_with(|c: char| c == '"') {
-            let tok = parse_string(
-                &mut contents,
-                FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
-            );
+            let tok = parse_string(&mut contents, location);
             col += tok.value.len();
             tokens.push(tok);
         } else if contents.starts_with(|c: char| c.is_ascii_digit() || c == '-') {
-            let tok = parse_digit(
-                &mut contents,
-                FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
-            );
+            let tok = parse_digit(&mut contents, location);
             col += tok.value.len();
             tokens.push(tok);
         } else if contents.starts_with('(') {
@@ -280,11 +260,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             tokens.push(Token {
                 token_type: TokenType::Oparen,
                 value: "(".to_string(),
-                loc: FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
+                loc: location,
             });
             col += 1;
         } else if contents.starts_with(')') {
@@ -292,11 +268,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             tokens.push(Token {
                 token_type: TokenType::Cparen,
                 value: ")".to_string(),
-                loc: FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
+                loc: location,
             });
             col += 1;
         } else if contents.starts_with('&') {
@@ -304,11 +276,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             tokens.push(Token {
                 token_type: TokenType::LineJoin,
                 value: "&".to_string(),
-                loc: FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
+                loc: location,
             });
             col += 1;
         } else if contents.starts_with(',') {
@@ -316,11 +284,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             tokens.push(Token {
                 token_type: TokenType::Comma,
                 value: ",".to_string(),
-                loc: FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
+                loc: location,
             });
             col += 1;
         } else if contents.starts_with('=') {
@@ -328,11 +292,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             tokens.push(Token {
                 token_type: TokenType::Assign,
                 value: "=".to_string(),
-                loc: FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
+                loc: location,
             });
             col += 1;
         } else if contents.starts_with('{') {
@@ -340,11 +300,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             tokens.push(Token {
                 token_type: TokenType::Ocurly,
                 value: "{".to_string(),
-                loc: FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
+                loc: location,
             });
             col += 1;
         } else if contents.starts_with('}') {
@@ -352,11 +308,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             tokens.push(Token {
                 token_type: TokenType::Ccurly,
                 value: "}".to_string(),
-                loc: FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
+                loc: location,
             });
             col += 1;
         } else if contents.starts_with(':') {
@@ -364,24 +316,12 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             tokens.push(Token {
                 token_type: TokenType::Colon,
                 value: ":".to_string(),
-                loc: FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
+                loc: location,
             });
             col += 1;
         } else if contents.starts_with('%') && col == 1 {
             chop_character(&mut contents);
-            col += 1;
-            let tok = parse_rpn_expr(
-                &mut contents,
-                FileLoc {
-                    row,
-                    col,
-                    filename: filename.to_string(),
-                },
-            );
+            let tok = parse_rpn_expr(&mut contents, location);
             col = 1;
             row += 1;
             tokens.push(tok);
@@ -397,11 +337,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
                 tokens.push(Token {
                     token_type: TokenType::LineEnd,
                     value: "LineEnd".to_string(),
-                    loc: FileLoc {
-                        row,
-                        col,
-                        filename: filename.to_string(),
-                    },
+                    loc: location,
                 });
             }
             row += 1;
