@@ -48,6 +48,8 @@ enum IntermedType {
     Bend,
     Quad,
     Sext,
+    Line(Vec<String>),
+    Ignore,
 }
 
 pub fn load_elegant_file(filename: &str, line_to_expand: &str) -> Simulation {
@@ -59,14 +61,14 @@ pub fn load_elegant_file(filename: &str, line_to_expand: &str) -> Simulation {
     line_to_simulation(line)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct FileLoc {
     filename: String,
     row: usize,
     col: usize,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum TokenType {
     Word,
     Value,
@@ -81,6 +83,7 @@ enum TokenType {
     RpnExpr,
     LineEnd,
     LineJoin,
+    EOF,
 }
 
 impl fmt::Display for TokenType {
@@ -89,7 +92,7 @@ impl fmt::Display for TokenType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Token {
     token_type: TokenType,
     value: String,
@@ -227,8 +230,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             match c {
                 '\n' => {
                     if !tokens.is_empty()
-                        && (tokens.last().unwrap().token_type != TokenType::LineJoin
-                            && tokens.last().unwrap().token_type != TokenType::LineEnd)
+                        && (tokens.last().unwrap().token_type != TokenType::LineEnd)
                     {
                         tokens.push(Token {
                             token_type: TokenType::LineEnd,
@@ -347,10 +349,212 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
             eprintln!("{}:{}:{} Unknown character '{}'", filename, row, col, chr,);
         }
     }
-    tokens
+
+    tokens.push(Token {
+        token_type: TokenType::EOF,
+        value: "EOF".to_string(),
+        loc: FileLoc {
+            row,
+            col,
+            filename: filename.to_string(),
+        },
+    });
+
+    let mut ind = 0;
+    let mut cleaned_tokens: Vec<Token> = vec![];
+
+    while ind < tokens.len() {
+        let this_tok = &tokens[ind];
+        ind += 1;
+        if ind - 1 == 0
+            && (this_tok.token_type == TokenType::LineEnd
+                || this_tok.token_type == TokenType::LineJoin)
+        {
+            continue;
+        } else if this_tok.token_type == TokenType::LineJoin
+            && tokens[ind].token_type == TokenType::LineEnd
+        {
+            continue;
+        } else if this_tok.token_type == TokenType::LineEnd
+            && tokens[ind - 2].token_type == TokenType::LineJoin
+        {
+            continue;
+        }
+
+        cleaned_tokens.push(this_tok.clone());
+    }
+
+    cleaned_tokens
+}
+
+fn get_tokens_for_next_ele(token_list: &[Token], ind: &mut usize) -> Vec<Token> {
+    let mut return_token_list: Vec<Token> = vec![];
+
+    while token_list[*ind].token_type != TokenType::LineEnd {
+        return_token_list.push(token_list[*ind].clone());
+        *ind += 1;
+    }
+    return_token_list.push(token_list[*ind].clone());
+
+    return_token_list
+}
+
+fn get_param_list(token_list: &[Token], calc: &mut RpnCalculator) -> HashMap<String, f64> {
+    let params_to_ignore = vec![
+        "zwake",
+        "trwake",
+        "zwakefile",
+        "tcolumn",
+        "wzcolumn",
+        "trwakefile",
+        "wxcolumn",
+        "wycolumn",
+        "systematic_multipoles",
+        "insert_from",
+        "output_file",
+    ];
+    let mut ind = 4;
+    let mut params = HashMap::<String, f64>::new();
+    if token_list.len() > 4 {
+        while token_list[ind].token_type != TokenType::LineEnd {
+            if token_list[ind].token_type == TokenType::Comma {
+                ind += 1;
+                continue;
+            }
+            let param = token_list[ind + 0].clone();
+            if !params_to_ignore.contains(&param.value.to_lowercase().as_str()) {
+                let value = token_list[ind + 2].clone();
+                assert!(param.token_type == TokenType::Word);
+                assert!(token_list[ind + 1].token_type == TokenType::Assign);
+                assert!(
+                    value.token_type == TokenType::Value || value.token_type == TokenType::EleStr
+                );
+
+                if value.token_type == TokenType::Value {
+                    params.insert(param.value, value.value.parse().unwrap());
+                } else {
+                    let store_key = value.value.clone().replace('"', "");
+                    let val = calc.interpret_string(&store_key).unwrap();
+                    params.insert(param.value, val);
+                }
+            }
+            ind += 3;
+        }
+    }
+    if !params.contains_key("l") {
+        params.insert("l".to_string(), 0f64);
+    }
+    params
+}
+
+fn get_next_ele_from_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> ElegantElement {
+    assert!(
+        token_list[0].token_type == TokenType::Word
+            || token_list[0].token_type == TokenType::EleStr
+    );
+    assert!(token_list[1].token_type == TokenType::Colon);
+    assert!(token_list[2].token_type == TokenType::Word);
+
+    let ele_name = token_list[0].value.to_lowercase().replace('"', "").clone();
+
+    match token_list[2].value.to_lowercase().as_str() {
+        "charge" | "magnify" | "malign" | "watch" | "watchpoint" | "mark" => ElegantElement {
+            name: ele_name,
+            intermed_type: IntermedType::Ignore,
+            params: HashMap::<String, f64>::new(),
+        },
+        "drift" | "marker" | "scraper" | "ecol" | "wiggler" => ElegantElement {
+            name: ele_name,
+            intermed_type: IntermedType::Drift,
+            params: get_param_list(token_list, calc),
+        },
+        "rfcw" | "rfdf" => ElegantElement {
+            name: ele_name,
+            intermed_type: IntermedType::AccCav,
+            params: get_param_list(token_list, calc),
+        },
+        "kquad" => ElegantElement {
+            name: ele_name,
+            intermed_type: IntermedType::Quad,
+            params: get_param_list(token_list, calc),
+        },
+        "hkick" | "vkick" => ElegantElement {
+            name: ele_name,
+            intermed_type: IntermedType::Kick,
+            params: get_param_list(token_list, calc),
+        },
+        "monitor" | "moni" => ElegantElement {
+            name: ele_name,
+            intermed_type: IntermedType::Moni,
+            params: get_param_list(token_list, calc),
+        },
+        "csrcsbend" | "rben" | "sben" | "sbend" => ElegantElement {
+            name: ele_name,
+            intermed_type: IntermedType::Bend,
+            params: get_param_list(token_list, calc),
+        },
+        "ksext" => ElegantElement {
+            name: ele_name,
+            intermed_type: IntermedType::Sext,
+            params: get_param_list(token_list, calc),
+        },
+        "line" => {
+            assert!(token_list[4].token_type == TokenType::Oparen);
+            let mut ind = 5;
+            let mut contained: Vec<String> = vec![];
+            while token_list[ind].token_type != TokenType::Cparen {
+                if token_list[ind].token_type == TokenType::Comma {
+                    ind += 1;
+                    continue;
+                }
+                let subline_name = token_list[ind].clone();
+                assert!(
+                    subline_name.token_type == TokenType::Word
+                        || subline_name.token_type == TokenType::EleStr,
+                    "Expected a 'Word', but got {:#?}",
+                    subline_name
+                );
+                if subline_name.token_type == TokenType::EleStr {
+                    contained.push(subline_name.value.to_lowercase().replace('"', ""));
+                }
+                contained.push(subline_name.value.to_lowercase());
+                ind += 1;
+            }
+            ind += 1;
+            assert!(token_list[ind].token_type == TokenType::LineEnd);
+            ElegantElement {
+                name: ele_name,
+                intermed_type: IntermedType::Line(contained),
+                params: HashMap::<String, f64>::new(),
+            }
+        }
+        _ => {
+            eprintln!("Tokens to get ele from: {:#?}", token_list);
+            eprintln!("Exiting as unable to interpret the above.");
+            exit(1);
+        }
+    }
 }
 
 fn add_ele_to_store(
+    token_list: &[Token],
+    ind: &mut usize,
+    store: &mut Library,
+    calc: &mut RpnCalculator,
+) {
+    use IntermedType::*;
+    let toks = get_tokens_for_next_ele(token_list, ind);
+    let new_ele = get_next_ele_from_tokens(&toks, calc);
+    match new_ele.intermed_type {
+        Ignore => store.ignore(new_ele.name),
+        Drift | AccCav | Quad | Kick | Moni | Bend | Sext => {
+            store.add_element(new_ele.name.clone(), new_ele)
+        }
+        Line(contents) => store.add_line(new_ele.name.to_lowercase(), contents),
+    }
+}
+
+fn add_ele_to_store_old(
     token_list: &[Token],
     ind: &mut usize,
     store: &mut Library,
@@ -781,6 +985,8 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Library {
             && compare_tokentype_at(token_list, ind + 1, Colon)
         {
             add_ele_to_store(token_list, &mut ind, &mut element_store, calc);
+        } else if tok.token_type == EOF {
+            break;
         } else {
             println!("{tok:?}", tok = token_list[ind - 1]);
             println!("{tok:?}");
@@ -803,7 +1009,7 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Library {
 }
 
 fn intermed_to_line(line: &mut Line, intermed: &Library, line_name: &str) {
-    let line_name = &line_name.to_lowercase();
+    let line_name = &line_name.to_lowercase().replace('"', "");
     if let Some(line_defn) = intermed.lines.get(line_name) {
         for subline in line_defn {
             intermed_to_line(line, intermed, subline);
@@ -813,7 +1019,12 @@ fn intermed_to_line(line: &mut Line, intermed: &Library, line_name: &str) {
         line.push(ele.clone());
     } else {
         println!("{:#?}", intermed.ignored);
-        println!("Trying to expand the line called {line_name} but it cannot be found");
+        println!("{:#?}", intermed.lines.keys());
+        println!("{:#?}", intermed.ignored.contains(&line_name.to_string()));
+        eprintln!(
+            "Trying to expand the line called '{:#?}' but it cannot be found",
+            line_name
+        );
     }
 }
 
@@ -889,6 +1100,12 @@ fn line_to_simulation(line: Line) -> Simulation {
                 };
                 acc.elements
                     .push(make_dipole(ele.name.to_string(), l, angle, design_gamma));
+            }
+            IntermedType::Line(_) => {
+                todo!()
+            }
+            IntermedType::Ignore => {
+                todo!()
             }
         }
     }
