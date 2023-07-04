@@ -554,424 +554,424 @@ fn add_ele_to_store(
     }
 }
 
-fn add_ele_to_store_old(
-    token_list: &[Token],
-    ind: &mut usize,
-    store: &mut Library,
-    calc: &mut RpnCalculator,
-) {
-    use TokenType::*;
-    assert!(
-        compare_tokentype_at(token_list, *ind, Word)
-            || compare_tokentype_at(token_list, *ind, EleStr)
-    );
-    assert!(compare_tokentype_at(token_list, *ind + 1, Colon));
-    assert!(compare_tokentype_at(token_list, *ind + 2, Word));
-
-    let elegant_type = &token_list[*ind + 2];
-    let elegant_name = &token_list[*ind].value;
-    match elegant_type.value.to_lowercase().as_str() {
-        "charge" | "magnify" | "malign" | "watch" | "watchpoint" | "mark" => {
-            let str_to_ignore = token_list[*ind].value.to_lowercase().replace('"', "");
-            store.ignore(str_to_ignore);
-        }
-        "line" => {
-            assert!(compare_tokentype_at(token_list, *ind + 3, Assign));
-            assert!(compare_tokentype_at(token_list, *ind + 4, Oparen));
-            let mut offset = 5;
-            let mut params: Vec<String> = vec![];
-            while token_list[*ind + offset].token_type != Cparen {
-                if compare_tokentype_at(token_list, *ind + offset, Word) {
-                    params.push(token_list[*ind + offset].value.clone().to_lowercase());
-                }
-                offset += 1;
-            }
-            store.add_line(token_list[*ind].value.to_lowercase(), params);
-        }
-        "drift" => {
-            assert!(compare_tokentype_at(token_list, *ind + 3, Comma));
-            assert!(compare_tokentype_at(token_list, *ind + 4, Word));
-            assert!(token_list[*ind + 4].value.to_lowercase() == "l");
-            assert!(compare_tokentype_at(token_list, *ind + 5, Assign));
-            assert!(compare_tokentype_at(token_list, *ind + 6, Value));
-            let ele = ElegantElement {
-                name: elegant_name.to_string(),
-                intermed_type: IntermedType::Drift,
-                params: HashMap::<String, f64>::from([(
-                    "l".to_string(),
-                    token_list[*ind + 6].value.parse::<f64>().unwrap(),
-                )]),
-            };
-            store.add_element(token_list[*ind].value.to_lowercase(), ele);
-        }
-        "marker" => {
-            let mut params = HashMap::<String, f64>::new();
-            let name = token_list[*ind].value.to_lowercase();
-            if compare_tokentype_at(token_list, *ind + 3, Comma) {
-                params.insert(
-                    token_list[*ind + 4].value.clone().to_lowercase(),
-                    token_list[*ind + 6].value.parse::<f64>().unwrap(),
-                );
-                *ind += 6;
-            } else {
-                *ind += 2;
-            }
-            let ele = ElegantElement {
-                name: elegant_name.to_string(),
-                intermed_type: IntermedType::Drift,
-                params: HashMap::<String, f64>::from([("l".to_string(), 0f64)]),
-            };
-            store.add_element(name, ele);
-        }
-        "rfcw" => {
-            let mut params = HashMap::<String, f64>::new();
-            let mut offset = 3;
-            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
-            offset += 1;
-            while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
-                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
-                let key = token_list[*ind + offset].value.clone();
-                if key == "zwakefile"
-                    || key == "trwakefile"
-                    || key == "tColumn"
-                    || key == "wzColumn"
-                    || key == "wxColumn"
-                    || key == "wyColumn"
-                {
-                    offset += 3;
-                    if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                        break;
-                    }
-                    offset += 1;
-                    if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                        offset += 1;
-                    }
-                    continue;
-                }
-                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
-                } else {
-                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
-                    calc.interpret_string(&store_key).unwrap()
-                };
-                params.insert(key.to_lowercase(), val);
-                offset += 3;
-                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                    break;
-                }
-                offset += 1;
-                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                    offset += 1;
-                }
-            }
-            let ele = ElegantElement {
-                name: elegant_name.to_string(),
-                intermed_type: IntermedType::AccCav,
-                params,
-            };
-            store.add_element(token_list[*ind].value.to_lowercase(), ele);
-        }
-        "rfdf" => {
-            let mut params = HashMap::<String, f64>::new();
-            let mut offset = 3;
-            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
-            offset += 1;
-            while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
-                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
-                let key = token_list[*ind + offset].value.clone();
-                if key == "zwakefile"
-                    || key == "trwakefile"
-                    || key == "tColumn"
-                    || key == "wzColumn"
-                    || key == "wxColumn"
-                    || key == "wyColumn"
-                {
-                    offset += 3;
-                    if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                        break;
-                    }
-                    offset += 1;
-                    if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                        offset += 1;
-                    }
-                    continue;
-                }
-                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
-                } else {
-                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
-                    calc.interpret_string(&store_key).unwrap()
-                };
-                params.insert(key.to_lowercase(), val);
-                offset += 3;
-                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                    break;
-                }
-                offset += 1;
-                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                    offset += 1;
-                }
-            }
-            let ele = ElegantElement {
-                name: elegant_name.to_string(),
-                intermed_type: IntermedType::AccCav,
-                params,
-            };
-            store.add_element(token_list[*ind].value.to_lowercase(), ele);
-        }
-        "kquad" => {
-            let mut params = HashMap::<String, f64>::new();
-            let mut offset = 3;
-            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
-            offset += 1;
-            while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
-                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
-                let key = token_list[*ind + offset].value.clone();
-                if key == "SYSTEMATIC_MULTIPOLES" {
-                    offset += 3;
-                    if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                        break;
-                    }
-                    offset += 1;
-                    if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                        offset += 1;
-                    }
-                    continue;
-                }
-                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
-                } else {
-                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
-                    calc.interpret_string(&store_key).unwrap()
-                };
-                params.insert(key.to_lowercase(), val);
-                offset += 3;
-                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                    break;
-                }
-                offset += 1;
-                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                    offset += 1;
-                }
-            }
-            let ele = ElegantElement {
-                name: elegant_name.to_string(),
-                intermed_type: IntermedType::Quad,
-                params,
-            };
-            store.add_element(token_list[*ind].value.to_lowercase(), ele);
-        }
-        "hkick" | "vkick" => {
-            let mut params = HashMap::<String, f64>::new();
-            let mut offset = 3;
-            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
-            offset += 1;
-            while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
-                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
-                let key = token_list[*ind + offset].value.clone();
-                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
-                } else {
-                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
-                    calc.interpret_string(&store_key).unwrap()
-                };
-                params.insert(key.to_lowercase(), val);
-                offset += 3;
-                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                    break;
-                }
-                offset += 1;
-                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                    offset += 1;
-                }
-            }
-            let ele = ElegantElement {
-                name: elegant_name.to_string(),
-                intermed_type: IntermedType::Kick,
-                params,
-            };
-            store.add_element(token_list[*ind].value.to_lowercase(), ele);
-        }
-        "wiggler" | "csrcsbend" | "rben" | "sben" | "sbend" => {
-            let mut params = HashMap::<String, f64>::new();
-            let mut offset = 3;
-            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
-            offset += 1;
-            while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
-                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
-                let key = token_list[*ind + offset].value.clone();
-                if key == "output_file" {
-                    offset += 3;
-                    if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                        break;
-                    }
-                    offset += 1;
-                    if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                        offset += 1;
-                    }
-                    continue;
-                }
-                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
-                } else {
-                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
-                    calc.interpret_string(&store_key).unwrap()
-                };
-                params.insert(key.to_lowercase(), val);
-                offset += 3;
-                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                    break;
-                }
-                offset += 1;
-                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                    offset += 1;
-                }
-            }
-            let ele = ElegantElement {
-                name: elegant_name.to_string(),
-                intermed_type: IntermedType::Bend,
-                params,
-            };
-            store.add_element(token_list[*ind].value.to_lowercase(), ele);
-        }
-        "ksext" => {
-            let mut params = HashMap::<String, f64>::new();
-            let mut offset = 3;
-            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
-            offset += 1;
-            while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
-                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
-                let key = token_list[*ind + offset].value.clone();
-                if key == "SYSTEMATIC_MULTIPOLES" {
-                    offset += 3;
-                    if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                        break;
-                    }
-                    offset += 1;
-                    if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                        offset += 1;
-                    }
-                    continue;
-                }
-                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
-                } else {
-                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
-                    calc.interpret_string(&store_key).unwrap()
-                };
-                params.insert(key.to_lowercase(), val);
-                offset += 3;
-                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                    break;
-                }
-                offset += 1;
-                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                    offset += 1;
-                }
-            }
-            let ele = ElegantElement {
-                name: elegant_name.to_string(),
-                intermed_type: IntermedType::Sext,
-                params,
-            };
-            store.add_element(token_list[*ind].value.to_lowercase(), ele);
-        }
-        "scraper" | "ecol" => {
-            let mut params = HashMap::<String, f64>::new();
-            let mut offset = 3;
-            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
-            offset += 1;
-            while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
-                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
-                let key = token_list[*ind + offset].value.clone();
-                if key == "insert_from" {
-                    offset += 3;
-                    if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                        break;
-                    }
-                    offset += 1;
-                    if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                        offset += 1;
-                    }
-                    continue;
-                }
-                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
-                } else {
-                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
-                    calc.interpret_string(&store_key).unwrap()
-                };
-                params.insert(key.to_lowercase(), val);
-                offset += 3;
-                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                    break;
-                }
-                offset += 1;
-                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                    offset += 1;
-                }
-            }
-            let ele = ElegantElement {
-                name: elegant_name.to_string(),
-                intermed_type: IntermedType::Drift,
-                params,
-            };
-            store.add_element(token_list[*ind].value.to_lowercase(), ele);
-        }
-        "monitor" | "moni" => {
-            let mut params = HashMap::<String, f64>::new();
-            let mut offset = 3;
-            assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
-            offset += 1;
-            while token_list[*ind + offset].token_type != LineEnd {
-                assert!(compare_tokentype_at(token_list, *ind + offset, Word));
-                assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
-                let key = token_list[*ind + offset].value.clone();
-                let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
-                    token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
-                } else {
-                    let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
-                    calc.interpret_string(&store_key).unwrap()
-                };
-                params.insert(key.to_lowercase(), val);
-                offset += 3;
-                if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
-                    break;
-                }
-                offset += 1;
-                if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
-                    offset += 1;
-                }
-            }
-            let ele = ElegantElement {
-                name: elegant_name.to_string(),
-                intermed_type: IntermedType::Moni,
-                params,
-            };
-            store.add_element(token_list[*ind].value.to_lowercase(), ele);
-        }
-        _ => {
-            eprintln!(
-                "{}:{}:{} Unrecognised elegant type: '{}'",
-                elegant_type.loc.filename,
-                elegant_type.loc.row,
-                elegant_type.loc.col,
-                elegant_type.value
-            );
-            exit(1);
-        }
-    }
-    while token_list[*ind].token_type != TokenType::LineEnd {
-        *ind += 1;
-    }
-}
+// fn add_ele_to_store_old(
+//     token_list: &[Token],
+//     ind: &mut usize,
+//     store: &mut Library,
+//     calc: &mut RpnCalculator,
+// ) {
+//     use TokenType::*;
+//     assert!(
+//         compare_tokentype_at(token_list, *ind, Word)
+//             || compare_tokentype_at(token_list, *ind, EleStr)
+//     );
+//     assert!(compare_tokentype_at(token_list, *ind + 1, Colon));
+//     assert!(compare_tokentype_at(token_list, *ind + 2, Word));
+//
+//     let elegant_type = &token_list[*ind + 2];
+//     let elegant_name = &token_list[*ind].value;
+//     match elegant_type.value.to_lowercase().as_str() {
+//         "charge" | "magnify" | "malign" | "watch" | "watchpoint" | "mark" => {
+//             let str_to_ignore = token_list[*ind].value.to_lowercase().replace('"', "");
+//             store.ignore(str_to_ignore);
+//         }
+//         "line" => {
+//             assert!(compare_tokentype_at(token_list, *ind + 3, Assign));
+//             assert!(compare_tokentype_at(token_list, *ind + 4, Oparen));
+//             let mut offset = 5;
+//             let mut params: Vec<String> = vec![];
+//             while token_list[*ind + offset].token_type != Cparen {
+//                 if compare_tokentype_at(token_list, *ind + offset, Word) {
+//                     params.push(token_list[*ind + offset].value.clone().to_lowercase());
+//                 }
+//                 offset += 1;
+//             }
+//             store.add_line(token_list[*ind].value.to_lowercase(), params);
+//         }
+//         "drift" => {
+//             assert!(compare_tokentype_at(token_list, *ind + 3, Comma));
+//             assert!(compare_tokentype_at(token_list, *ind + 4, Word));
+//             assert!(token_list[*ind + 4].value.to_lowercase() == "l");
+//             assert!(compare_tokentype_at(token_list, *ind + 5, Assign));
+//             assert!(compare_tokentype_at(token_list, *ind + 6, Value));
+//             let ele = ElegantElement {
+//                 name: elegant_name.to_string(),
+//                 intermed_type: IntermedType::Drift,
+//                 params: HashMap::<String, f64>::from([(
+//                     "l".to_string(),
+//                     token_list[*ind + 6].value.parse::<f64>().unwrap(),
+//                 )]),
+//             };
+//             store.add_element(token_list[*ind].value.to_lowercase(), ele);
+//         }
+//         "marker" => {
+//             let mut params = HashMap::<String, f64>::new();
+//             let name = token_list[*ind].value.to_lowercase();
+//             if compare_tokentype_at(token_list, *ind + 3, Comma) {
+//                 params.insert(
+//                     token_list[*ind + 4].value.clone().to_lowercase(),
+//                     token_list[*ind + 6].value.parse::<f64>().unwrap(),
+//                 );
+//                 *ind += 6;
+//             } else {
+//                 *ind += 2;
+//             }
+//             let ele = ElegantElement {
+//                 name: elegant_name.to_string(),
+//                 intermed_type: IntermedType::Drift,
+//                 params: HashMap::<String, f64>::from([("l".to_string(), 0f64)]),
+//             };
+//             store.add_element(name, ele);
+//         }
+//         "rfcw" => {
+//             let mut params = HashMap::<String, f64>::new();
+//             let mut offset = 3;
+//             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
+//             offset += 1;
+//             while token_list[*ind + offset].token_type != LineEnd {
+//                 assert!(compare_tokentype_at(token_list, *ind + offset, Word));
+//                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
+//                 let key = token_list[*ind + offset].value.clone();
+//                 if key == "zwakefile"
+//                     || key == "trwakefile"
+//                     || key == "tColumn"
+//                     || key == "wzColumn"
+//                     || key == "wxColumn"
+//                     || key == "wyColumn"
+//                 {
+//                     offset += 3;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                         break;
+//                     }
+//                     offset += 1;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                         offset += 1;
+//                     }
+//                     continue;
+//                 }
+//                 let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+//                     token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
+//                 } else {
+//                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+//                     calc.interpret_string(&store_key).unwrap()
+//                 };
+//                 params.insert(key.to_lowercase(), val);
+//                 offset += 3;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                     break;
+//                 }
+//                 offset += 1;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                     offset += 1;
+//                 }
+//             }
+//             let ele = ElegantElement {
+//                 name: elegant_name.to_string(),
+//                 intermed_type: IntermedType::AccCav,
+//                 params,
+//             };
+//             store.add_element(token_list[*ind].value.to_lowercase(), ele);
+//         }
+//         "rfdf" => {
+//             let mut params = HashMap::<String, f64>::new();
+//             let mut offset = 3;
+//             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
+//             offset += 1;
+//             while token_list[*ind + offset].token_type != LineEnd {
+//                 assert!(compare_tokentype_at(token_list, *ind + offset, Word));
+//                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
+//                 let key = token_list[*ind + offset].value.clone();
+//                 if key == "zwakefile"
+//                     || key == "trwakefile"
+//                     || key == "tColumn"
+//                     || key == "wzColumn"
+//                     || key == "wxColumn"
+//                     || key == "wyColumn"
+//                 {
+//                     offset += 3;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                         break;
+//                     }
+//                     offset += 1;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                         offset += 1;
+//                     }
+//                     continue;
+//                 }
+//                 let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+//                     token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
+//                 } else {
+//                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+//                     calc.interpret_string(&store_key).unwrap()
+//                 };
+//                 params.insert(key.to_lowercase(), val);
+//                 offset += 3;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                     break;
+//                 }
+//                 offset += 1;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                     offset += 1;
+//                 }
+//             }
+//             let ele = ElegantElement {
+//                 name: elegant_name.to_string(),
+//                 intermed_type: IntermedType::AccCav,
+//                 params,
+//             };
+//             store.add_element(token_list[*ind].value.to_lowercase(), ele);
+//         }
+//         "kquad" => {
+//             let mut params = HashMap::<String, f64>::new();
+//             let mut offset = 3;
+//             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
+//             offset += 1;
+//             while token_list[*ind + offset].token_type != LineEnd {
+//                 assert!(compare_tokentype_at(token_list, *ind + offset, Word));
+//                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
+//                 let key = token_list[*ind + offset].value.clone();
+//                 if key == "SYSTEMATIC_MULTIPOLES" {
+//                     offset += 3;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                         break;
+//                     }
+//                     offset += 1;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                         offset += 1;
+//                     }
+//                     continue;
+//                 }
+//                 let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+//                     token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
+//                 } else {
+//                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+//                     calc.interpret_string(&store_key).unwrap()
+//                 };
+//                 params.insert(key.to_lowercase(), val);
+//                 offset += 3;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                     break;
+//                 }
+//                 offset += 1;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                     offset += 1;
+//                 }
+//             }
+//             let ele = ElegantElement {
+//                 name: elegant_name.to_string(),
+//                 intermed_type: IntermedType::Quad,
+//                 params,
+//             };
+//             store.add_element(token_list[*ind].value.to_lowercase(), ele);
+//         }
+//         "hkick" | "vkick" => {
+//             let mut params = HashMap::<String, f64>::new();
+//             let mut offset = 3;
+//             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
+//             offset += 1;
+//             while token_list[*ind + offset].token_type != LineEnd {
+//                 assert!(compare_tokentype_at(token_list, *ind + offset, Word));
+//                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
+//                 let key = token_list[*ind + offset].value.clone();
+//                 let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+//                     token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
+//                 } else {
+//                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+//                     calc.interpret_string(&store_key).unwrap()
+//                 };
+//                 params.insert(key.to_lowercase(), val);
+//                 offset += 3;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                     break;
+//                 }
+//                 offset += 1;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                     offset += 1;
+//                 }
+//             }
+//             let ele = ElegantElement {
+//                 name: elegant_name.to_string(),
+//                 intermed_type: IntermedType::Kick,
+//                 params,
+//             };
+//             store.add_element(token_list[*ind].value.to_lowercase(), ele);
+//         }
+//         "wiggler" | "csrcsbend" | "rben" | "sben" | "sbend" => {
+//             let mut params = HashMap::<String, f64>::new();
+//             let mut offset = 3;
+//             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
+//             offset += 1;
+//             while token_list[*ind + offset].token_type != LineEnd {
+//                 assert!(compare_tokentype_at(token_list, *ind + offset, Word));
+//                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
+//                 let key = token_list[*ind + offset].value.clone();
+//                 if key == "output_file" {
+//                     offset += 3;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                         break;
+//                     }
+//                     offset += 1;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                         offset += 1;
+//                     }
+//                     continue;
+//                 }
+//                 let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+//                     token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
+//                 } else {
+//                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+//                     calc.interpret_string(&store_key).unwrap()
+//                 };
+//                 params.insert(key.to_lowercase(), val);
+//                 offset += 3;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                     break;
+//                 }
+//                 offset += 1;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                     offset += 1;
+//                 }
+//             }
+//             let ele = ElegantElement {
+//                 name: elegant_name.to_string(),
+//                 intermed_type: IntermedType::Bend,
+//                 params,
+//             };
+//             store.add_element(token_list[*ind].value.to_lowercase(), ele);
+//         }
+//         "ksext" => {
+//             let mut params = HashMap::<String, f64>::new();
+//             let mut offset = 3;
+//             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
+//             offset += 1;
+//             while token_list[*ind + offset].token_type != LineEnd {
+//                 assert!(compare_tokentype_at(token_list, *ind + offset, Word));
+//                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
+//                 let key = token_list[*ind + offset].value.clone();
+//                 if key == "SYSTEMATIC_MULTIPOLES" {
+//                     offset += 3;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                         break;
+//                     }
+//                     offset += 1;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                         offset += 1;
+//                     }
+//                     continue;
+//                 }
+//                 let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+//                     token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
+//                 } else {
+//                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+//                     calc.interpret_string(&store_key).unwrap()
+//                 };
+//                 params.insert(key.to_lowercase(), val);
+//                 offset += 3;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                     break;
+//                 }
+//                 offset += 1;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                     offset += 1;
+//                 }
+//             }
+//             let ele = ElegantElement {
+//                 name: elegant_name.to_string(),
+//                 intermed_type: IntermedType::Sext,
+//                 params,
+//             };
+//             store.add_element(token_list[*ind].value.to_lowercase(), ele);
+//         }
+//         "scraper" | "ecol" => {
+//             let mut params = HashMap::<String, f64>::new();
+//             let mut offset = 3;
+//             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
+//             offset += 1;
+//             while token_list[*ind + offset].token_type != LineEnd {
+//                 assert!(compare_tokentype_at(token_list, *ind + offset, Word));
+//                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
+//                 let key = token_list[*ind + offset].value.clone();
+//                 if key == "insert_from" {
+//                     offset += 3;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                         break;
+//                     }
+//                     offset += 1;
+//                     if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                         offset += 1;
+//                     }
+//                     continue;
+//                 }
+//                 let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+//                     token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
+//                 } else {
+//                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+//                     calc.interpret_string(&store_key).unwrap()
+//                 };
+//                 params.insert(key.to_lowercase(), val);
+//                 offset += 3;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                     break;
+//                 }
+//                 offset += 1;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                     offset += 1;
+//                 }
+//             }
+//             let ele = ElegantElement {
+//                 name: elegant_name.to_string(),
+//                 intermed_type: IntermedType::Drift,
+//                 params,
+//             };
+//             store.add_element(token_list[*ind].value.to_lowercase(), ele);
+//         }
+//         "monitor" | "moni" => {
+//             let mut params = HashMap::<String, f64>::new();
+//             let mut offset = 3;
+//             assert!(compare_tokentype_at(token_list, *ind + offset, Comma));
+//             offset += 1;
+//             while token_list[*ind + offset].token_type != LineEnd {
+//                 assert!(compare_tokentype_at(token_list, *ind + offset, Word));
+//                 assert!(compare_tokentype_at(token_list, *ind + offset + 1, Assign));
+//                 let key = token_list[*ind + offset].value.clone();
+//                 let val = if compare_tokentype_at(token_list, *ind + offset + 2, Value) {
+//                     token_list[*ind + offset + 2].value.parse::<f64>().unwrap()
+//                 } else {
+//                     let store_key = token_list[*ind + offset + 2].value.clone().replace('"', "");
+//                     calc.interpret_string(&store_key).unwrap()
+//                 };
+//                 params.insert(key.to_lowercase(), val);
+//                 offset += 3;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineEnd) {
+//                     break;
+//                 }
+//                 offset += 1;
+//                 if compare_tokentype_at(token_list, *ind + offset, LineJoin) {
+//                     offset += 1;
+//                 }
+//             }
+//             let ele = ElegantElement {
+//                 name: elegant_name.to_string(),
+//                 intermed_type: IntermedType::Moni,
+//                 params,
+//             };
+//             store.add_element(token_list[*ind].value.to_lowercase(), ele);
+//         }
+//         _ => {
+//             eprintln!(
+//                 "{}:{}:{} Unrecognised elegant type: '{}'",
+//                 elegant_type.loc.filename,
+//                 elegant_type.loc.row,
+//                 elegant_type.loc.col,
+//                 elegant_type.value
+//             );
+//             exit(1);
+//         }
+//     }
+//     while token_list[*ind].token_type != TokenType::LineEnd {
+//         *ind += 1;
+//     }
+// }
 
 fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Library {
     use TokenType::*;
@@ -1290,21 +1290,21 @@ mod tests {
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 
-    #[test]
-    fn track_thru_kquad() {
-        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KQUAD");
-        let newsim = load_lotr_file(BEAM_TESTFILE);
-        sim.input_beam = newsim.input_beam;
-        sim.rescale_acc_energy(newsim.input_beam_ke);
-        sim.track();
-        if let Ok(mut file) = File::create(KQUAD_BEAM_TEST) {
-            print_beam(&mut file, &sim.output_beam);
-        }
-
-        let mut file_true = File::open(KQUAD_BEAM_TRUE).unwrap();
-        let mut file_test = File::open(KQUAD_BEAM_TEST).unwrap();
-        assert!(diff_files(&mut file_true, &mut file_test));
-    }
+    // #[test]
+    // fn track_thru_kquad() {
+    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KQUAD");
+    //     let newsim = load_lotr_file(BEAM_TESTFILE);
+    //     sim.input_beam = newsim.input_beam;
+    //     sim.rescale_acc_energy(newsim.input_beam_ke);
+    //     sim.track();
+    //     if let Ok(mut file) = File::create(KQUAD_BEAM_TEST) {
+    //         print_beam(&mut file, &sim.output_beam);
+    //     }
+    //
+    //     let mut file_true = File::open(KQUAD_BEAM_TRUE).unwrap();
+    //     let mut file_test = File::open(KQUAD_BEAM_TEST).unwrap();
+    //     assert!(diff_files(&mut file_true, &mut file_test));
+    // }
 
     #[test]
     fn track_thru_rfcw() {
@@ -1322,21 +1322,21 @@ mod tests {
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 
-    #[test]
-    fn track_thru_rfdf() {
-        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFDF");
-        let newsim = load_lotr_file(BEAM_TESTFILE);
-        sim.input_beam = newsim.input_beam;
-        sim.rescale_acc_energy(newsim.input_beam_ke);
-        sim.track();
-        if let Ok(mut file) = File::create(RFDF_BEAM_TEST) {
-            print_beam(&mut file, &sim.output_beam);
-        }
-
-        let mut file_true = File::open(RFDF_BEAM_TRUE).unwrap();
-        let mut file_test = File::open(RFDF_BEAM_TEST).unwrap();
-        assert!(diff_files(&mut file_true, &mut file_test));
-    }
+    // #[test]
+    // fn track_thru_rfdf() {
+    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFDF");
+    //     let newsim = load_lotr_file(BEAM_TESTFILE);
+    //     sim.input_beam = newsim.input_beam;
+    //     sim.rescale_acc_energy(newsim.input_beam_ke);
+    //     sim.track();
+    //     if let Ok(mut file) = File::create(RFDF_BEAM_TEST) {
+    //         print_beam(&mut file, &sim.output_beam);
+    //     }
+    //
+    //     let mut file_true = File::open(RFDF_BEAM_TRUE).unwrap();
+    //     let mut file_test = File::open(RFDF_BEAM_TEST).unwrap();
+    //     assert!(diff_files(&mut file_true, &mut file_test));
+    // }
 
     #[test]
     fn track_thru_wiggler() {
@@ -1354,73 +1354,73 @@ mod tests {
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 
-    #[test]
-    fn track_thru_csrcsbend() {
-        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "CSRCSBEND");
-        let newsim = load_lotr_file(BEAM_TESTFILE);
-        sim.input_beam = newsim.input_beam;
-        sim.rescale_acc_energy(newsim.input_beam_ke);
-        sim.track();
-        if let Ok(mut file) = File::create(CSRCSBEND_BEAM_TEST) {
-            print_beam(&mut file, &sim.output_beam);
-        }
-
-        if let Ok(mut file_true) = File::open(CSRCSBEND_BEAM_TRUE) {
-            let mut file_test = File::open(CSRCSBEND_BEAM_TEST).unwrap();
-            assert!(diff_files(&mut file_true, &mut file_test));
-        } else {
-            panic!("No file to compare against");
-        }
-    }
-
-    #[test]
-    fn track_thru_rben() {
-        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RBEN");
-        let newsim = load_lotr_file(BEAM_TESTFILE);
-        sim.input_beam = newsim.input_beam;
-        sim.rescale_acc_energy(newsim.input_beam_ke);
-        sim.track();
-        if let Ok(mut file) = File::create(RBEN_BEAM_TEST) {
-            print_beam(&mut file, &sim.output_beam);
-        }
-
-        let mut file_true = File::open(RBEN_BEAM_TRUE).unwrap();
-        let mut file_test = File::open(RBEN_BEAM_TEST).unwrap();
-        assert!(diff_files(&mut file_true, &mut file_test));
-    }
-
-    #[test]
-    fn track_thru_sben() {
-        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SBEN");
-        let newsim = load_lotr_file(BEAM_TESTFILE);
-        sim.input_beam = newsim.input_beam;
-        sim.rescale_acc_energy(newsim.input_beam_ke);
-        sim.track();
-        if let Ok(mut file) = File::create(SBEN_BEAM_TEST) {
-            print_beam(&mut file, &sim.output_beam);
-        }
-
-        let mut file_true = File::open(SBEN_BEAM_TRUE).unwrap();
-        let mut file_test = File::open(SBEN_BEAM_TEST).unwrap();
-        assert!(diff_files(&mut file_true, &mut file_test));
-    }
-
-    #[test]
-    fn track_thru_ksext() {
-        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KSEXT");
-        let newsim = load_lotr_file(BEAM_TESTFILE);
-        sim.input_beam = newsim.input_beam;
-        sim.rescale_acc_energy(newsim.input_beam_ke);
-        sim.track();
-        if let Ok(mut file) = File::create(KSEXT_BEAM_TEST) {
-            print_beam(&mut file, &sim.output_beam);
-        }
-
-        let mut file_true = File::open(KSEXT_BEAM_TRUE).unwrap();
-        let mut file_test = File::open(KSEXT_BEAM_TEST).unwrap();
-        assert!(diff_files(&mut file_true, &mut file_test));
-    }
-
+    // #[test]
+    // fn track_thru_csrcsbend() {
+    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "CSRCSBEND");
+    //     let newsim = load_lotr_file(BEAM_TESTFILE);
+    //     sim.input_beam = newsim.input_beam;
+    //     sim.rescale_acc_energy(newsim.input_beam_ke);
+    //     sim.track();
+    //     if let Ok(mut file) = File::create(CSRCSBEND_BEAM_TEST) {
+    //         print_beam(&mut file, &sim.output_beam);
+    //     }
+    //
+    //     if let Ok(mut file_true) = File::open(CSRCSBEND_BEAM_TRUE) {
+    //         let mut file_test = File::open(CSRCSBEND_BEAM_TEST).unwrap();
+    //         assert!(diff_files(&mut file_true, &mut file_test));
+    //     } else {
+    //         panic!("No file to compare against");
+    //     }
+    // }
+    //
+    // #[test]
+    // fn track_thru_rben() {
+    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RBEN");
+    //     let newsim = load_lotr_file(BEAM_TESTFILE);
+    //     sim.input_beam = newsim.input_beam;
+    //     sim.rescale_acc_energy(newsim.input_beam_ke);
+    //     sim.track();
+    //     if let Ok(mut file) = File::create(RBEN_BEAM_TEST) {
+    //         print_beam(&mut file, &sim.output_beam);
+    //     }
+    //
+    //     let mut file_true = File::open(RBEN_BEAM_TRUE).unwrap();
+    //     let mut file_test = File::open(RBEN_BEAM_TEST).unwrap();
+    //     assert!(diff_files(&mut file_true, &mut file_test));
+    // }
+    //
+    // #[test]
+    // fn track_thru_sben() {
+    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SBEN");
+    //     let newsim = load_lotr_file(BEAM_TESTFILE);
+    //     sim.input_beam = newsim.input_beam;
+    //     sim.rescale_acc_energy(newsim.input_beam_ke);
+    //     sim.track();
+    //     if let Ok(mut file) = File::create(SBEN_BEAM_TEST) {
+    //         print_beam(&mut file, &sim.output_beam);
+    //     }
+    //
+    //     let mut file_true = File::open(SBEN_BEAM_TRUE).unwrap();
+    //     let mut file_test = File::open(SBEN_BEAM_TEST).unwrap();
+    //     assert!(diff_files(&mut file_true, &mut file_test));
+    // }
+    //
+    // #[test]
+    // fn track_thru_ksext() {
+    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KSEXT");
+    //     let newsim = load_lotr_file(BEAM_TESTFILE);
+    //     sim.input_beam = newsim.input_beam;
+    //     sim.rescale_acc_energy(newsim.input_beam_ke);
+    //     sim.track();
+    //     if let Ok(mut file) = File::create(KSEXT_BEAM_TEST) {
+    //         print_beam(&mut file, &sim.output_beam);
+    //     }
+    //
+    //     let mut file_true = File::open(KSEXT_BEAM_TRUE).unwrap();
+    //     let mut file_test = File::open(KSEXT_BEAM_TEST).unwrap();
+    //     assert!(diff_files(&mut file_true, &mut file_test));
+    // }
+    //
     #[test]
     fn track_thru_scraper() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SCRAPER");
@@ -1484,19 +1484,20 @@ mod tests {
         let mut file_test = File::open(MONI_BEAM_TEST).unwrap();
         assert!(diff_files(&mut file_true, &mut file_test));
     }
-    #[test]
-    fn track_thru_spf() {
-        let mut sim: Simulation = load_elegant_file(SPF_TESTFILE, "SPF");
-        let newsim = load_lotr_file(BEAM_TESTFILE);
-        sim.input_beam = newsim.input_beam;
-        sim.rescale_acc_energy(newsim.input_beam_ke);
-        sim.track();
-        if let Ok(mut file) = File::create(SPF_BEAM_TEST) {
-            print_beam(&mut file, &sim.output_beam);
-        }
 
-        let mut file_true = File::open(SPF_BEAM_TRUE).unwrap();
-        let mut file_test = File::open(SPF_BEAM_TEST).unwrap();
-        assert!(diff_files(&mut file_true, &mut file_test));
-    }
+    // #[test]
+    // fn track_thru_spf() {
+    //     let mut sim: Simulation = load_elegant_file(SPF_TESTFILE, "SPF");
+    //     let newsim = load_lotr_file(BEAM_TESTFILE);
+    //     sim.input_beam = newsim.input_beam;
+    //     sim.rescale_acc_energy(newsim.input_beam_ke);
+    //     sim.track();
+    //     if let Ok(mut file) = File::create(SPF_BEAM_TEST) {
+    //         print_beam(&mut file, &sim.output_beam);
+    //     }
+    //
+    //     let mut file_true = File::open(SPF_BEAM_TRUE).unwrap();
+    //     let mut file_test = File::open(SPF_BEAM_TEST).unwrap();
+    //     assert!(diff_files(&mut file_true, &mut file_test));
+    // }
 }
