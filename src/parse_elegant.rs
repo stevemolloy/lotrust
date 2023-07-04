@@ -83,7 +83,7 @@ enum TokenType {
     RpnExpr,
     LineEnd,
     LineJoin,
-    EOF,
+    Eof,
 }
 
 impl fmt::Display for TokenType {
@@ -351,7 +351,7 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
     }
 
     tokens.push(Token {
-        token_type: TokenType::EOF,
+        token_type: TokenType::Eof,
         value: "EOF".to_string(),
         loc: FileLoc {
             row,
@@ -366,17 +366,10 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
     while ind < tokens.len() {
         let this_tok = &tokens[ind];
         ind += 1;
-        if ind - 1 == 0
-            && (this_tok.token_type == TokenType::LineEnd
-                || this_tok.token_type == TokenType::LineJoin)
-        {
-            continue;
-        } else if this_tok.token_type == TokenType::LineJoin
-            && tokens[ind].token_type == TokenType::LineEnd
-        {
-            continue;
-        } else if this_tok.token_type == TokenType::LineEnd
-            && tokens[ind - 2].token_type == TokenType::LineJoin
+        if (this_tok.token_type == TokenType::LineJoin
+            && tokens[ind].token_type == TokenType::LineEnd)
+            || (this_tok.token_type == TokenType::LineEnd
+                && tokens[ind - 2].token_type == TokenType::LineJoin)
         {
             continue;
         }
@@ -421,8 +414,9 @@ fn get_param_list(token_list: &[Token], calc: &mut RpnCalculator) -> HashMap<Str
                 ind += 1;
                 continue;
             }
-            let param = token_list[ind + 0].clone();
+            let param = token_list[ind].clone();
             if !params_to_ignore.contains(&param.value.to_lowercase().as_str()) {
+                let name_of_param = param.value.to_lowercase();
                 let value = token_list[ind + 2].clone();
                 assert!(param.token_type == TokenType::Word);
                 assert!(token_list[ind + 1].token_type == TokenType::Assign);
@@ -431,11 +425,11 @@ fn get_param_list(token_list: &[Token], calc: &mut RpnCalculator) -> HashMap<Str
                 );
 
                 if value.token_type == TokenType::Value {
-                    params.insert(param.value, value.value.parse().unwrap());
+                    params.insert(name_of_param, value.value.parse().unwrap());
                 } else {
                     let store_key = value.value.clone().replace('"', "");
                     let val = calc.interpret_string(&store_key).unwrap();
-                    params.insert(param.value, val);
+                    params.insert(name_of_param, val);
                 }
             }
             ind += 3;
@@ -455,7 +449,7 @@ fn get_next_ele_from_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> E
     assert!(token_list[1].token_type == TokenType::Colon);
     assert!(token_list[2].token_type == TokenType::Word);
 
-    let ele_name = token_list[0].value.to_lowercase().replace('"', "").clone();
+    let ele_name = token_list[0].value.to_lowercase().replace('"', "");
 
     match token_list[2].value.to_lowercase().as_str() {
         "charge" | "magnify" | "malign" | "watch" | "watchpoint" | "mark" => ElegantElement {
@@ -488,11 +482,18 @@ fn get_next_ele_from_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> E
             intermed_type: IntermedType::Moni,
             params: get_param_list(token_list, calc),
         },
-        "csrcsbend" | "rben" | "sben" | "sbend" => ElegantElement {
-            name: ele_name,
-            intermed_type: IntermedType::Bend,
-            params: get_param_list(token_list, calc),
-        },
+        "csrcsbend" | "rben" | "sben" | "sbend" => {
+            println!(
+                "param_list for bend '{}': {:#?}",
+                ele_name,
+                get_param_list(token_list, calc)
+            );
+            ElegantElement {
+                name: ele_name,
+                intermed_type: IntermedType::Bend,
+                params: get_param_list(token_list, calc),
+            }
+        }
         "ksext" => ElegantElement {
             name: ele_name,
             intermed_type: IntermedType::Sext,
@@ -985,7 +986,7 @@ fn parse_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> Library {
             && compare_tokentype_at(token_list, ind + 1, Colon)
         {
             add_ele_to_store(token_list, &mut ind, &mut element_store, calc);
-        } else if tok.token_type == EOF {
+        } else if tok.token_type == Eof {
             break;
         } else {
             println!("{tok:?}", tok = token_list[ind - 1]);
@@ -1290,21 +1291,21 @@ mod tests {
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 
-    // #[test]
-    // fn track_thru_kquad() {
-    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KQUAD");
-    //     let newsim = load_lotr_file(BEAM_TESTFILE);
-    //     sim.input_beam = newsim.input_beam;
-    //     sim.rescale_acc_energy(newsim.input_beam_ke);
-    //     sim.track();
-    //     if let Ok(mut file) = File::create(KQUAD_BEAM_TEST) {
-    //         print_beam(&mut file, &sim.output_beam);
-    //     }
-    //
-    //     let mut file_true = File::open(KQUAD_BEAM_TRUE).unwrap();
-    //     let mut file_test = File::open(KQUAD_BEAM_TEST).unwrap();
-    //     assert!(diff_files(&mut file_true, &mut file_test));
-    // }
+    #[test]
+    fn track_thru_kquad() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KQUAD");
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
+        sim.track();
+        if let Ok(mut file) = File::create(KQUAD_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(KQUAD_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(KQUAD_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
 
     #[test]
     fn track_thru_rfcw() {
@@ -1322,21 +1323,21 @@ mod tests {
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 
-    // #[test]
-    // fn track_thru_rfdf() {
-    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFDF");
-    //     let newsim = load_lotr_file(BEAM_TESTFILE);
-    //     sim.input_beam = newsim.input_beam;
-    //     sim.rescale_acc_energy(newsim.input_beam_ke);
-    //     sim.track();
-    //     if let Ok(mut file) = File::create(RFDF_BEAM_TEST) {
-    //         print_beam(&mut file, &sim.output_beam);
-    //     }
-    //
-    //     let mut file_true = File::open(RFDF_BEAM_TRUE).unwrap();
-    //     let mut file_test = File::open(RFDF_BEAM_TEST).unwrap();
-    //     assert!(diff_files(&mut file_true, &mut file_test));
-    // }
+    #[test]
+    fn track_thru_rfdf() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFDF");
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
+        sim.track();
+        if let Ok(mut file) = File::create(RFDF_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(RFDF_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(RFDF_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
 
     #[test]
     fn track_thru_wiggler() {
@@ -1354,73 +1355,73 @@ mod tests {
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 
-    // #[test]
-    // fn track_thru_csrcsbend() {
-    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "CSRCSBEND");
-    //     let newsim = load_lotr_file(BEAM_TESTFILE);
-    //     sim.input_beam = newsim.input_beam;
-    //     sim.rescale_acc_energy(newsim.input_beam_ke);
-    //     sim.track();
-    //     if let Ok(mut file) = File::create(CSRCSBEND_BEAM_TEST) {
-    //         print_beam(&mut file, &sim.output_beam);
-    //     }
-    //
-    //     if let Ok(mut file_true) = File::open(CSRCSBEND_BEAM_TRUE) {
-    //         let mut file_test = File::open(CSRCSBEND_BEAM_TEST).unwrap();
-    //         assert!(diff_files(&mut file_true, &mut file_test));
-    //     } else {
-    //         panic!("No file to compare against");
-    //     }
-    // }
-    //
-    // #[test]
-    // fn track_thru_rben() {
-    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RBEN");
-    //     let newsim = load_lotr_file(BEAM_TESTFILE);
-    //     sim.input_beam = newsim.input_beam;
-    //     sim.rescale_acc_energy(newsim.input_beam_ke);
-    //     sim.track();
-    //     if let Ok(mut file) = File::create(RBEN_BEAM_TEST) {
-    //         print_beam(&mut file, &sim.output_beam);
-    //     }
-    //
-    //     let mut file_true = File::open(RBEN_BEAM_TRUE).unwrap();
-    //     let mut file_test = File::open(RBEN_BEAM_TEST).unwrap();
-    //     assert!(diff_files(&mut file_true, &mut file_test));
-    // }
-    //
-    // #[test]
-    // fn track_thru_sben() {
-    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SBEN");
-    //     let newsim = load_lotr_file(BEAM_TESTFILE);
-    //     sim.input_beam = newsim.input_beam;
-    //     sim.rescale_acc_energy(newsim.input_beam_ke);
-    //     sim.track();
-    //     if let Ok(mut file) = File::create(SBEN_BEAM_TEST) {
-    //         print_beam(&mut file, &sim.output_beam);
-    //     }
-    //
-    //     let mut file_true = File::open(SBEN_BEAM_TRUE).unwrap();
-    //     let mut file_test = File::open(SBEN_BEAM_TEST).unwrap();
-    //     assert!(diff_files(&mut file_true, &mut file_test));
-    // }
-    //
-    // #[test]
-    // fn track_thru_ksext() {
-    //     let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KSEXT");
-    //     let newsim = load_lotr_file(BEAM_TESTFILE);
-    //     sim.input_beam = newsim.input_beam;
-    //     sim.rescale_acc_energy(newsim.input_beam_ke);
-    //     sim.track();
-    //     if let Ok(mut file) = File::create(KSEXT_BEAM_TEST) {
-    //         print_beam(&mut file, &sim.output_beam);
-    //     }
-    //
-    //     let mut file_true = File::open(KSEXT_BEAM_TRUE).unwrap();
-    //     let mut file_test = File::open(KSEXT_BEAM_TEST).unwrap();
-    //     assert!(diff_files(&mut file_true, &mut file_test));
-    // }
-    //
+    #[test]
+    fn track_thru_csrcsbend() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "CSRCSBEND");
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
+        sim.track();
+        if let Ok(mut file) = File::create(CSRCSBEND_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        if let Ok(mut file_true) = File::open(CSRCSBEND_BEAM_TRUE) {
+            let mut file_test = File::open(CSRCSBEND_BEAM_TEST).unwrap();
+            assert!(diff_files(&mut file_true, &mut file_test));
+        } else {
+            panic!("No file to compare against");
+        }
+    }
+
+    #[test]
+    fn track_thru_rben() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RBEN");
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
+        sim.track();
+        if let Ok(mut file) = File::create(RBEN_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(RBEN_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(RBEN_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_sben() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SBEN");
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
+        sim.track();
+        if let Ok(mut file) = File::create(SBEN_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(SBEN_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(SBEN_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_ksext() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "KSEXT");
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
+        sim.track();
+        if let Ok(mut file) = File::create(KSEXT_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(KSEXT_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(KSEXT_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
     #[test]
     fn track_thru_scraper() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "SCRAPER");
@@ -1485,19 +1486,19 @@ mod tests {
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 
-    // #[test]
-    // fn track_thru_spf() {
-    //     let mut sim: Simulation = load_elegant_file(SPF_TESTFILE, "SPF");
-    //     let newsim = load_lotr_file(BEAM_TESTFILE);
-    //     sim.input_beam = newsim.input_beam;
-    //     sim.rescale_acc_energy(newsim.input_beam_ke);
-    //     sim.track();
-    //     if let Ok(mut file) = File::create(SPF_BEAM_TEST) {
-    //         print_beam(&mut file, &sim.output_beam);
-    //     }
-    //
-    //     let mut file_true = File::open(SPF_BEAM_TRUE).unwrap();
-    //     let mut file_test = File::open(SPF_BEAM_TEST).unwrap();
-    //     assert!(diff_files(&mut file_true, &mut file_test));
-    // }
+    #[test]
+    fn track_thru_spf() {
+        let mut sim: Simulation = load_elegant_file(SPF_TESTFILE, "SPF");
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
+        sim.track();
+        if let Ok(mut file) = File::create(SPF_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(SPF_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(SPF_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
 }
