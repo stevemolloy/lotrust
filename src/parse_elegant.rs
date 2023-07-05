@@ -602,7 +602,7 @@ fn line_to_simulation(line: Line) -> Simulation {
                     None => 0f64,
                 };
                 let phase = match ele.params.get("phase") {
-                    Some(x) => x.to_radians() - PI / 2f64, // Convert from elegant phase defn
+                    Some(x) => -(x.to_radians() - PI / 2f64), // Convert from elegant phase defn
                     None => 0f64,
                 };
                 design_gamma += (volt * phase.cos()) / MASS;
