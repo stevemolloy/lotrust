@@ -94,28 +94,10 @@ pub fn load_elegant_file(filename: &str, line_to_expand: &str) -> Simulation {
     let line_to_expand = line_to_expand.to_lowercase();
     let mut calc: RpnCalculator = Default::default();
     let mut line: Line = vec![];
-    let tokens = tokenize_file_contents(filename);
+    let tokens = tokenize_file(filename);
     let inter_repr = parse_tokens(&tokens, &mut calc);
     intermed_to_line(&mut line, &inter_repr, &line_to_expand);
     line_to_simulation(line)
-}
-
-fn parse_word(input: &mut String, loc: FileLoc) -> Token {
-    let mut name: String = chop_character(input).to_string();
-    while !input.is_empty() {
-        if input.starts_with(|c: char| {
-            c == '_' || c.is_ascii_alphanumeric() || c == '.' || c == '$' || c == '-'
-        }) {
-            name.push(chop_character(input));
-        } else {
-            break;
-        }
-    }
-    Token {
-        token_type: TokenType::Word,
-        value: name,
-        loc,
-    }
 }
 
 fn parse_string(input: &mut String, loc: FileLoc) -> Token {
@@ -155,11 +137,13 @@ fn parse_rpn_expr(input: &mut String, mut loc: FileLoc) -> Token {
     }
 }
 
-fn parse_digit(input: &mut String, loc: FileLoc) -> Token {
+fn parse_word_or_digit(input: &mut String, loc: FileLoc) -> Token {
     let mut value: String = chop_character(input).to_string();
 
     while !input.is_empty() {
-        if input.starts_with(|c: char| !(c.is_ascii_alphanumeric() || c == '-' || c == '.')) {
+        if input.starts_with(|c: char| {
+            !(c.is_ascii_alphanumeric() || c == '-' || c == '.' || c == '_' || c == '$')
+        }) {
             break;
         } else {
             value.push(chop_character(input));
@@ -185,7 +169,7 @@ fn chop_character(input: &mut String) -> char {
     input.remove(0)
 }
 
-fn tokenize_file_contents(filename: &str) -> Vec<Token> {
+fn tokenize_file(filename: &str) -> Vec<Token> {
     let mut contents = match read_to_string(filename) {
         Ok(contents) => contents.to_lowercase(),
         Err(e) => {
@@ -223,16 +207,12 @@ fn tokenize_file_contents(filename: &str) -> Vec<Token> {
                     col += 1;
                 }
             }
-        } else if contents.starts_with(|c: char| c.is_ascii_alphabetic()) {
-            let tok = parse_word(&mut contents, location);
-            col += tok.value.len();
-            tokens.push(tok);
         } else if contents.starts_with(|c: char| c == '"') {
             let tok = parse_string(&mut contents, location);
             col += tok.value.len();
             tokens.push(tok);
-        } else if contents.starts_with(|c: char| c.is_ascii_digit() || c == '-') {
-            let tok = parse_digit(&mut contents, location);
+        } else if contents.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '-') {
+            let tok = parse_word_or_digit(&mut contents, location);
             col += tok.value.len();
             tokens.push(tok);
         } else if contents.starts_with('(') {
