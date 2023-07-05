@@ -150,18 +150,16 @@ fn parse_word_or_digit(input: &mut String, loc: FileLoc) -> Token {
         }
     }
 
-    if value.parse::<f64>().is_ok() {
-        Token {
-            token_type: TokenType::Value,
-            value,
-            loc,
-        }
+    let value_or_word = if value.parse::<f64>().is_ok() {
+        TokenType::Value
     } else {
-        Token {
-            token_type: TokenType::Word,
-            value,
-            loc,
-        }
+        TokenType::Word
+    };
+
+    Token {
+        token_type: value_or_word,
+        value,
+        loc,
     }
 }
 
