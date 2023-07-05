@@ -150,7 +150,7 @@ fn parse_word_or_digit(input: &mut String, loc: FileLoc) -> Token {
         }
     }
 
-    if let Ok(_) = value.parse::<f64>() {
+    if value.parse::<f64>().is_ok() {
         Token {
             token_type: TokenType::Value,
             value,
@@ -373,15 +373,13 @@ fn get_param_list(token_list: &[Token], calc: &mut RpnCalculator) -> HashMap<Str
                 continue;
             }
             let param = token_list[ind].clone();
+            let value = token_list[ind + 2].clone();
+            assert!(param.token_type == TokenType::Word);
+            assert!(token_list[ind + 1].token_type == TokenType::Assign);
+            assert!(value.token_type == TokenType::Value || value.token_type == TokenType::EleStr);
+
             if !params_to_ignore.contains(&param.value.as_str()) {
                 let name_of_param = param.value;
-                let value = token_list[ind + 2].clone();
-                assert!(param.token_type == TokenType::Word);
-                assert!(token_list[ind + 1].token_type == TokenType::Assign);
-                assert!(
-                    value.token_type == TokenType::Value || value.token_type == TokenType::EleStr
-                );
-
                 if value.token_type == TokenType::Value {
                     params.insert(name_of_param, value.value.parse().unwrap());
                 } else {
@@ -440,18 +438,11 @@ fn get_next_ele_from_tokens(token_list: &[Token], calc: &mut RpnCalculator) -> E
             intermed_type: IntermedType::Moni,
             params: get_param_list(token_list, calc),
         },
-        "csrcsbend" | "rben" | "sben" | "sbend" => {
-            println!(
-                "param_list for bend '{}': {:#?}",
-                ele_name,
-                get_param_list(token_list, calc)
-            );
-            ElegantElement {
-                name: ele_name,
-                intermed_type: IntermedType::Bend,
-                params: get_param_list(token_list, calc),
-            }
-        }
+        "csrcsbend" | "rben" | "sben" | "sbend" => ElegantElement {
+            name: ele_name,
+            intermed_type: IntermedType::Bend,
+            params: get_param_list(token_list, calc),
+        },
         "ksext" => ElegantElement {
             name: ele_name,
             intermed_type: IntermedType::Sext,
