@@ -5,9 +5,9 @@ use crate::parse_lotr::Simulation;
 use ndarray::Array2;
 use std::collections::HashMap;
 use std::f64::consts::PI;
-use std::fmt;
 use std::fs::read_to_string;
 use std::process::exit;
+use std::{f64, fmt};
 
 type Line = Vec<ElegantElement>;
 
@@ -156,48 +156,25 @@ fn parse_rpn_expr(input: &mut String, mut loc: FileLoc) -> Token {
 }
 
 fn parse_digit(input: &mut String, loc: FileLoc) -> Token {
-    let mut actually_a_word: bool = false;
-    let mut already_decimal: bool = false;
-    let mut already_exp: bool = false;
     let mut value: String = chop_character(input).to_string();
+
     while !input.is_empty() {
-        if input.starts_with(|c: char| c.is_ascii_digit()) {
-            value.push(chop_character(input));
-        } else if input.starts_with("e-") {
-            if already_exp {
-                panic!("Attempt to add 'e' to a digit twice");
-            }
-            already_exp = true;
-            value.push(chop_character(input));
-            value.push(chop_character(input));
-        } else if input.starts_with('e') {
-            if already_exp && !actually_a_word {
-                panic!("Attempt to add 'e' to a digit twice");
-            }
-            already_exp = true;
-            value.push(chop_character(input));
-        } else if input.starts_with('.') {
-            if already_decimal {
-                panic!("Attempt to add a second decimal point to a digit");
-            }
-            already_decimal = true;
-            value.push(chop_character(input));
-        } else if input.starts_with(|c: char| c.is_ascii_alphabetic()) {
-            actually_a_word = true;
-            value.push(chop_character(input));
-        } else {
+        if input.starts_with(|c: char| !(c.is_ascii_alphanumeric() || c == '-' || c == '.')) {
             break;
+        } else {
+            value.push(chop_character(input));
         }
     }
-    if actually_a_word {
+
+    if let Ok(_) = value.parse::<f64>() {
         Token {
-            token_type: TokenType::Word,
+            token_type: TokenType::Value,
             value,
             loc,
         }
     } else {
         Token {
-            token_type: TokenType::Value,
+            token_type: TokenType::Word,
             value,
             loc,
         }
