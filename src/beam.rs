@@ -24,30 +24,32 @@ impl Beam {
                     Some(val) => *val,
                     None => 0f64,
                 };
-                let t_matrix = arr2(&[[1f64, r56], [0f64, 1f64]]);
-                self.pos = self.pos.dot(&t_matrix.t());
+                let t_matrix = arr2(&[[1f64, 0f64], [r56, 1f64]]);
+                self.pos = self.pos.dot(&t_matrix);
             }
             EleType::AccCav => {
                 let beam_ke = ele.gamma * MASS;
-                let new_ke = beam_ke + ele.params["v"] * ele.params["phi"].cos();
+                let ke_gain = ele.params["v"] * ele.params["phi"].cos();
+                let new_ke = beam_ke + ke_gain;
+
                 let e_err_mat = arr2(&[[1f64, 0f64], [0f64, beam_ke / new_ke]]);
 
                 let r56_drift = match ele.params.get("r56_drift") {
                     Some(val) => *val,
                     None => 0f64,
                 };
+                let drift_matrix = arr2(&[[1f64, 0f64], [r56_drift, 1f64]]);
 
-                let drift_matrix = arr2(&[[1f64, r56_drift], [0f64, 1f64]]);
                 let r65_kick = match ele.params.get("r65_kick") {
                     Some(val) => *val,
                     None => 0f64,
                 };
-                let kick_matrix = arr2(&[[1f64, 0f64], [r65_kick, 1f64]]);
+                let kick_matrix = arr2(&[[1f64, r65_kick], [0f64, 1f64]]);
 
-                self.pos = self.pos.dot(&drift_matrix.t());
-                self.pos = self.pos.dot(&e_err_mat.t());
-                self.pos = self.pos.dot(&kick_matrix.t());
-                self.pos = self.pos.dot(&drift_matrix.t());
+                self.pos = self.pos.dot(&drift_matrix);
+                self.pos = self.pos.dot(&e_err_mat);
+                self.pos = self.pos.dot(&kick_matrix);
+                self.pos = self.pos.dot(&drift_matrix);
             }
         }
     }
