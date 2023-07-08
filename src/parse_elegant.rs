@@ -1,6 +1,6 @@
-use crate::beam::{Beam, MASS};
+use crate::beam::{gamma_2_beta, Beam, C, MASS};
 use crate::elegant_rpn::RpnCalculator;
-use crate::elements::{make_acccav, make_dipole, make_drift, make_quad};
+use crate::elements::{make_dipole, make_drift, make_quad, EleType, Element};
 use crate::parse_lotr::Simulation;
 use ndarray::Array2;
 use std::collections::HashMap;
@@ -50,6 +50,53 @@ enum IntermedType {
     Sext,
     Line(Vec<String>),
     Ignore,
+}
+
+impl ElegantElement {
+    fn make_lotr_element(&self, gamma: &mut f64) -> Option<Element> {
+        let length = match self.params.get("l") {
+            Some(x) => *x,
+            None => 0f64,
+        };
+        let beta_sq = gamma_2_beta(*gamma).powi(2);
+        let gamma_sq = gamma.powi(2);
+        let r56_drift = length / (beta_sq * gamma_sq);
+
+        match self.intermed_type {
+            IntermedType::AccCav => {
+                let volt = match self.params.get("volt") {
+                    Some(x) => *x,
+                    None => 0f64,
+                };
+                let freq = match self.params.get("freq") {
+                    Some(x) => *x,
+                    None => 0f64,
+                };
+                let phase = match self.params.get("phase") {
+                    Some(x) => -(x.to_radians() - PI / 2f64), // Convert from elegant phase defn
+                    None => 0f64,
+                };
+                let k = 2f64 * PI * freq / C;
+                let r65_kick = -k * volt * phase.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
+
+                let mut param_map = HashMap::new();
+                param_map.insert("v".to_string(), volt);
+                param_map.insert("freq".to_string(), freq);
+                param_map.insert("phi".to_string(), phase);
+                param_map.insert("r56_drift".to_string(), r56_drift);
+                param_map.insert("r65_kick".to_string(), r65_kick);
+                *gamma += (volt * phase.cos()) / MASS;
+                Some(Element {
+                    name: self.name.to_string(),
+                    ele_type: EleType::AccCav,
+                    length,
+                    gamma: *gamma,
+                    params: param_map,
+                })
+            }
+            _ => todo!(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -589,31 +636,9 @@ fn line_to_simulation(line: Line) -> Simulation {
                     .push(make_quad(ele.name.to_string(), l, design_gamma))
             }
             IntermedType::AccCav => {
-                let l = match ele.params.get("l") {
-                    Some(x) => *x,
-                    None => 0f64,
+                if let Some(lotr_ele) = ele.make_lotr_element(&mut design_gamma) {
+                    acc.elements.push(lotr_ele);
                 };
-                let volt = match ele.params.get("volt") {
-                    Some(x) => *x,
-                    None => 0f64,
-                };
-                let freq = match ele.params.get("freq") {
-                    Some(x) => *x,
-                    None => 0f64,
-                };
-                let phase = match ele.params.get("phase") {
-                    Some(x) => -(x.to_radians() - PI / 2f64), // Convert from elegant phase defn
-                    None => 0f64,
-                };
-                design_gamma += (volt * phase.cos()) / MASS;
-                acc.elements.push(make_acccav(
-                    ele.name.to_string(),
-                    l,
-                    volt,
-                    freq,
-                    phase,
-                    design_gamma,
-                ))
             }
             IntermedType::Bend => {
                 let l = match ele.params.get("l") {
