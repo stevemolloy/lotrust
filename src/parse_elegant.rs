@@ -72,6 +72,8 @@ impl ElegantElement {
                 let freq = self.get_param_or_default("freq", 0f64);
                 let phase_degrees = self.get_param_or_default("phase", 0f64);
                 let phase = -(phase_degrees.to_radians() - PI / 2f64);
+                let cell_length = self.get_param_or_default("cell_length", length);
+                let can_use_cells = (length / cell_length).fract() == 0f64;
                 let k = 2f64 * PI * freq / C;
                 let r65_kick = -k * volt * phase.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
 
@@ -79,6 +81,11 @@ impl ElegantElement {
                 param_map.insert("v".to_string(), volt);
                 param_map.insert("freq".to_string(), freq);
                 param_map.insert("phi".to_string(), phase);
+                if can_use_cells {
+                    param_map.insert("num_cells".to_string(), length / cell_length);
+                } else {
+                    param_map.insert("num_cells".to_string(), 1f64);
+                }
                 param_map.insert("r56_drift".to_string(), r56_drift);
                 param_map.insert("r65_kick".to_string(), r65_kick);
                 let retval = Some(Element {
