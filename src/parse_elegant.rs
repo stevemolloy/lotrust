@@ -53,29 +53,25 @@ enum IntermedType {
 }
 
 impl ElegantElement {
+    fn get_param_or_default(&self, param: &str, default_val: f64) -> f64 {
+        match self.params.get(param) {
+            Some(val) => *val,
+            None => default_val,
+        }
+    }
+
     fn make_lotr_element(&self, gamma: &mut f64) -> Option<Element> {
-        let length = match self.params.get("l") {
-            Some(x) => *x,
-            None => 0f64,
-        };
+        let length = self.get_param_or_default("l", 0f64);
         let beta_sq = gamma_2_beta(*gamma).powi(2);
         let gamma_sq = gamma.powi(2);
         let r56_drift = length / (beta_sq * gamma_sq);
 
         match self.intermed_type {
             IntermedType::AccCav => {
-                let volt = match self.params.get("volt") {
-                    Some(x) => *x,
-                    None => 0f64,
-                };
-                let freq = match self.params.get("freq") {
-                    Some(x) => *x,
-                    None => 0f64,
-                };
-                let phase = match self.params.get("phase") {
-                    Some(x) => -(x.to_radians() - PI / 2f64), // Convert from elegant phase defn
-                    None => 0f64,
-                };
+                let volt = self.get_param_or_default("volt", 0f64);
+                let freq = self.get_param_or_default("freq", 0f64);
+                let phase_degrees = self.get_param_or_default("phase", 0f64);
+                let phase = -(phase_degrees.to_radians() - PI / 2f64);
                 let k = 2f64 * PI * freq / C;
                 let r65_kick = -k * volt * phase.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
 
@@ -85,14 +81,15 @@ impl ElegantElement {
                 param_map.insert("phi".to_string(), phase);
                 param_map.insert("r56_drift".to_string(), r56_drift);
                 param_map.insert("r65_kick".to_string(), r65_kick);
-                *gamma += (volt * phase.cos()) / MASS;
-                Some(Element {
+                let retval = Some(Element {
                     name: self.name.to_string(),
                     ele_type: EleType::AccCav,
                     length,
                     gamma: *gamma,
                     params: param_map,
-                })
+                });
+                *gamma += (volt * phase.cos()) / MASS;
+                retval
             }
             _ => todo!(),
         }
@@ -620,18 +617,12 @@ fn line_to_simulation(line: Line) -> Simulation {
     for ele in line {
         match ele.intermed_type {
             IntermedType::Drift | IntermedType::Kick | IntermedType::Moni | IntermedType::Sext => {
-                let l = match ele.params.get("l") {
-                    Some(l) => *l,
-                    None => 0f64,
-                };
+                let l = ele.get_param_or_default("l", 0f64);
                 acc.elements
                     .push(make_drift(ele.name.to_string(), l, design_gamma))
             }
             IntermedType::Quad => {
-                let l = match ele.params.get("l") {
-                    Some(l) => *l,
-                    None => 0f64,
-                };
+                let l = ele.get_param_or_default("l", 0f64);
                 acc.elements
                     .push(make_quad(ele.name.to_string(), l, design_gamma))
             }
@@ -641,14 +632,8 @@ fn line_to_simulation(line: Line) -> Simulation {
                 };
             }
             IntermedType::Bend => {
-                let l = match ele.params.get("l") {
-                    Some(x) => *x,
-                    None => 0f64,
-                };
-                let angle = match ele.params.get("angle") {
-                    Some(x) => *x,
-                    None => 0f64,
-                };
+                let l = ele.get_param_or_default("l", 0f64);
+                let angle = ele.get_param_or_default("angle", 0f64);
                 acc.elements
                     .push(make_dipole(ele.name.to_string(), l, angle, design_gamma));
             }
@@ -669,6 +654,7 @@ fn compare_tokentype_at(token_list: &[Token], ind: usize, tok_type: TokenType) -
 
 #[cfg(test)]
 mod tests {
+    use crate::out_energyprofile;
     use std::fs::File;
     use std::io::Read;
 
@@ -760,6 +746,9 @@ mod tests {
 
     const SPF_BEAM_TRUE: &str = "tests/spf_output_true.beam";
     const SPF_BEAM_TEST: &str = "tests/spf_output_test.beam";
+
+    const SPF_ENERGY_PROFILE_TRUE: &str = "tests/spf_energy_profile_true.data";
+    const SPF_ENERGY_PROFILE_TEST: &str = "tests/spf_energy_profile_test.data";
 
     #[test]
     fn track_thru_drift() {
@@ -1049,6 +1038,18 @@ mod tests {
 
         let mut file_true = File::open(SPF_BEAM_TRUE).unwrap();
         let mut file_test = File::open(SPF_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn energyprofile_is_correct() {
+        let sim: Simulation = load_elegant_file(SPF_TESTFILE, "SPF");
+        if let Ok(mut file) = File::create(SPF_ENERGY_PROFILE_TEST) {
+            out_energyprofile(&mut file, &sim);
+        }
+
+        let mut file_true = File::open(SPF_ENERGY_PROFILE_TRUE).unwrap();
+        let mut file_test = File::open(SPF_ENERGY_PROFILE_TEST).unwrap();
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 }

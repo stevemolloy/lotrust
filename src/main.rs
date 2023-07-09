@@ -51,9 +51,9 @@ struct State {
 const HISTORYFILE: &str = "history";
 const CONFIGDIR: &str = ".config/LOTR/";
 
-fn out_energyprofile(sink: &mut impl Write, state: &State) {
+pub fn out_energyprofile(sink: &mut impl Write, sim: &Simulation) {
     let mut z = 0f64;
-    for (ind, ele) in state.simulation.elements.iter().enumerate() {
+    for (ind, ele) in sim.elements.iter().enumerate() {
         if let Err(e) = writeln!(sink, "{}, {}, {}", ind, z, ele.gamma) {
             println!("{}", e);
             break;
@@ -187,7 +187,7 @@ fn parse_input(text: &str, mut state: State) -> State {
                             println!("Could not write to stdout...: {e}");
                         }
                     }
-                    "energy_profile" => out_energyprofile(&mut io::stdout(), &state),
+                    "energy_profile" => out_energyprofile(&mut io::stdout(), &state.simulation),
                     _ => println!("ERROR: Cannot understand '{print_what}'"),
                 }
             }
@@ -225,7 +225,7 @@ fn parse_input(text: &str, mut state: State) -> State {
                     }
                     "energy_profile" => {
                         if let Ok(mut file) = File::create(filename) {
-                            out_energyprofile(&mut file, &state);
+                            out_energyprofile(&mut file, &state.simulation);
                         } else {
                             println!("ERROR: Could not write the file");
                         }
