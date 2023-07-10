@@ -1,4 +1,4 @@
-use crate::beam::{gamma_2_beta, Beam, C, MASS};
+use crate::beam::{gamma_2_beta, ke_2_gamma, Beam, C, MASS};
 use crate::elegant_rpn::RpnCalculator;
 use crate::elements::{make_dipole, make_drift, make_quad, EleType, Element};
 use crate::parse_lotr::Simulation;
@@ -613,7 +613,7 @@ fn line_to_simulation(line: Line) -> Simulation {
         breakpoints_passed: Vec::new(),
         current: 0,
     };
-    let mut design_gamma = acc.input_beam_ke / MASS;
+    let mut design_gamma = ke_2_gamma(acc.input_beam_ke);
     for ele in line {
         match ele.intermed_type {
             IntermedType::Drift | IntermedType::Kick | IntermedType::Moni | IntermedType::Sext => {
