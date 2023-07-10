@@ -64,7 +64,7 @@ impl ElegantElement {
         let length = self.get_param_or_default("l", 0f64);
         let beta_sq = gamma_2_beta(*gamma).powi(2);
         let gamma_sq = gamma.powi(2);
-        let r56_drift = length / (beta_sq * gamma_sq);
+        let mut r56_drift = length / (beta_sq * gamma_sq);
 
         match self.intermed_type {
             IntermedType::AccCav => {
@@ -82,7 +82,9 @@ impl ElegantElement {
                 param_map.insert("freq".to_string(), freq);
                 param_map.insert("phi".to_string(), phase);
                 if can_use_cells {
-                    param_map.insert("num_cells".to_string(), length / cell_length);
+                    let num_cells = length / cell_length;
+                    param_map.insert("num_cells".to_string(), num_cells);
+                    r56_drift /= num_cells;
                 } else {
                     param_map.insert("num_cells".to_string(), 1f64);
                 }
