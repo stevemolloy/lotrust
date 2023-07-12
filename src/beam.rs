@@ -29,7 +29,7 @@ impl Beam {
                 self.pos = self.pos.dot(&t_matrix);
             }
             EleType::AccCav => {
-                let mut beam_ke = ele.gamma * MASS;
+                let mut beam_ke = gamma_2_ke(ele.gamma);
                 let num_cells = match ele.params.get("num_cells") {
                     Some(val) => *val as usize,
                     None => 1,
@@ -44,7 +44,7 @@ impl Beam {
 
                 for _ in 0..num_cells {
                     let new_ke = beam_ke + ke_gain_per_cell;
-                    let gamma = beam_ke / MASS;
+                    let gamma = ke_2_gamma(beam_ke);
                     let gamma_sq = gamma.powi(2);
 
                     let e_err_mat = arr2(&[[1f64, 0f64], [0f64, beam_ke / new_ke]]);
@@ -80,6 +80,10 @@ pub fn print_beam(sink: &mut impl Write, beam: &Beam) {
 
 pub fn ke_2_gamma(ke: f64) -> f64 {
     ke / MASS + 1f64
+}
+
+pub fn gamma_2_ke(gamma: f64) -> f64 {
+    (gamma - 1f64) * MASS
 }
 
 pub fn gamma_2_beta(g: f64) -> f64 {
