@@ -28,9 +28,13 @@ impl Beam {
                 self.pos = self.pos.dot(&t_matrix);
             }
             EleType::AccCav => {
-                let beam_ke = ele.gamma * MASS;
+                let beam_ke = gamma_2_ke(ele.gamma);
                 let ke_gain = ele.params["v"] * ele.params["phi"].cos();
                 let new_ke = beam_ke + ke_gain;
+                println!(
+                    "Tracking through AccCav. beam_ke/new_ke = {}",
+                    beam_ke / new_ke
+                );
 
                 let e_err_mat = arr2(&[[1f64, 0f64], [0f64, beam_ke / new_ke]]);
 
@@ -67,6 +71,10 @@ pub fn print_beam(sink: &mut impl Write, beam: &Beam) {
 
 pub fn ke_2_gamma(ke: f64) -> f64 {
     ke / MASS + 1f64
+}
+
+pub fn gamma_2_ke(gamma: f64) -> f64 {
+    (gamma - 1f64) * MASS
 }
 
 pub fn gamma_2_beta(g: f64) -> f64 {
