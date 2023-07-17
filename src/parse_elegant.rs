@@ -68,7 +68,13 @@ impl ElegantElement {
 
         match self.intermed_type {
             IntermedType::AccCav => {
-                let volt = self.get_param_or_default("volt", 0f64);
+                let volt = if self.params.contains_key("volt") {
+                    self.params["volt"]
+                } else if self.params.contains_key("voltage") {
+                    self.params["voltage"]
+                } else {
+                    0f64
+                };
                 let freq = self.get_param_or_default("freq", 0f64);
                 let phase_degrees = self.get_param_or_default("phase", 0f64);
                 let phase = -(phase_degrees.to_radians() - PI / 2f64);
