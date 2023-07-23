@@ -68,7 +68,13 @@ impl ElegantElement {
 
         match self.intermed_type {
             IntermedType::AccCav => {
-                let volt = self.get_param_or_default("volt", 0f64);
+                let volt = if self.params.contains_key("volt") {
+                    self.params["volt"]
+                } else if self.params.contains_key("voltage") {
+                    self.params["voltage"]
+                } else {
+                    0f64
+                };
                 let freq = self.get_param_or_default("freq", 0f64);
                 let phase_degrees = self.get_param_or_default("phase", 0f64);
                 let phase = -(phase_degrees.to_radians() - PI / 2f64);
@@ -723,6 +729,9 @@ mod tests {
     const RFCW_BEAM_TRUE: &str = "tests/rfcw_output_true.beam";
     const RFCW_BEAM_TEST: &str = "tests/rfcw_output_test.beam";
 
+    const RFCW_CREST_BEAM_TRUE: &str = "tests/rfcw_crest_output_true.beam";
+    const RFCW_CREST_BEAM_TEST: &str = "tests/rfcw_crest_output_test.beam";
+
     const RFDF_BEAM_TRUE: &str = "tests/rfdf_output_true.beam";
     const RFDF_BEAM_TEST: &str = "tests/rfdf_output_test.beam";
 
@@ -856,7 +865,7 @@ mod tests {
     }
 
     #[test]
-    fn track_thru_rfcw() {
+    fn track_thru_zero_crossing_rfcw() {
         let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFCW");
         let newsim = load_lotr_file(BEAM_TESTFILE);
         sim.input_beam = newsim.input_beam;
@@ -868,6 +877,22 @@ mod tests {
 
         let mut file_true = File::open(RFCW_BEAM_TRUE).unwrap();
         let mut file_test = File::open(RFCW_BEAM_TEST).unwrap();
+        assert!(diff_files(&mut file_true, &mut file_test));
+    }
+
+    #[test]
+    fn track_thru_crest_rfcw() {
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFCW_CREST");
+        let newsim = load_lotr_file(BEAM_TESTFILE);
+        sim.input_beam = newsim.input_beam;
+        sim.rescale_acc_energy(newsim.input_beam_ke);
+        sim.track();
+        if let Ok(mut file) = File::create(RFCW_CREST_BEAM_TEST) {
+            print_beam(&mut file, &sim.output_beam);
+        }
+
+        let mut file_true = File::open(RFCW_CREST_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(RFCW_CREST_BEAM_TEST).unwrap();
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 
