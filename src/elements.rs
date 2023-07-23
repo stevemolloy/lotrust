@@ -1,4 +1,4 @@
-use crate::beam::{gamma_2_beta, ke_2_gamma, C, MASS};
+use crate::beam::{gamma_2_beta, C, MASS};
 use core::fmt::Debug;
 use std::collections::HashMap;
 use std::f64::consts::PI;
@@ -24,40 +24,6 @@ pub struct Element {
     pub length: f64,
     #[allow(dead_code)]
     pub params: HashMap<String, f64>,
-}
-
-impl Element {
-    pub fn rescale_energy(&mut self, new_energy: &mut f64) {
-        self.gamma = ke_2_gamma(*new_energy);
-        let gamma_sq = self.gamma.powi(2);
-        let beta_sq = gamma_2_beta(self.gamma).powi(2);
-
-        match self.ele_type {
-            EleType::Drift => {
-                let r56 = self.length / (beta_sq * gamma_sq);
-                self.params.insert("r56".to_string(), r56);
-            }
-            EleType::Dipole => {
-                let angle = self.params["angle"];
-                let omega = angle / self.length;
-                let r56 = (self.length / (beta_sq * gamma_sq))
-                    - ((angle - angle.sin()) / (omega * beta_sq));
-                self.params.insert("r56".to_string(), r56);
-            }
-            EleType::AccCav => {
-                let phase = self.params["phi"];
-                let volt = self.params["v"];
-                let freq = self.params["freq"];
-                let k = 2f64 * PI * freq / C;
-                self.params.insert(
-                    "r65_kick".to_string(),
-                    -k * volt * phase.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS),
-                );
-                let r56 = self.length / (beta_sq * gamma_sq) / self.params["num_cells"];
-                self.params.insert("r56".to_string(), r56);
-            }
-        }
-    }
 }
 
 pub fn make_drift(name: String, length: f64, gamma: f64) -> Element {
@@ -96,7 +62,7 @@ pub fn make_dipole(name: String, length: f64, angle: f64, gamma: f64) -> Element
         (length / (beta_sq * gamma_sq)) - ((angle_fixed - angle_fixed.sin()) / (omega * beta_sq));
 
     let mut param_map = HashMap::new();
-    param_map.insert("angle".to_string(), angle_fixed);
+    param_map.insert("angle".to_string(), angle);
     param_map.insert("r56".to_string(), r56);
     Element {
         name,

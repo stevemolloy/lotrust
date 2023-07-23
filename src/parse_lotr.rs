@@ -1,5 +1,5 @@
-use crate::beam::{gamma_2_beta, ke_2_gamma, Beam};
-use crate::elements::{make_acccav, make_dipole, make_drift, Element};
+use crate::beam::{gamma_2_beta, ke_2_gamma, Beam, MASS};
+use crate::elements::{make_acccav, make_dipole, make_drift, EleType, Element};
 use ndarray::Array2;
 use std::fmt;
 use std::fs::read_to_string;
@@ -74,7 +74,28 @@ impl Simulation {
 
     pub fn rescale_acc_energy(&mut self, mut new_ke: f64) {
         for ele in self.elements.iter_mut() {
-            ele.rescale_energy(&mut new_ke);
+            match ele.ele_type {
+                EleType::Drift => *ele = make_drift(ele.name.clone(), ele.length, new_ke / MASS),
+                EleType::Dipole => {
+                    *ele = make_dipole(
+                        ele.name.clone(),
+                        ele.length,
+                        ele.params["angle"],
+                        new_ke / MASS,
+                    )
+                }
+                EleType::AccCav => {
+                    new_ke += ele.params["v"] * ele.params["phi"].cos();
+                    *ele = make_acccav(
+                        ele.name.clone(),
+                        ele.length,
+                        ele.params["v"],
+                        ele.params["freq"],
+                        ele.params["phi"],
+                        new_ke / MASS,
+                    );
+                }
+            }
         }
     }
 }

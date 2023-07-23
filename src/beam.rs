@@ -37,8 +37,9 @@ impl Beam {
                 );
 
                 let e_err_mat = arr2(&[[1f64, 0f64], [0f64, beam_ke / new_ke]]);
+
                 let r56_drift = match ele.params.get("r56_drift") {
-                    Some(val) => *val / 2f64,
+                    Some(val) => *val,
                     None => 0f64,
                 };
                 let drift_matrix = arr2(&[[1f64, 0f64], [r56_drift, 1f64]]);
