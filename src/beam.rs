@@ -28,15 +28,11 @@ impl Beam {
                 self.pos = self.pos.dot(&t_matrix);
             }
             EleType::AccCav => {
-                let beam_ke = gamma_2_ke(ele.gamma);
-                let ke_gain = ele.params["v"] * ele.params["phi"].cos();
-                let new_ke = beam_ke + ke_gain;
-                println!(
-                    "Tracking through AccCav. beam_ke/new_ke = {}",
-                    beam_ke / new_ke
-                );
+                let synchro_ke = gamma_2_ke(ele.gamma);
+                let synchro_ke_gain = ele.params["v"] * ele.params["phi"].cos();
+                let new_synchro_ke = synchro_ke + synchro_ke_gain;
 
-                let e_err_mat = arr2(&[[1f64, 0f64], [0f64, beam_ke / new_ke]]);
+                let e_err_mat = arr2(&[[1f64, 0f64], [0f64, synchro_ke / new_synchro_ke]]);
 
                 let r56_drift = match ele.params.get("r56_drift") {
                     Some(val) => *val,
