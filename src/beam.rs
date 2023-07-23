@@ -1,6 +1,5 @@
 use crate::elements::EleType;
 use ndarray::{arr2, s, Array2, Axis};
-use std::f64::consts::PI;
 use std::io::Write;
 
 use crate::elements::Element;
@@ -29,40 +28,31 @@ impl Beam {
                 self.pos = self.pos.dot(&t_matrix);
             }
             EleType::AccCav => {
-                let mut beam_ke = gamma_2_ke(ele.gamma);
-                let num_cells = match ele.params.get("num_cells") {
-                    Some(val) => *val as usize,
-                    None => 1,
-                };
+                let beam_ke = gamma_2_ke(ele.gamma);
+                let ke_gain = ele.params["v"] * ele.params["phi"].cos();
+                let new_ke = beam_ke + ke_gain;
+                println!(
+                    "Tracking through AccCav. beam_ke/new_ke = {}",
+                    beam_ke / new_ke
+                );
+
+                let e_err_mat = arr2(&[[1f64, 0f64], [0f64, beam_ke / new_ke]]);
                 let r56_drift = match ele.params.get("r56_drift") {
                     Some(val) => *val / 2f64,
                     None => 0f64,
                 };
                 let drift_matrix = arr2(&[[1f64, 0f64], [r56_drift, 1f64]]);
 
-                let ke_gain_per_cell = ele.params["v"] * ele.params["phi"].cos() / num_cells as f64;
+                let r65_kick = match ele.params.get("r65_kick") {
+                    Some(val) => *val,
+                    None => 0f64,
+                };
+                let kick_matrix = arr2(&[[1f64, r65_kick], [0f64, 1f64]]);
 
-                for _ in 0..num_cells {
-                    let new_ke = beam_ke + ke_gain_per_cell;
-                    let gamma = ke_2_gamma(beam_ke);
-                    let gamma_sq = gamma.powi(2);
-
-                    let e_err_mat = arr2(&[[1f64, 0f64], [0f64, beam_ke / new_ke]]);
-
-                    let volt = ele.params["v"] / num_cells as f64;
-                    let phase = ele.params["phi"];
-                    let freq = ele.params["freq"];
-                    let k = 2f64 * PI * freq / C;
-                    let r65_kick = -k * volt * phase.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
-                    let kick_matrix = arr2(&[[1f64, r65_kick], [0f64, 1f64]]);
-
-                    self.pos = self.pos.dot(&drift_matrix);
-                    self.pos = self.pos.dot(&e_err_mat);
-                    self.pos = self.pos.dot(&kick_matrix);
-                    self.pos = self.pos.dot(&drift_matrix);
-
-                    beam_ke = new_ke;
-                }
+                self.pos = self.pos.dot(&drift_matrix);
+                self.pos = self.pos.dot(&e_err_mat);
+                self.pos = self.pos.dot(&kick_matrix);
+                self.pos = self.pos.dot(&drift_matrix);
             }
         }
     }
