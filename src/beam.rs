@@ -28,6 +28,11 @@ impl Beam {
                 self.pos = self.pos.dot(&t_matrix);
             }
             EleType::AccCav => {
+                for particle in self.pos.outer_iter() {
+                    let neg_matrix = arr2(&[[-1f64, 0f64], [0f64, -1f64]]);
+                    println!("particle details: {:#?}", neg_matrix.dot(&particle));
+                    println!("particle details: {:#?}", particle);
+                }
                 let synchro_ke = gamma_2_ke(ele.gamma);
                 let synchro_ke_gain = ele.params["v"] * ele.params["phi"].cos();
                 let new_synchro_ke = synchro_ke + synchro_ke_gain;
