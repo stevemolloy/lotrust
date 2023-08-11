@@ -15,7 +15,7 @@ test_sbend: sbend, ANGLE="24.97 180 / pi *", TILT="0.5 pi *", l=2.477675, e1=0, 
 test_hkick: HKICK, l = 0.140000
 test_vkick: VKICK, l = 0.140000
 test_kquad: Kquad, L=0.2, K1=2.981606216824745,  SYSTEMATIC_MULTIPOLES="./input/Systematic_multipole_content_QF.sdds", N_KICKS=32
-test_rfcw: rfcw, freq = "frequency",&
+test_rfcw_zerocrossing: rfcw, freq = "frequency",&
 		cell_length="rf_cav_l",l="rf_cell_l", volt="rf_voltage 2 sqrt /",&
 		phase="zero_crossing_phase",&
 		change_p0=1,&
@@ -23,7 +23,7 @@ test_rfcw: rfcw, freq = "frequency",&
 		zwake=0, trwake=0,&
 		n_bins=0,change_p0=1,&
 		wyColumn="W",n_bins=0
-test_rfcw_acc: rfcw, freq = "frequency",&
+test_rfcw_crest: rfcw, freq = "frequency",&
 		cell_length="rf_cav_l",l="rf_cell_l", volt="rf_voltage 2 sqrt /",&
 		phase="crest_phase",&
 		change_p0=1,&
@@ -40,7 +40,7 @@ test_csrcsbend: CSRCSBEND, ANGLE="5.9 180 / pi * -1 *", L=0.5, TILT="3 pi * 2 /"
 					EDGE1_EFFECTS=1, EDGE2_EFFECTS=1, EDGE_ORDER=2,&
 					BINS=600, SG_HALFWIDTH=1,&
 					HGAP=0.0055, FINT=0.4,
-test_rben: rben, l = 0.4, angle= 0
+test_rben: rben, ANGLE="24.97 180 / pi *", l=2.477675
 test_sben: SBEN,l = 1.027,ANGLE="bend_angle",TILT="0.5 pi *"
 test_ksext: KSEXT, L = 0.1, K2="sext_k2 -1 *", SYSTEMATIC_MULTIPOLES="./input/Systematic_multipole_content_SXH.sdds", N_KICKS=32
 test_scraper: scraper, l = 0.00, insert_from = "-x", position = -0.05
@@ -55,8 +55,8 @@ SBEND: line = ( test_sbend )
 HKICK: line = ( test_hkick )
 VKICK: line = ( test_vkick )
 KQUAD: line = ( test_kquad )
-RFCW: line = ( test_rfcw )
-RFCW_CREST: line = ( test_rfcw_acc )
+RFCW_ZEROCROSSING: line = ( test_rfcw_zerocrossing )
+RFCW_CREST: line = ( test_rfcw_crest )
 RFDF: line = ( test_rfdf )
 WIGGLER: line = ( test_wiggler )
 CSRCSBEND: line = ( test_csrcsbend )

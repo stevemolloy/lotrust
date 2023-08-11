@@ -1,5 +1,5 @@
 use crate::elements::EleType;
-use ndarray::{arr2, s, Array2, Axis};
+use ndarray::{arr2, s, Array, Array2, Axis};
 use std::io::Write;
 
 use crate::elements::Element;
@@ -27,34 +27,40 @@ impl Beam {
                 let t_matrix = arr2(&[[1f64, 0f64], [r56, 1f64]]);
                 self.pos = self.pos.dot(&t_matrix);
             }
-            EleType::AccCav => {
-                for particle in self.pos.outer_iter() {
-                    let neg_matrix = arr2(&[[-1f64, 0f64], [0f64, -1f64]]);
-                    println!("particle details: {:#?}", neg_matrix.dot(&particle));
-                    println!("particle details: {:#?}", particle);
-                }
+            EleType::AccCav(details) => {
+                let length = details.length;
+                let k = details.wavenumber;
+                let volt = details.voltage;
+                let phase = details.phase;
+                let gamma_sq = ele.gamma.powi(2);
+                let beta_sq = gamma_2_beta(ele.gamma);
                 let synchro_ke = gamma_2_ke(ele.gamma);
-                let synchro_ke_gain = ele.params["v"] * ele.params["phi"].cos();
+                let synchro_ke_gain = volt * phase.cos();
                 let new_synchro_ke = synchro_ke + synchro_ke_gain;
 
                 let e_err_mat = arr2(&[[1f64, 0f64], [0f64, synchro_ke / new_synchro_ke]]);
 
-                let r56_drift = match ele.params.get("r56_drift") {
-                    Some(val) => *val,
-                    None => 0f64,
-                };
+                let r56_drift = length / (beta_sq * gamma_sq);
                 let drift_matrix = arr2(&[[1f64, 0f64], [r56_drift, 1f64]]);
 
-                let r65_kick = match ele.params.get("r65_kick") {
-                    Some(val) => *val,
-                    None => 0f64,
-                };
-                let kick_matrix = arr2(&[[1f64, r65_kick], [0f64, 1f64]]);
+                let mut newpos = Array::zeros((0, 2));
+                for particle in self.pos.outer_iter() {
+                    // arr2 defines matrices in terms of a list of columns
+                    // let ident_matrix = arr2(&[[1f64, 0f64], [0f64, 1f64]]);
+                    let mut newparticle = particle.dot(&drift_matrix);
+                    let phase_error = newparticle[0] * details.wavenumber;
+                    let new_phase = details.phase - phase_error;
+                    let r65_kick =
+                        k * volt * new_phase.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
+                    let kick_matrix = arr2(&[[1f64, r65_kick], [0f64, 1f64]]);
 
-                self.pos = self.pos.dot(&drift_matrix);
-                self.pos = self.pos.dot(&e_err_mat);
-                self.pos = self.pos.dot(&kick_matrix);
-                self.pos = self.pos.dot(&drift_matrix);
+                    newparticle = newparticle.dot(&e_err_mat);
+                    newparticle = newparticle.dot(&kick_matrix);
+                    newparticle = newparticle.dot(&drift_matrix);
+                    newpos.push_row((&newparticle).into()).unwrap();
+                }
+
+                self.pos = newpos;
             }
         }
     }

@@ -1,10 +1,10 @@
-use crate::beam::{gamma_2_beta, ke_2_gamma, Beam, C, MASS};
+use crate::beam::{ke_2_gamma, Beam, C, MASS};
 use crate::elegant_rpn::RpnCalculator;
-use crate::elements::{make_dipole, make_drift, make_quad, EleType, Element};
+use crate::elements::{make_acccav, make_dipole, make_drift, make_quad, AccCavDetails};
 use crate::parse_lotr::Simulation;
+use core::f64::consts::PI;
 use ndarray::Array2;
 use std::collections::HashMap;
-use std::f64::consts::PI;
 use std::fs::read_to_string;
 use std::process::exit;
 use std::{f64, fmt};
@@ -60,46 +60,47 @@ impl ElegantElement {
         }
     }
 
-    fn make_lotr_element(&self, gamma: &mut f64) -> Option<Element> {
-        let length = self.get_param_or_default("l", 0f64);
-        let beta_sq = gamma_2_beta(*gamma).powi(2);
-        let gamma_sq = gamma.powi(2);
-        let r56_drift = length / (beta_sq * gamma_sq);
-
-        match self.intermed_type {
-            IntermedType::AccCav => {
-                let volt = if self.params.contains_key("volt") {
-                    self.params["volt"]
-                } else if self.params.contains_key("voltage") {
-                    self.params["voltage"]
-                } else {
-                    0f64
-                };
-                let freq = self.get_param_or_default("freq", 0f64);
-                let phase_degrees = self.get_param_or_default("phase", 0f64);
-                let phase = -(phase_degrees.to_radians() - PI / 2f64);
-                let k = 2f64 * PI * freq / C;
-                let r65_kick = -k * volt * phase.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
-
-                let mut param_map = HashMap::new();
-                param_map.insert("v".to_string(), volt);
-                param_map.insert("freq".to_string(), freq);
-                param_map.insert("phi".to_string(), phase);
-                param_map.insert("r56_drift".to_string(), r56_drift);
-                param_map.insert("r65_kick".to_string(), r65_kick);
-                let retval = Some(Element {
-                    name: self.name.to_string(),
-                    ele_type: EleType::AccCav,
-                    length,
-                    gamma: *gamma,
-                    params: param_map,
-                });
-                *gamma += (volt * phase.cos()) / MASS;
-                retval
-            }
-            _ => todo!(),
-        }
-    }
+    // fn make_lotr_element(&self, gamma: &mut f64) -> Option<Element> {
+    //     let length = self.get_param_or_default("l", 0f64);
+    //     let beta_sq = gamma_2_beta(*gamma).powi(2);
+    //     let gamma_sq = gamma.powi(2);
+    //     let r56_drift = length / (beta_sq * gamma_sq);
+    //
+    //     match self.intermed_type {
+    //         IntermedType::AccCav => {
+    //             let volt = if self.params.contains_key("volt") {
+    //                 self.params["volt"]
+    //             } else if self.params.contains_key("voltage") {
+    //                 self.params["voltage"]
+    //             } else {
+    //                 0f64
+    //             };
+    //             let freq = self.get_param_or_default("freq", 0f64);
+    //             let phase_degrees = self.get_param_or_default("phase", 0f64);
+    //             let phase = -(phase_degrees.to_radians() - PI / 2f64);
+    //             let k = 2f64 * PI * freq / C;
+    //             let r65_kick = -k * volt * phase.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
+    //
+    //             let mut param_map = HashMap::new();
+    //             param_map.insert("v".to_string(), volt);
+    //             param_map.insert("k".to_string(), k);
+    //             param_map.insert("freq".to_string(), freq);
+    //             param_map.insert("phi".to_string(), phase);
+    //             param_map.insert("r56_drift".to_string(), r56_drift);
+    //             param_map.insert("r65_kick".to_string(), r65_kick);
+    //             let retval = Some(Element {
+    //                 name: self.name.to_string(),
+    //                 ele_type: EleType::AccCav,
+    //                 length,
+    //                 gamma: *gamma,
+    //                 params: param_map,
+    //             });
+    //             *gamma += (volt * phase.cos()) / MASS;
+    //             retval
+    //         }
+    //         _ => todo!(),
+    //     }
+    // }
 }
 
 #[derive(Debug, Clone)]
@@ -633,9 +634,36 @@ fn line_to_simulation(line: Line) -> Simulation {
                     .push(make_quad(ele.name.to_string(), l, design_gamma))
             }
             IntermedType::AccCav => {
-                if let Some(lotr_ele) = ele.make_lotr_element(&mut design_gamma) {
-                    acc.elements.push(lotr_ele);
+                let phase = ele.get_param_or_default("phase", 0f64).to_radians() - PI / 2f64;
+                let volt = if ele.params.contains_key("volt") {
+                    ele.params["volt"]
+                } else if ele.params.contains_key("voltage") {
+                    ele.params["voltage"]
+                } else {
+                    0f64
                 };
+                let freq = if ele.params.contains_key("freq") {
+                    ele.params["freq"]
+                } else if ele.params.contains_key("frequency") {
+                    ele.params["frequency"]
+                } else {
+                    panic!("Param map in ele doesn't contain necessary freq/frequency key");
+                };
+                let k = 2f64 * PI * freq / C;
+                let details = AccCavDetails {
+                    frequency: freq,
+                    voltage: volt,
+                    phase,
+                    length: ele.params["l"],
+                    wavenumber: k,
+                };
+                acc.elements
+                    .push(make_acccav(ele.name.to_string(), details, design_gamma));
+                design_gamma += (volt * phase.cos()) / MASS;
+                // println!("Calling make_lotr_element in line_to_simulation");
+                // if let Some(lotr_ele) = ele.make_lotr_element(&mut design_gamma) {
+                //     acc.elements.push(lotr_ele);
+                // };
             }
             IntermedType::Bend => {
                 let l = ele.get_param_or_default("l", 0f64);
@@ -717,8 +745,8 @@ mod tests {
     const KQUAD_BEAM_TRUE: &str = "tests/kquad_output_true.beam";
     const KQUAD_BEAM_TEST: &str = "tests/kquad_output_test.beam";
 
-    const RFCW_BEAM_TRUE: &str = "tests/rfcw_output_true.beam";
-    const RFCW_BEAM_TEST: &str = "tests/rfcw_output_test.beam";
+    const RFCW_ZEROCROSSING_BEAM_TRUE: &str = "tests/rfcw_zerocrossing_output_true.beam";
+    const RFCW_ZEROCROSSING_BEAM_TEST: &str = "tests/rfcw_zerocrossing_output_test.beam";
 
     const RFCW_CREST_BEAM_TRUE: &str = "tests/rfcw_crest_output_true.beam";
     const RFCW_CREST_BEAM_TEST: &str = "tests/rfcw_crest_output_test.beam";
@@ -857,17 +885,17 @@ mod tests {
 
     #[test]
     fn track_thru_zero_crossing_rfcw() {
-        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFCW");
+        let mut sim: Simulation = load_elegant_file(ELEGANT_TESTFILE, "RFCW_ZEROCROSSING");
         let newsim = load_lotr_file(BEAM_TESTFILE);
         sim.input_beam = newsim.input_beam;
         sim.rescale_acc_energy(newsim.input_beam_ke);
         sim.track();
-        if let Ok(mut file) = File::create(RFCW_BEAM_TEST) {
+        if let Ok(mut file) = File::create(RFCW_ZEROCROSSING_BEAM_TEST) {
             print_beam(&mut file, &sim.output_beam);
         }
 
-        let mut file_true = File::open(RFCW_BEAM_TRUE).unwrap();
-        let mut file_test = File::open(RFCW_BEAM_TEST).unwrap();
+        let mut file_true = File::open(RFCW_ZEROCROSSING_BEAM_TRUE).unwrap();
+        let mut file_test = File::open(RFCW_ZEROCROSSING_BEAM_TEST).unwrap();
         assert!(diff_files(&mut file_true, &mut file_test));
     }
 

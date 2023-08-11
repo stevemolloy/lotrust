@@ -1,5 +1,6 @@
-use crate::beam::{gamma_2_beta, ke_2_gamma, Beam, MASS};
-use crate::elements::{make_acccav, make_dipole, make_drift, EleType, Element};
+use crate::beam::{gamma_2_beta, ke_2_gamma, Beam, C, MASS};
+use crate::elements::{make_acccav, make_dipole, make_drift, AccCavDetails, EleType, Element};
+use core::f64::consts::PI;
 use ndarray::Array2;
 use std::fmt;
 use std::fs::read_to_string;
@@ -84,16 +85,9 @@ impl Simulation {
                         new_ke / MASS,
                     )
                 }
-                EleType::AccCav => {
-                    new_ke += ele.params["v"] * ele.params["phi"].cos();
-                    *ele = make_acccav(
-                        ele.name.clone(),
-                        ele.length,
-                        ele.params["v"],
-                        ele.params["freq"],
-                        ele.params["phi"],
-                        new_ke / MASS,
-                    );
+                EleType::AccCav(details) => {
+                    new_ke += details.voltage * details.phase.cos();
+                    *ele = make_acccav(ele.name.clone(), details, ke_2_gamma(new_ke));
                 }
             }
         }
@@ -450,12 +444,23 @@ fn parse_tokens(token_list: &[Token]) -> Simulation {
                         ind += 1;
                         token_check(&token_list[ind], Value);
                         let phi = token_list[ind].value.parse::<f64>().expect("uh oh!");
-                        acc.elements.push(make_acccav(
-                            "acccav_name".to_string(),
+                        println!("Calling make_acccav in parse_tokens");
+                        // let mut params = HashMap::<String, f64>::new();
+                        let k = 2f64 * PI * freq / C;
+                        let details = AccCavDetails {
                             length,
                             voltage,
-                            freq,
-                            phi,
+                            frequency: freq,
+                            phase: phi,
+                            wavenumber: k,
+                        };
+                        // params.insert("l".to_string(), length);
+                        // params.insert("v".to_string(), voltage);
+                        // params.insert("freq".to_string(), freq);
+                        // params.insert("phi".to_string(), phi);
+                        acc.elements.push(make_acccav(
+                            "acccav_name".to_string(),
+                            details,
                             ke_2_gamma(sync_ke),
                         ));
                         sync_ke += voltage * length * phi.cos();

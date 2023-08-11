@@ -1,16 +1,23 @@
-use crate::beam::{gamma_2_beta, C, MASS};
+use crate::beam::{gamma_2_beta, C};
 use core::fmt::Debug;
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::process::exit;
 
-// const E_CHARGE: f64 = 1.60217663e-19;
+#[derive(Debug, Copy, Clone)]
+pub struct AccCavDetails {
+    pub length: f64,
+    pub wavenumber: f64,
+    pub frequency: f64,
+    pub voltage: f64,
+    pub phase: f64,
+}
 
 #[derive(Debug)]
 pub enum EleType {
     Drift,
     Dipole,
-    AccCav,
+    AccCav(AccCavDetails),
 }
 
 // TODO(#2): Beam should (?) be resorted when tracked by an element that may reorder things.
@@ -74,26 +81,37 @@ pub fn make_dipole(name: String, length: f64, angle: f64, gamma: f64) -> Element
 }
 
 // TODO(#4): Accelerating cavities need to have wakefields in their physics.
-pub fn make_acccav(name: String, length: f64, v: f64, freq: f64, phi: f64, gamma: f64) -> Element {
-    let beta_sq = gamma_2_beta(gamma).powi(2);
-    let gamma_sq = gamma.powi(2);
-    let r56_drift = length / (beta_sq * gamma_sq);
+// pub fn make_acccav(name: String, length: f64, v: f64, freq: f64, phi: f64, gamma: f64) -> Element {
+pub fn make_acccav(name: String, details: AccCavDetails, gamma: f64) -> Element {
+    // let beta_sq = gamma_2_beta(gamma).powi(2);
+    // let gamma_sq = gamma.powi(2);
+    let length = details.length;
+    let freq = details.frequency;
+    let phi = details.phase;
+    let v = details.voltage;
+
+    // let r56_drift = length / (beta_sq * gamma_sq);
 
     let k = 2f64 * PI * freq / C;
-    let r65_kick = -k * v * phi.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
 
-    let mut param_map = HashMap::new();
-    param_map.insert("v".to_string(), v);
-    param_map.insert("freq".to_string(), freq);
-    param_map.insert("phi".to_string(), phi);
-    param_map.insert("r56_drift".to_string(), r56_drift);
-    param_map.insert("r65_kick".to_string(), r65_kick);
+    let details: AccCavDetails = AccCavDetails {
+        length,
+        wavenumber: k,
+        frequency: freq,
+        voltage: v,
+        phase: phi,
+    };
+
+    // let r65_kick = -k * v * phi.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
+
+    // params.insert("r56_drift".to_string(), r56_drift);
+    // params.insert("r65_kick".to_string(), r65_kick);
     Element {
         name,
-        ele_type: EleType::AccCav,
+        ele_type: EleType::AccCav(details),
         length,
         gamma,
-        params: param_map,
+        params: HashMap::<String, f64>::new(),
     }
 }
 
