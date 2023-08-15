@@ -83,14 +83,10 @@ pub fn make_dipole(name: String, length: f64, angle: f64, gamma: f64) -> Element
 // TODO(#4): Accelerating cavities need to have wakefields in their physics.
 // pub fn make_acccav(name: String, length: f64, v: f64, freq: f64, phi: f64, gamma: f64) -> Element {
 pub fn make_acccav(name: String, details: AccCavDetails, gamma: f64) -> Element {
-    // let beta_sq = gamma_2_beta(gamma).powi(2);
-    // let gamma_sq = gamma.powi(2);
     let length = details.length;
     let freq = details.frequency;
     let phi = details.phase;
     let v = details.voltage;
-
-    // let r56_drift = length / (beta_sq * gamma_sq);
 
     let k = 2f64 * PI * freq / C;
 
@@ -102,10 +98,6 @@ pub fn make_acccav(name: String, details: AccCavDetails, gamma: f64) -> Element 
         phase: phi,
     };
 
-    // let r65_kick = -k * v * phi.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
-
-    // params.insert("r56_drift".to_string(), r56_drift);
-    // params.insert("r65_kick".to_string(), r65_kick);
     Element {
         name,
         ele_type: EleType::AccCav(details),

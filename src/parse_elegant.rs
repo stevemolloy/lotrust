@@ -59,48 +59,6 @@ impl ElegantElement {
             None => default_val,
         }
     }
-
-    // fn make_lotr_element(&self, gamma: &mut f64) -> Option<Element> {
-    //     let length = self.get_param_or_default("l", 0f64);
-    //     let beta_sq = gamma_2_beta(*gamma).powi(2);
-    //     let gamma_sq = gamma.powi(2);
-    //     let r56_drift = length / (beta_sq * gamma_sq);
-    //
-    //     match self.intermed_type {
-    //         IntermedType::AccCav => {
-    //             let volt = if self.params.contains_key("volt") {
-    //                 self.params["volt"]
-    //             } else if self.params.contains_key("voltage") {
-    //                 self.params["voltage"]
-    //             } else {
-    //                 0f64
-    //             };
-    //             let freq = self.get_param_or_default("freq", 0f64);
-    //             let phase_degrees = self.get_param_or_default("phase", 0f64);
-    //             let phase = -(phase_degrees.to_radians() - PI / 2f64);
-    //             let k = 2f64 * PI * freq / C;
-    //             let r65_kick = -k * volt * phase.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
-    //
-    //             let mut param_map = HashMap::new();
-    //             param_map.insert("v".to_string(), volt);
-    //             param_map.insert("k".to_string(), k);
-    //             param_map.insert("freq".to_string(), freq);
-    //             param_map.insert("phi".to_string(), phase);
-    //             param_map.insert("r56_drift".to_string(), r56_drift);
-    //             param_map.insert("r65_kick".to_string(), r65_kick);
-    //             let retval = Some(Element {
-    //                 name: self.name.to_string(),
-    //                 ele_type: EleType::AccCav,
-    //                 length,
-    //                 gamma: *gamma,
-    //                 params: param_map,
-    //             });
-    //             *gamma += (volt * phase.cos()) / MASS;
-    //             retval
-    //         }
-    //         _ => todo!(),
-    //     }
-    // }
 }
 
 #[derive(Debug, Clone)]
