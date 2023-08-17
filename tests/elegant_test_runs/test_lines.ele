@@ -1,0 +1,47 @@
+&run_setup
+     lattice = test_lines.lte
+     default_order = 1,
+     final_pass = 1,
+     use_beamline = RFCW_CREST,
+     p_central = 489.2,
+	   output = "./output/%s_O1.out"
+	   sigma = "./output/%s_O1.sig",
+	   magnets =  "./output/%s_O1.magn",
+	   centroid =  "./output/%s_O1.cen",
+	   parameters = "./output/%s_O1.param",
+	   semaphore_file = "./output/%s_O1.sem",
+     print_statistics = 1
+	   always_change_p0 = 1
+&end
+
+&run_control
+&end
+
+&twiss_output
+     matched = 0,
+     beta_x  = "2.5716",
+     beta_y  = "2.6931",
+     alpha_x = "-1.2961",
+     alpha_y = "-1.5561",
+     filename = "./output/%s_O1.twi",
+&end
+
+&sdds_beam
+     input="./input/test_beam.sdds",
+     input_type="elegant",
+     sample_fraction = 1,
+     center_transversely = 1,
+     center_arrival_time = 1,
+     reuse_bunch = 1,
+&end
+
+&matrix_output
+     full_matrix_only = 0,
+     SDDS_output="./output/%s_O1.mat",
+     SDDS_output_order=3,
+     output_at_each_step = 0,
+&end
+
+&track
+&end
+

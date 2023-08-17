@@ -1,0 +1,72 @@
+% 2998e6 sto frequency
+% 2.9985e9 sto rf_frequency
+% 0.033333333 sto rf_cav_l
+% 0.033333333 156 * sto rf_cell_l
+% 6.44e5 156 * sto rf_voltage
+% 0 sto zero_crossing_phase
+% 90 sto crest_phase
+% 61.4e6 sto tdc_voltage,
+% 5 180 / pi * sto bend_angle
+% 50.011380 sto sext_k2
+
+test_drift: drift, l = 5.000
+test_marker: marker
+test_sbend: sbend, ANGLE="24.97 180 / pi *", TILT="0.5 pi *", l=2.477675, e1=0, e2=0, K1=0, K2=0
+test_hkick: HKICK, l = 0.140000
+test_vkick: VKICK, l = 0.140000
+test_kquad: Kquad, L=0.2, K1=2.981606216824745,  SYSTEMATIC_MULTIPOLES="./input/Systematic_multipole_content_QF.sdds", N_KICKS=32
+test_rfcw_zerocrossing: rfcw, freq = "frequency",&
+		cell_length="rf_cav_l",l="rf_cell_l", volt="rf_voltage 2 sqrt /",&
+		phase="zero_crossing_phase",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1,&
+		zwake=0, trwake=0,&
+		n_bins=0,change_p0=1,&
+		wyColumn="W",n_bins=0
+test_rfcw_crest: rfcw, freq = "frequency",&
+		cell_length="rf_cav_l",l="rf_cell_l", volt="rf_voltage 2 sqrt /",&
+		phase="crest_phase",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1,&
+		zwake=0, trwake=0,&
+		n_bins=0,change_p0=1,&
+		wyColumn="W",n_bins=0
+test_rfdf: RFDF, L=3, PHASE="zero_crossing_phase", TILT=0, frequency="rf_frequency", VOLTAGE="tdc_voltage", N_KICKS=3000, MAGNETIC_DEFLECTION=1,
+test_wiggler: wiggler, l = 4.95, K = 2.23, POLES = 328
+test_csrcsbend: CSRCSBEND, ANGLE="5.9 180 / pi * -1 *", L=0.5, TILT="3 pi * 2 /",&
+					E1="0", E2="0",&
+					K1=0, K2=0, K3=0,&
+					NONLINEAR=1, N_KICKS=550, INTEGRATION_ORDER=4,&
+					EDGE1_EFFECTS=1, EDGE2_EFFECTS=1, EDGE_ORDER=2,&
+					BINS=600, SG_HALFWIDTH=1,&
+					HGAP=0.0055, FINT=0.4,
+test_rben: rben, ANGLE="24.97 180 / pi *", l=2.477675
+test_sben: SBEN,l = 1.027,ANGLE="bend_angle",TILT="0.5 pi *"
+test_ksext: KSEXT, L = 0.1, K2="sext_k2 -1 *", SYSTEMATIC_MULTIPOLES="./input/Systematic_multipole_content_SXH.sdds", N_KICKS=32
+test_scraper: scraper, l = 0.00, insert_from = "-x", position = -0.05
+test_ecol: ECOL, X_MAX=1.0, Y_MAX=1.0, DX=0, DY=0
+test_monitor: monitor, l = 0.15, weight = 1
+test_moni: moni, l = 0.200000, weight = 1
+"W-END":       WATCH, FILENAME="./output/w-end.sdds"
+"W-INIT":      WATCH, FILENAME="./output/w-init.sdds"
+
+DRIFT: line = ( "W-INIT", test_drift , "W-END" )
+MARKER: line = ( "W-INIT", test_marker , "W-END" )
+SBEND: line = ( "W-INIT", test_sbend , "W-END" )
+HKICK: line = ( "W-INIT", test_hkick , "W-END" )
+VKICK: line = ( "W-INIT", test_vkick , "W-END" )
+KQUAD: line = ( "W-INIT", test_kquad , "W-END" )
+RFCW_ZEROCROSSING: line = ( "W-INIT", test_rfcw_zerocrossing , "W-END" )
+RFCW_CREST: line = ( "W-INIT", test_rfcw_crest , "W-END" )
+RFDF: line = ( "W-INIT", test_rfdf , "W-END" )
+WIGGLER: line = ( "W-INIT", test_wiggler , "W-END" )
+CSRCSBEND: line = ( "W-INIT", test_csrcsbend , "W-END" )
+RBEN: line = ( "W-INIT", test_rben , "W-END" )
+SBEN: line = ( "W-INIT", test_sben , "W-END" )
+KSEXT: line = ( "W-INIT", test_ksext , "W-END" )
+SCRAPER: line = ( "W-INIT", test_scraper , "W-END" )
+ECOL: line = ( "W-INIT", test_ecol , "W-END" )
+MONITOR: line = ( "W-INIT", test_monitor , "W-END" )
+MONI: line = ( "W-INIT", test_moni , "W-END" )
+
+

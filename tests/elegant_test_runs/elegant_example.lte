@@ -1,0 +1,3362 @@
+
+!++++++++++++++++++++++++++++++++++++++++++ CHANGE LOG ++++++++++++++++++++++++++++++++++++++++++
+! (Changes performed since version 3.4.4)
+
+!2019-01-08	LI Changed path for outputfiles from ..\output\ to ./output/ (56 occurrences)
+!               LI Changed path for inputfiles from ..\input\ to ./input/ (332 occurrences)
+!2019-01-09     LI Changed DX=10 to DX=0 for I.SP02.VAC.MBD.1 (i.e. from beamdump closed to open)
+!2019-01-11     LI Corrected filename for I.S07a.DIA.SCRN.1 (from %s-I_S01a_DIA_SCRN_1.w1 to %s-I_S07a_DIA_SCRN_1.w1)
+!2019-01-11     LI Corrected filename for I.S15a.DIA.SCRN.1 (from %s-I_S01a_DIA_SCRN_1.w1 to %s-I_S15a_DIA_SCRN_1.w1)
+!2019-01-21     LI Changed the "volt" parameter for linac structures
+!                      I.L16a_linspf, I.L16b_linspf, I.L17a_linspf, I.L17b_linspf, I.L18a_linspf, I.L18b_linspf, I.L19a_linspf, I.L19b_linspf
+!                  to the new modulator configuration (volt="V_MDL_SPF 2 sqrt /"  changed to  volt="V_MDL_SPF").
+!                  Have not yet changed the corresponding parameter for 1.5GeV and 3GeV injection mode.
+!2019-01-21     LI Corrected HGAP for the DIA and DIB type dipole magnets (from 0.001m to 0.0075m)
+!2019-01-21     LI Moved CH charge element to start of SPF beamline (to avoid elegant runtime warnings)
+!		   Have not yet made the corresponding change to the INJ3 and INJ15 beamlines.
+!2019-01-22     LI Corrected Einput value (from pAverage=185 to pAverage=204.8). The previous value came from an earlier version of daresburyastrain.sdds.
+!2019-01-22     LI Removed DX (x misalignment) from the SP02 quads.
+!2019-01-22     LI Corrected the insert_from direction for I.BC2.VAC.SCRP.1 and I.BC2.VAC.SCRP.2 (from y to x)
+!2019-01-29     LI Removed the "automatic" calculation of linac peak voltages and phase adjustments
+
+!2019-02-04     LI Removed markers PUNKT1, PUNKT2, FIT1, FIT2, FIT3
+!2019-02-04     LI Changed to separate quadrupole- and sextupole-definitions for the various running modes
+
+!2019-02-05     LI Removed all "knobs" for the BC1 quadrupoles and sextupoles
+!2019-02-05     LI Removed all "knobs" for the BC2 quadrupoles and sextupoles
+!2019-02-12     LI Added BC2 branch for TDC (SP01B) line
+!2019-02-13     LI Added TDC (SP01B) line
+
+!2019-02-27     LI Removed the phi_adj_pt1 and phi_adj_pt2 phases (remnants from the "automatic" calculation)
+
+!2019-04-02     Save the present lattice version as MAXIV_linac_lattice_3.5.lte
+
+!2021-11-09	Change wakefield files from wakefieldlong.sdds and wakefieldtran.sdds to
+!		wakefieldlong_interp.sdds and wakefieldtran_interp.sdds
+
+!2022-03-14     NB Updated SP01B (version 3.6.1)
+
+!2023-02-24     NB Added new screen in BC2_ACHR2_TDC and updated layout in SP01B according to CAD model
+!2023-02-27     ST Updated compression and matching (phi_L1_SPF, phi_MDL_SPF, SXL_K2, I.S01*.MAG.QE.*_SPF, I.MS1.MAG.QB.*_SPF)
+!2023-03-06     NB Save the present lattice version as MAXIV_linac_lattice_3.6.2.lte
+
+!2023-03-14     LI Rename some magnets in order to have the same naming as in Tango:
+!               I.BC2.MAG.DIBB.01_I.BC2.MAG.CRDI --> I.BC2.MAG.DIBB.10_I.BC2.MAG.CRDI
+!               I.BC2.MAG.DIB.10_I.BC2.MAG.CRDI  --> I.BC2.MAG.DIB.11_I.BC2.MAG.CRDI
+!               I.BC2.MAG.DIB.11_I.BC2.MAG.CRDI  --> I.BC2.MAG.DIB.12_I.BC2.MAG.CRDI
+!               I.SP01B.MAG.QG.1 --> I.SP01M.MAG.QH.1
+!               I.SP01B.MAG.QG.2 --> I.SP01M.MAG.QH.2
+!               I.SP01B.MAG.QG.3 --> I.SP01C.MAG.QH.3
+!               I.SP01B.MAG.QG.4 --> I.SP01C.MAG.QH.4
+!               I.SP01B.MAG.QG.5 --> I.SP01S.MAG.QH.5
+
+!2023-03-30     NB Closed dispersion after BC2 for SP01B line (BC2_QM_K1_TDC optimized for etax and etapx in BC2END_TDC)
+!2023-03-31     NB Defined new lines SP01B_COMMON_BRANCHA, SP01B_COMMON_BRANCHB and SP01B_COMMON_BRANCHC
+!2023-03-31     NB Save the present lattice version as MAXIV_linac_lattice_3.6.3.lte
+
+
+!+++++++++++++++++++++++++ NOTE ON ELEMENT NAMES ++++++++++++++++++++++++
+
+! Any physical element will be named according to its location, as
+! specified in the MAX IV naming convention. However, in the lattice
+! each element name consists of several parts separated by an
+! underscore '_' or a hyphen '-'. The first part, up to the
+! underscore, is the name of the physical device according to the MAX
+! IV naming convention. For magnets this means that individual magnets
+! that are powered in series will have different names. The second
+! part, between the underscore and the hyphen, is a linking name. The
+! link name will be used to distinguish various component
+! interdependencies, such as common powersupplies for magnets. This
+! eases the elegant setup of links for various simulations. To be more
+! specific, the link name will:
+!   - be identical for magnet units that make up a single 'knob'.
+!     I.e. two magnets sharing the same powersupply will
+!     have identical second parts in their names. This makes it
+!     possible to properly tune the machine in elegant using
+!     wildcards such as '*' and '?', while at the same time being
+!     clear on what physical elements are found where.
+
+! The last part of the element name, i.e. after the hyphen, is only
+! used as a note that will be kept during the conversion to a human
+! readable .csv lattice. Examples include using the note to
+!   - indicate the electronics type for the stripline detectors; E means
+!     it is capable of providing position data, NE means 'No Electronics'.
+!   - indicate a reserved space in case the lattice name is RESERVED
+
+! In general, editing the lattice is MUCH, MUCH easier if the user
+! utilizes regular expressions for search and replace,
+! i.e. pattern-based search and replace. An editor that supports
+! regular expressions, such as Scite, is therefore highly recommended.
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ GENERAL ELEMENTS AND DEFINITIONS ++++++++++++++++++++++++++++++++++++++++++
+
+! In this section all generic elements are declared that share the same name throughout the entire lattice.
+
+
+!---Natural constants
+
+% 299792458	sto    c
+% 510998.918    sto    E0
+
+
+!---Energy
+
+!  This value must be altered in case the average incoming particle energy changes
+% 204.8 204.8 * 1 + sqrt E0 *    sto    Einput
+
+
+!---Charge
+
+!CH: 	CHARGE, TOTAl = q_val
+!CH: 	CHARGE, TOTAl = 100e-12
+CH:    CHARGE, TOTAl = 100e-12
+
+
+!---General linac structure parameters
+% 2.9985e9		sto rf_frequency
+
+
+!---Mechanical sizes
+
+! Stripline BPM margins (mechanical size)
+STRIPD:    drift, l = 0.025
+
+! Current transformer margins (mechanical size)
+CTda:    drift, l = 0.09825
+CTdb:	 drift, l = 0.04175
+
+! Screen margins (approximate and more exact mechanical size)
+SCRNd:    drift, l = 0.10
+SCRNa:	  drift, l = 0.073
+SCRNb:	  drift, l = 0.127
+
+
+!---Bunch delays/shifts/blow-up due to jitter etc. in the preinjector
+
+PREINJ_POS:     MALIGN
+PREINJ_SIZE:    MAGNIFY
+PREINJ:		line=(PREINJ_SIZE, PREINJ_POS)
+
+
+!---Watch points (used for simulation only)
+
+"W-INIT":      WATCH, FILENAME="./output/w-init.sdds"
+"W-ACHR1A":    WATCH, FILENAME="./output/w-achr1a.sdds"
+"W-END":       WATCH, FILENAME="./output/w-end.sdds"
+"W-TEMP":      WATCH, FILENAME="./output/w-temp.sdds"
+
+
+!---Fit points (used for matching simulations, et.c.)
+
+BCFIT2:      marker, FITPOINT=1
+!BC1START:    marker
+BC1END:      marker
+BC2START:    marker, FITPOINT=1
+BC2END:      marker
+15INJ:       marker
+3INJ:        marker
+IP15:        marker
+IP3:         marker
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ ACCELERATION ++++++++++++++++++++++++++++++++++++++++++
+
+!---General linac parameters
+
+% 0.033333333          sto    cav_l
+% 2998e6	       sto    frequency
+% 0.033333333 156 *    sto    section_l
+
+% 90 		  sto    phi_L1_INJ15
+% 90 		  sto	 phi_L1_INJ3
+% 90 26.4 +   sto    phi_L1_SPF
+
+% 6.44e5 156 *    sto    V_L1_INJ15
+% 6.44e5 156 *	  sto	 V_L1_INJ3
+% 6.44e5 156 * 	  sto	 V_L1_SPF
+
+% 90		  sto 	 phi_MDL_INJ15
+% 90		  sto 	 phi_MDL_INJ3
+% 90 5 +	  sto 	 phi_MDL_SPF
+
+% 6.44e5 156 *	  sto	 V_MDL_INJ15
+% 6.44e5 156 *	  sto	 V_MDL_INJ3
+% 6.44e5 156 *	  sto	 V_MDL_SPF
+
+! E_EX3 is needed further down for calculating undulator parameters (which are not further used...).
+! For now, E_EX3 is just a dummy number:
+% 3.0e9    sto    E_EX3
+
+
+
+! SPF mode:
+! Compute end values for SPF
+!% 3e9						sto	EkinSPF
+!% EkinSPF E0 + 				sto	EtotSPF
+!% EtotSPF E0 / EtotSPF E0 / * 1 - sqrt		sto	gammabetaSPF
+!% 2 EtotSPF E0 / EtotSPF E0 / * + sqrt 	sto 	gammaSPF
+!% gammabetaSPF gammaSPF /			sto	betaSPF
+
+! 1.5 GeV injection mode:
+! Compute end values for 1.5 GeV injection
+!% 1.5e9					sto	Ekin15
+!% Ekin15 E0 + 					sto	Etot15
+!% Etot15 E0 / Etot15 E0 / * 1 - sqrt		sto	gammabeta15
+!% 2 Etot15 E0 / Etot15 E0 / * + sqrt 		sto 	gamma15
+!% gammabeta15 gamma15 /			sto	beta15
+
+! 3.0 GeV injection mode:
+! Compute end values for 3 GeV injection
+!% 3e9						sto	Ekin3
+!% Ekin3 E0 + 					sto	Etot3
+!% Etot3 E0 / Etot3 E0 / * 1 - sqrt		sto	gammabeta3
+!% 2 Etot3 E0 / Etot3 E0 / * + sqrt 		sto 	gamma3
+!% gammabeta3 gamma3 /				sto	beta3
+
+
+lin1spf: 	rfcw, freq = "frequency" ,&
+		cell_length="cav_l",l="section_l", volt="V_L1_SPF",&
+		phase="phi_L1_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+               
+linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+lin115: 	rfcw, freq = "frequency" ,&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15",&
+		phase="phi_L1_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+               
+lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+lin13: 	rfcw, freq = "frequency" ,&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ3",&
+		phase="phi_L1_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+
+
+!---SPF mode definitions
+
+I.L01a_lin1spf:	rfcw, freq = "frequency" ,&
+		cell_length="cav_l",l="section_l", volt="V_L1_SPF",&
+		phase="phi_L1_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+               
+I.L01b_lin1spf:	rfcw, freq = "frequency" ,&
+		cell_length="cav_l",l="section_l", volt="V_L1_SPF",&
+		phase="phi_L1_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L02a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L02b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L03a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L03b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L04a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L04b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L05a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L05b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L06a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L06b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L07a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L07b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L08a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L08b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L09a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L09b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L10a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L10b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L11a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L11b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L12a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L12b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L13a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L13b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L14a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L14b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L15a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L15b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L16a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L16b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L17a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L17b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L18a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L18b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L19a_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L19b_linspf: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_SPF",&
+		phase="phi_MDL_SPF",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+
+!---1.5 GeV mode definitions
+
+I.L01a_lin115: 	rfcw, freq = "frequency" ,&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15",&
+		phase="phi_L1_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L01b_lin115: 	rfcw, freq = "frequency" ,&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15",&
+		phase="phi_L1_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+               
+I.L02a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L02b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L03a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L03b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L04a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L04b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L05a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L05b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L06a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L06b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L07a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L07b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L08a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L08b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L09a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L09b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L10a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L10b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L11a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L11b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L12a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L12b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L13a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L13b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L14a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L14b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L15a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L15b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ15",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L16a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15 2 sqrt /",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L16b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15 2 sqrt /",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L17a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15 2 sqrt /",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L17b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15 2 sqrt /",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L18a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15 2 sqrt /",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L18b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15 2 sqrt /",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L19a_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15 2 sqrt /",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L19b_lin15: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ15 2 sqrt /",&
+		phase="phi_MDL_INJ15",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+
+!---3 GeV mode definitions
+
+I.L01a_lin13: 	rfcw, freq = "frequency" ,&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ3",&
+		phase="phi_L1_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+               
+I.L01b_lin13: 	rfcw, freq = "frequency" ,&
+		cell_length="cav_l",l="section_l", volt="V_L1_INJ3",&
+		phase="phi_L1_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L02a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L02b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L03a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L03b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L04a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L04b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L05a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L05b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L06a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L06b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L07a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L07b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L08a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L08b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L09a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L09b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L10a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L10b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L11a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L11b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L12a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L12b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L13a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L13b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L14a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L14b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L15a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L15b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L16a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3 2 sqrt /",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L16b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3 2 sqrt /",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L17a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3 2 sqrt /",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L17b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3 2 sqrt /",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L18a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3 2 sqrt /",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L18b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3 2 sqrt /",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L19a_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3 2 sqrt /",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+I.L19b_lin3: 	rfcw, freq = "frequency",&
+		cell_length="cav_l",l="section_l", volt="V_MDL_INJ3 2 sqrt /",&
+		phase="phi_MDL_INJ3",&
+		change_p0=1,&
+		end1_focus=1, end2_focus=1
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ PRE-BC1 ++++++++++++++++++++++++++++++++++++++++++
+
+!---Quadrupoles for photogun input
+
+I.S01A.MAG.QE.1_SPF:    Kquad, l = 0.07000000000000001, K1 = 4.276988763364757
+I.S01A.MAG.QE.2_SPF:    Kquad, l = 0.07000000000000001, K1 = -8.363970255785460
+I.S01B.MAG.QE.3_SPF:    Kquad, l = 0.07000000000000001, K1 = 9.754458800245654
+I.S01B.MAG.QE.4_SPF:    Kquad, l = 0.07000000000000001, K1 = -10.91762518483201
+
+!---Quadrupoles for thermionic gun input
+
+I.S01A.MAG.QE.1_INJ:    Kquad, l = 0.07000000000000001, K1 = 5.632537253954041
+I.S01A.MAG.QE.2_INJ:    Kquad, l = 0.07000000000000001, K1 = -6.444329336611179
+I.S01B.MAG.QE.3_INJ:    Kquad, l = 0.07000000000000001, K1 = 4.997975418193223
+I.S01B.MAG.QE.4_INJ:    Kquad, l = 0.07000000000000001, K1 = -6.019692179861022
+
+
+!---Corrector magnets
+
+I.MAG.CODp: 			drift, l = 0.005
+I.MAG.COEp: 			drift, l = 0.04
+I.S01a.MAG.COEX.1: 		HKICK, l = 0.07, B2 = 6.944
+I.S01a.MAG.COEY.1: 		VKICK, l = 0.07, B2 = 6.944
+I.S01b.MAG.COEX.2-RESERVED: 	drift, l = 0.07
+I.S01b.MAG.COEY.2-RESERVED: 	drift, l = 0.07
+
+
+!---BPMs
+
+! Stripline BPM located inside the IS01b.QE.2 quadrupole, with electronics. 
+! Physical length is 0.2 m (estimate); stripline length is 0.15 m but is approximated as a thin detector.
+I.S01b.DIA.BPL.1-E:    monitor, l = 0.0, weight = 1   
+
+
+!---Screens
+
+I.S01a.DIA.SCRN.1:		WATCH, FILENAME="./output/%s-I_S01a_DIA_SCRN_1.w1"
+I.S01a.DIA.SCR.1:		line = (SCRNd, I.S01a.DIA.SCRN.1, SCRNd)
+!I.S01b.DIA.SCRN.2:		WATCH, FILENAME="./output/%s-I_S01b_DIA_SCRN_2.w1"
+I.S01b.DIA.SCRN.2-RESERVED: 	marker
+I.S01b.DIA.SCR.2:		line = (SCRNd, I.S01b.DIA.SCRN.2-RESERVED, SCRNd)
+
+
+!---Markers
+
+I.S01a:    marker
+I.L01a:	   marker
+I.S01b:	   marker
+I.L01b:	   marker
+
+
+!---Drifts
+
+linD020:     drift, l = 0.20
+linD035:     drift, l = 0.35
+linD048:     drift, l = 0.48
+linD008:     drift, l = 0.08
+linD028:     drift, l = 0.28
+linD038:     drift, l = 0.38
+!linD013:    drift, l = 0.13
+linD018:     drift, l = 0.18
+linD0175:    drift, l = 0.175
+linD026:     drift, l = 0.26
+linD027:     drift, l = 0.27
+linD015:     drift, l = 0.15
+linD0112:    drift, l = 0.112
+linD0038:    drift, l = 0.038
+linD013:     drift, l = 0.130
+linD002:     drift, l = 0.020
+linD005:     drift, l = 0.050
+linD006:     drift, l = 0.060
+linD0305:    drift, l = 0.305
+linD0125:    drift, l = 0.125
+linD0105:    drift, l = 0.105
+linD0075:    drift, l = 0.075
+linD0035:    drift, l = 0.035
+linD0055:    drift, l = 0.055
+linD0095:    drift, l = 0.095
+linD0145:    drift, l = 0.145
+
+
+PreBC1_SPF:    line = (I.S01a, LIND035,&
+		       I.S01A.MAG.QE.1_SPF,&
+		       linD002, I.S01a.DIA.SCR.1, linD006, I.MAG.COEp, I.S01a.MAG.COEY.1, I.MAG.COEp, linD013,&
+		       I.S01A.MAG.QE.2_SPF,&
+		       linD0075, I.MAG.COEp, I.S01a.MAG.COEX.1, I.MAG.COEp, linD0125,&
+		       I.L01a, I.L01a_lin1spf,&
+		       I.S01b, LIND035,&
+		       I.S01B.MAG.QE.3_SPF,&
+		       linD008, I.MAG.COEp, I.S01b.MAG.COEX.2-RESERVED, I.MAG.COEp, linD0035, I.MAG.COEp, I.S01b.MAG.COEY.2-RESERVED, I.MAG.COEp, linD0145,&
+		       I.S01B.MAG.QE.4_SPF,&
+		       I.S01b.DIA.BPL.1-E, linD0095, I.S01b.DIA.SCR.2, linD0055,&
+		       I.L01b, I.L01b_lin1spf)
+
+PreBC1_INJ15:    line = (I.S01a, LIND035,&
+			 I.S01A.MAG.QE.1_INJ,&
+			 linD002, I.S01a.DIA.SCR.1, linD006, I.MAG.COEp, I.S01a.MAG.COEY.1, I.MAG.COEp, linD013,&
+			 I.S01A.MAG.QE.2_INJ,&
+			 linD0075, I.MAG.COEp, I.S01a.MAG.COEX.1, I.MAG.COEp, linD0125,&
+			 I.L01a, I.L01a_lin115,&
+			 I.S01b, LIND035,&
+			 I.S01B.MAG.QE.3_INJ,&
+			 linD008, I.MAG.COEp, I.S01b.MAG.COEX.2-RESERVED, I.MAG.COEp, linD0035, I.MAG.COEp, I.S01b.MAG.COEY.2-RESERVED, I.MAG.COEp, linD0145,&
+			 I.S01B.MAG.QE.4_INJ,&
+			 I.S01b.DIA.BPL.1-E, linD0095, I.S01b.DIA.SCR.2, linD0055,&
+			 I.L01b, I.L01b_lin115)
+
+PreBC1_INJ3:    line = (I.S01a, LIND035,&
+			I.S01A.MAG.QE.1_INJ,&
+			linD002, I.S01a.DIA.SCR.1, linD006, I.MAG.COEp, I.S01a.MAG.COEY.1, I.MAG.COEp, linD013,&
+			I.S01A.MAG.QE.2_INJ,&
+			linD0075, I.MAG.COEp, I.S01a.MAG.COEX.1, I.MAG.COEp, linD0125,&
+			I.L01a, I.L01a_lin13,&
+			I.S01b, LIND035,&
+			I.S01B.MAG.QE.3_INJ,&
+			linD008, I.MAG.COEp, I.S01b.MAG.COEX.2-RESERVED, I.MAG.COEp, linD0035, I.MAG.COEp, I.S01b.MAG.COEY.2-RESERVED, I.MAG.COEp, linD0145,&
+			I.S01B.MAG.QE.4_INJ,&
+			I.S01b.DIA.BPL.1-E, linD0095, I.S01b.DIA.SCR.2, linD0055,&
+			I.L01b, I.L01b_lin13)
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ MATCHING SECTION 1 ++++++++++++++++++++++++++++++++++++++++++
+
+!---Quadrupoles for photogun input
+
+I.MS1.MAG.QB.1_SPF:    Kquad, l = 0.2, K1 = -4.777897454861288
+I.MS1.MAG.QB.2_SPF:    Kquad, l = 0.2, K1 = 4.021581344094500
+I.MS1.MAG.QB.3_SPF:    Kquad, l = 0.2, K1 = -4.141361459631211
+I.MS1.MAG.QB.4_SPF:    Kquad, l = 0.2, K1 = 6.790236162269313
+
+!---Quadrupoles for thermionic gun input
+
+I.MS1.MAG.QB.1_INJ:    Kquad, l = 0.2, K1 = -4.096153492547519
+I.MS1.MAG.QB.2_INJ:    Kquad, l = 0.2, K1 = 4.042802234303561
+I.MS1.MAG.QB.3_INJ:    Kquad, l = 0.2, K1 = -3.917926519210812
+I.MS1.MAG.QB.4_INJ:    Kquad, l = 0.2, K1 = 6.023325980983226
+
+
+!---Corrector magnets
+
+I.MS1.MAG.COEX.1:    HKICK, l = 0.07, B2 = 6.944, steering = 1
+I.MS1.MAG.COEY.1:    VKICK, l = 0.07, B2 = 6.944, steering = 1
+I.MS1.MAG.COEX.2:    HKICK, l = 0.07, B2 = 6.944
+I.MS1.MAG.COEY.2:    VKICK, l = 0.07, B2 = 6.944
+
+! Note that the extra correctors are in here for a reason; I'm assuming the 
+! machine optics in this matching section are not well defined. Therefore,
+! there is no use in optimizing corrector locations by machine functions
+! and phases. Instead, the first quadrupoles gets a corrector pair each for
+! "magnet-to-magnet" correction. The last two quadrupoles gets a stripline 
+! BPM each, which also acts as a (fairly short but sufficient) launching
+! section.
+
+
+!---BPMs
+
+!--- Free-standing stripline BPM, with electronics. Physical length is 0.2 m (estimate)
+I.MS1.DIA.BPD.1:      monitor, l = 0.15, weight = 0
+I.MS1.DIA.BPL.2-E:    monitor, l = 0.15, weight = 1		! Launcher BPM for BC1
+I.MS1.DIA.BPL.3-E:    monitor, l = 0.15, weight = 1		! Launcher BPM for BC1
+
+
+!---Screens
+
+SCRNdistA:	     drift, l = 0.063
+SCRNdistB:	     drift, l = 0.137
+I.MS1.DIA.SCRN.1:    WATCH, FILENAME="./output/%s-I_MS1_DIA_SCRN_1.w1"
+I.MS1.DIA.SCR.1:     line = (SCRNdistA, I.MS1.DIA.SCRN.1, SCRNdistB)
+
+
+!---Current transformers
+
+I.MS1.DIA.CT.1:	    WATCH, FILENAME="./output/%s-I_MS1_DIA_CT_1.ct"
+I.MS1.DIA.CTR.1:    line = (CTda,I.MS1.DIA.CT.1,CTdb)
+
+
+!---Markers
+
+I.MS1:    marker
+
+
+!---Drifts
+
+I.MS1_D015: 	drift, l = 0.15
+I.MS1_D07: 	drift, l = 0.7
+I.MS1_D010: 	drift, l = 0.1
+I.MS1_D050: 	drift, l = 0.5
+I.MS1_D035: 	drift, l = 0.35
+I.MS1_D008:  	drift, l = 0.08
+I.MS1_D056: 	drift, l = 0.56
+I.MS1_D006: 	drift, l = 0.06
+I.MS1_D0125:    drift, l = 0.125
+I.MS1_D0010: 	drift, l = 0.010
+I.MS1_D0040: 	drift, l = 0.040
+I.MS1_D0025: 	drift, l = 0.025
+I.MS1_D0075: 	drift, l = 0.075
+I.MS1_D0017: 	drift, l = 0.017
+I.MS1_D0050: 	drift, l = 0.050
+I.MS1_D0003:	drift, l = 0.003
+I.MS1_D0207:	drift, l = 0.207
+I.MS1_D0002:	drift, l = 0.002
+I.MS1_D0048:	drift, l = 0.048
+
+LASERHEATER-RESERVED:    drift, l = 2.6      ! Reserved space for the laser heater
+
+
+MATCH1_SPF:    line = (I.MS1, I.MS1_D035,&
+		       I.MS1.MAG.QB.1_SPF,&
+		       I.MS1_D010, STRIPD, I.MS1.DIA.BPD.1, STRIPD, I.MS1_D0050, I.MAG.COEp, I.MS1.MAG.COEX.1, I.MAG.COEp, I.MAG.COEp, I.MS1.MAG.COEY.1, I.MAG.COEp, I.MS1_D0050,&
+		       I.MS1.MAG.QB.2_SPF,&
+		       I.MS1_D0050, LASERHEATER-RESERVED, I.MAG.COEp, I.MS1.MAG.COEX.2, I.MAG.COEp, I.MS1_D0025, I.MAG.COEp, I.MS1.MAG.COEY.2, I.MAG.COEp, I.MS1_D0125,&
+		       I.MS1.MAG.QB.3_SPF,&
+		       I.MS1_D015, STRIPD, I.MS1.DIA.BPL.2-E, STRIPD, I.MS1_D0003, I.MS1.DIA.CTR.1, I.MS1_D0207,&
+		       I.MS1.MAG.QB.4_SPF,&
+		       I.MS1_D010, STRIPD, I.MS1.DIA.BPL.3-E, STRIPD, I.MS1_D0002, I.MS1.DIA.SCR.1, I.MS1_D0048)
+
+MATCH1_INJ:    line = (I.MS1, I.MS1_D035,&
+		       I.MS1.MAG.QB.1_INJ,&
+		       I.MS1_D010, STRIPD, I.MS1.DIA.BPD.1, STRIPD, I.MS1_D0050, I.MAG.COEp, I.MS1.MAG.COEX.1, I.MAG.COEp, I.MAG.COEp, I.MS1.MAG.COEY.1, I.MAG.COEp, I.MS1_D0050,&
+		       I.MS1.MAG.QB.2_INJ,&
+		       I.MS1_D0050, LASERHEATER-RESERVED, I.MAG.COEp, I.MS1.MAG.COEX.2, I.MAG.COEp, I.MS1_D0025, I.MAG.COEp, I.MS1.MAG.COEY.2, I.MAG.COEp, I.MS1_D0125,&
+		       I.MS1.MAG.QB.3_INJ,&
+		       I.MS1_D015, STRIPD, I.MS1.DIA.BPL.2-E, STRIPD, I.MS1_D0003, I.MS1.DIA.CTR.1, I.MS1_D0207,&
+		       I.MS1.MAG.QB.4_INJ,&
+		       I.MS1_D010, STRIPD, I.MS1.DIA.BPL.3-E, STRIPD, I.MS1_D0002, I.MS1.DIA.SCR.1, I.MS1_D0048)
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ BUNCH COMPRESSOR 1 ++++++++++++++++++++++++++++++++++++++++++
+
+!---Dipoles
+
+! Dipole circuit knob
+! Note that all BC1 dipoles are powered by the same power supply
+% 1    sto    knob_I.BC1.MAG.CRDI
+
+! Nominal dipole field strengths
+% 4.4 180 / pi *    sto    nominal_DIA_ANGLE
+% -3    	    sto    nominal_DIA_K1
+% 3.13588	    sto    nominal_DIA_K2
+
+I.BC1.MAG.DIA.1_I.BC1.MAG.CRDI:    csrcsbend, angle="nominal_DIA_ANGLE knob_I.BC1.MAG.CRDI *", l=0.1,&
+					      e1="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI *", e2="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI *",&
+					      K1="nominal_DIA_K1 knob_I.BC1.MAG.CRDI *", K2="nominal_DIA_K2 knob_I.BC1.MAG.CRDI *"&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC1.MAG.DIA.2_I.BC1.MAG.CRDI:    csrcsbend, angle="nominal_DIA_ANGLE knob_I.BC1.MAG.CRDI *", l=0.1,&
+					      e1="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI *", e2="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI *",&
+					      K1="nominal_DIA_K1 knob_I.BC1.MAG.CRDI *", K2="nominal_DIA_K2 knob_I.BC1.MAG.CRDI *"&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC1.MAG.DIA.3_I.BC1.MAG.CRDI:    csrcsbend, angle="nominal_DIA_ANGLE knob_I.BC1.MAG.CRDI *", l=0.1,&
+					      e1="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI *", e2="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI *",&
+					      K1="nominal_DIA_K1 knob_I.BC1.MAG.CRDI *", K2="nominal_DIA_K2 knob_I.BC1.MAG.CRDI *"&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC1.MAG.DIA.4_I.BC1.MAG.CRDI:    csrcsbend, angle="nominal_DIA_ANGLE knob_I.BC1.MAG.CRDI *", l=0.1,&
+					      e1="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI *", e2="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI *",&
+					      K1="nominal_DIA_K1 knob_I.BC1.MAG.CRDI *", K2="nominal_DIA_K2 knob_I.BC1.MAG.CRDI *"&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC1.MAG.DIA.5_I.BC1.MAG.CRDI:    csrcsbend, angle="nominal_DIA_ANGLE knob_I.BC1.MAG.CRDI * -1 *", l=0.1,&
+					      e1="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI * -1 *", e2="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI * -1 *",&
+					      K1="nominal_DIA_K1 knob_I.BC1.MAG.CRDI *", K2="nominal_DIA_K2 knob_I.BC1.MAG.CRDI *"&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC1.MAG.DIA.6_I.BC1.MAG.CRDI:    csrcsbend, angle="nominal_DIA_ANGLE knob_I.BC1.MAG.CRDI * -1 *", l=0.1,&
+					      e1="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI * -1 *", e2="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI * -1 *",&
+					      K1="nominal_DIA_K1 knob_I.BC1.MAG.CRDI *", K2="nominal_DIA_K2 knob_I.BC1.MAG.CRDI *"&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC1.MAG.DIA.7_I.BC1.MAG.CRDI:    csrcsbend, angle="nominal_DIA_ANGLE knob_I.BC1.MAG.CRDI * -1 *", l=0.1,&
+					      e1="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI * -1 *", e2="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI * -1 *",&
+					      K1="nominal_DIA_K1 knob_I.BC1.MAG.CRDI *", K2="nominal_DIA_K2 knob_I.BC1.MAG.CRDI *"&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC1.MAG.DIA.8_I.BC1.MAG.CRDI:    csrcsbend, angle="nominal_DIA_ANGLE knob_I.BC1.MAG.CRDI * -1 *", l=0.1,&
+					      e1="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI * -1 *", e2="nominal_DIA_ANGLE 2 / knob_I.BC1.MAG.CRDI * -1 *",&
+					      K1="nominal_DIA_K1 knob_I.BC1.MAG.CRDI *", K2="nominal_DIA_K2 knob_I.BC1.MAG.CRDI *"&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+
+
+!---Quadrupoles
+
+% 5.17189    sto    QM_K1
+% -0.5765    sto    QDEND_K1
+% 6.00634    sto    QFEND_K1
+
+I.BC1.MAG.QD.1_I.BC1.MAG.CRQM:    Kquad, l = 0.1, K1="QM_K1"
+I.BC1.MAG.QD.2_I.BC1.MAG.CRQM:    Kquad, l = 0.1, K1="QM_K1"
+I.BC1.MAG.QD.3_I.BC1.MAG.CRQM:    Kquad, l = 0.1, K1="QM_K1"
+I.BC1.MAG.QD.4_I.BC1.MAG.CRQM:    Kquad, l = 0.1, K1="QM_K1"
+
+I.BC1.MAG.QB.1_I.BC1.MAG.CRQ1: 	  Kquad, l = 0.2, K1="QDEND_K1"
+I.BC1.MAG.QB.2_I.BC1.MAG.CRQ2:    Kquad, l = 0.2, K1="QFEND_K1"
+I.BC1.MAG.QB.3_I.BC1.MAG.CRQ1: 	  Kquad, l = 0.2, K1="QDEND_K1"
+
+
+!---Sextupoles
+
+!% 40      sto    SXL_K2
+% 56       sto    SXL_K2 
+!% 45  	   sto    SXL_K2
+
+I.BC1.MAG.SXL.1_I.BC1.MAG.CRSX:    Ksext, l = 0.1, K2="SXL_K2"
+I.BC1.MAG.SXL.2_I.BC1.MAG.CRSX:    Ksext, l = 0.1, K2="SXL_K2 -1 *"
+
+
+!---Corrector magnets
+
+I.BC1.MAG.COEX.1:    HKICK, l = 0.07, B2 = 6.944, steering = 1
+I.BC1.MAG.COEY.1:    VKICK, l = 0.07, B2 = 6.944, steering = 1
+I.BC1.MAG.COEX.2:    HKICK, l = 0.07, B2 = 6.944, steering = 1
+I.BC1.MAG.COEY.2:    VKICK, l = 0.07, B2 = 6.944, steering = 1
+I.BC1.MAG.COEX.3:    HKICK, l = 0.07, B2 = 6.944, steering = 1
+I.BC1.MAG.COEY.3:    VKICK, l = 0.07, B2 = 6.944, steering = 1
+I.BC1.MAG.COEX.4:    HKICK, l = 0.07, B2 = 6.944, steering = 1
+I.BC1.MAG.COEY.4:    VKICK, l = 0.07, B2 = 6.944, steering = 1
+
+
+!---BPMs
+
+! Free-standing stripline BPM, with electronics. Physical length is 0.2 m (estimate)
+I.BC1.DIA.BP$.1-E:    monitor, l = 0.0,  weight = 1
+I.BC1.DIA.BPD.1:      monitor, l = 0.15, weight = 0
+I.BC1.DIA.BP$.2-E:    monitor, l = 0.0,  weight = 1
+
+
+!---Screens
+
+I.BC1.DIA.SCRN.1:    WATCH, FILENAME="./output/%s-I_BC1_DIA_SCRN_1.w1"
+I.BC1.DIA.SCR.1:     line = (SCRNd, I.BC1.DIA.SCRN.1, SCRNd)
+
+I.BC1.DIA.SCRN.2:    WATCH, FILENAME="./output/%s-I_BC1_DIA_SCRN_2.w1"
+I.BC1.DIA.SCR.2:     line = (SCRNd, I.BC1.DIA.SCRN.2, SCRNd)
+
+I.BC1.DIA.SCRN.3:    WATCH, FILENAME="./output/%s-I_BC1_DIA_SCRN_3.w1"
+I.BC1.DIA.SCR.3:     line = (SCRNd, I.BC1.DIA.SCRN.3, SCRNd)
+
+
+!---Scrapers
+
+I.BC1.VAC.SCRP.1:    scraper, l = 0.00, insert_from = "+x", position = 0.05
+I.BC1.VAC.SCRP.2:    scraper, l = 0.00, insert_from = "-x", position = -0.05
+I.BC1.VAC.SCRP.3:    scraper, l = 0.00, insert_from = "+y", position = 0.05
+I.BC1.VAC.SCRP.4:    scraper, l = 0.00, insert_from = "-y", position = -0.05
+
+
+!---Markers
+
+I.BC1:    marker, FITPOINT = 1
+
+
+!---Drifts
+
+I.BC1_D006:      drift, l = 0.06
+I.BC1_D122:      drift, l = 1.22
+I.BC1_D014:      drift, l = 0.14
+I.BC1_D020:      drift, l = 0.2
+I.BC1_D040:      drift, l = 0.4
+I.BC1_D00535:    drift, l = 0.0535
+I.BC1_D005:      drift, l = 0.05
+I.BC1_D0604:	 drift, l = 0.604
+I.BC1_D0025:     drift, l = 0.025
+I.BC1_D0132:     drift, l = 0.132
+I.BC1_D130:      drift, l = 1.3
+I.BC1_D0075: 	 drift, l = 0.075
+I.BC1_D0125: 	 drift, l = 0.125
+I.BC1_D015: 	 drift, l = 0.15
+I.BC1_D107: 	 drift, l = 1.07
+I.BC1_D110: 	 drift, l = 1.1
+I.BC1_D090: 	 drift, l = 0.9
+I.BC1_D054: 	 drift, l = 0.54
+I.BC1_D044: 	 drift, l = 0.44
+I.BC1_D024: 	 drift, l = 0.24
+I.BC1_D086: 	 drift, l = 0.86
+I.BC1_D10465:	 drift, l = 1.0465
+I.BC1_D01785:	 drift, l = 0.1785
+I.BC1_D01855:	 drift, l = 0.1855
+I.BC1_D0066:	 drift, l = 0.066
+I.BC1_D082:	 drift, l = 0.82
+I.BC1_D0845:	 drift, l = 0.845
+I.BC1_D08485:	 drift, l = 0.8485
+I.BC1_D07165:	 drift, l = 0.7165
+
+
+BC1Achr1:    line = (I.BC1.MAG.DIA.1_I.BC1.MAG.CRDI,&
+		     I.BC1_D005, I.MAG.COEp, I.BC1.MAG.COEX.1, I.MAG.COEp, I.BC1_D082, I.MAG.COEp, I.BC1.MAG.COEY.1, I.MAG.COEp, I.BC1_D005,&
+		     I.BC1.MAG.DIA.2_I.BC1.MAG.CRDI,&
+		     I.BC1_D130, I.BC1.DIA.BP$.1-E,&
+		     I.BC1.MAG.QD.1_I.BC1.MAG.CRQM,&
+		     I.BC1_D006,&
+		     I.BC1.MAG.SXL.1_I.BC1.MAG.CRSX,&
+		     I.BC1_D006,&
+		     I.BC1.MAG.QD.2_I.BC1.MAG.CRQM,&
+		     I.BC1_D00535, I.BC1.DIA.SCR.1, I.BC1_D0132, I.BC1.VAC.SCRP.1, I.BC1_D0066, I.BC1.VAC.SCRP.2,&
+		     I.BC1_D0066, I.BC1.VAC.SCRP.3, I.BC1_D0066, I.BC1.VAC.SCRP.4, I.BC1_D07165,&
+		     I.BC1.MAG.DIA.3_I.BC1.MAG.CRDI,&
+		     I.BC1_D005, I.MAG.COEp, I.BC1.MAG.COEX.2, I.MAG.COEp, I.BC1_D082, I.MAG.COEp, I.BC1.MAG.COEY.2, I.MAG.COEp, I.BC1_D005,&
+		     I.BC1.MAG.DIA.4_I.BC1.MAG.CRDI,&
+		     "W-ACHR1A")
+ 
+BC1CenterFocus:    line = (I.BC1_D020,&
+			   I.BC1.MAG.QB.1_I.BC1.MAG.CRQ1,&
+			   I.BC1_D0125, STRIPD, I.BC1.DIA.BPD.1, STRIPD, I.BC1_D0075,&
+			   I.BC1.MAG.QB.2_I.BC1.MAG.CRQ2,&
+			   I.BC1_D006, I.BC1.DIA.SCR.2, I.BC1_D014,&
+			   I.BC1.MAG.QB.3_I.BC1.MAG.CRQ1,&
+			   I.BC1_D020)
+
+BC1Achr2:    line = (I.BC1.MAG.DIA.5_I.BC1.MAG.CRDI,&
+		     I.BC1_D005, I.MAG.COEp, I.BC1.MAG.COEY.3, I.MAG.COEp, I.BC1_D082, I.MAG.COEp, I.BC1.MAG.COEX.3, I.MAG.COEp, I.BC1_D005,&
+		     I.BC1.MAG.DIA.6_I.BC1.MAG.CRDI,&
+		     I.BC1_D130, I.BC1.DIA.BP$.2-E,&
+		     I.BC1.MAG.QD.3_I.BC1.MAG.CRQM,&
+		     I.BC1_D006,&
+		     I.BC1.MAG.SXL.2_I.BC1.MAG.CRSX,&
+		     I.BC1_D006,&
+		     I.BC1.MAG.QD.4_I.BC1.MAG.CRQM,&
+		     I.BC1_D00535, I.BC1.DIA.SCR.3, I.BC1_D10465,&
+		     I.BC1.MAG.DIA.7_I.BC1.MAG.CRDI,&
+		     I.BC1_D005, I.MAG.COEp, I.BC1.MAG.COEX.4, I.MAG.COEp, I.BC1_D0025, I.MAG.COEp, I.BC1.MAG.COEY.4, I.MAG.COEp, I.BC1_D0845,&
+		     I.BC1.MAG.DIA.8_I.BC1.MAG.CRDI,&
+		     BCFIT2, BC1END)
+
+BC1:    line = (I.BC1, BC1Achr1, BC1CenterFocus, BC1Achr2)
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ MATCHING SECTION 2 ++++++++++++++++++++++++++++++++++++++++++
+
+!---Quadrupoles
+
+I.MS2.MAG.QB.1:    Kquad, l = 0.2, K1=-3.54455027774398
+I.MS2.MAG.QB.2:    Kquad, l = 0.2, K1=-3.443233802198442
+I.MS2.MAG.QB.3:    Kquad, l = 0.2, K1=3.973198967336858
+I.MS2.MAG.QB.4:    Kquad, l = 0.2, K1=-2.334083852000341
+
+
+!---Corrector magnets
+
+! In operating mode, these extra kicks proved necessary to avoid a singular 
+! matrix for the correction system
+I.MS2.MAG.COEX.1:	      HKICK, l = 0.07, B2 = 6.944, steering = 1
+I.MS2.MAG.COEY.1: 	      VKICK, l = 0.07, B2 = 6.944, steering = 1
+I.MS2.MAG.COEX.2: 	      HKICK, l = 0.07, B2 = 6.944, steering = 1
+I.MS2.MAG.COEY.2-RESERVED:    drift, l = 0.07
+
+
+!---BPMs
+
+! Free-standing stripline BPM, with electronics. Physical length is 0.2 m (estimate)
+I.MS2.DIA.BPL.1-E:    monitor, l = 0.15, weight = 1
+
+
+!---Screens
+
+I.MS2.DIA.SCRN.1:    WATCH, FILENAME="./output/%s-I_MS2_DIA_SCRN_1.w1"
+I.MS2.DIA.SCR.1:     line = (SCRNd, I.MS2.DIA.SCRN.1, SCRNd)
+
+I.MS2.DIA.SCRN.2:    WATCH, FILENAME="./output/%s-I_MS2_DIA_SCRN_2.w1"
+I.MS2.DIA.SCR.2:     line = (SCRNd, I.MS2.DIA.SCRN.2, SCRNd)
+
+
+!---Current transformers
+
+I.MS2.DIA.CT.1:	    WATCH, FILENAME="./output/%s-I_MS2_DIA_CT_1.ct"
+I.MS2.DIA.CTR.1:    line = (CTda, I.MS2.DIA.CT.1, CTdb)
+
+
+!---Electro-Optical Detector
+
+! Physical length is 0.4 m
+EODCRYSTAL-RESERVED:    marker
+EODD:       		drift, l = 0.20
+EOD:        		line = (EODD, EODCRYSTAL-RESERVED, EODD)
+
+
+!---Bunch length monitor
+
+! THz radiation extraction via mirror
+I.MS2.DIA.DET.1:    WATCH, FILENAME="./output/%s-I_MS2_DIA_DET_1.w1", X_DATA = 0, Y_DATA = 0, LONGIT_DATA = 1
+
+
+!---Markers
+I.MS2:    marker
+
+
+!---Drifts
+
+I.MS2_D003: 	drift, l = 0.03
+I.MS2_D040: 	drift, l = 0.4
+I.MS2_D010: 	drift, l = 0.10
+I.MS2_D011: 	drift, l = 0.11
+I.MS2_D015: 	drift, l = 0.15
+I.MS2_D020: 	drift, l = 0.20
+I.MS2_D025: 	drift, l = 0.25
+I.MS2_D030: 	drift, l = 0.30
+I.MS2_D0055: 	drift, l = 0.055
+I.MS2_D090: 	drift, l = 0.9
+I.MS2_D120: 	drift, l = 1.2
+I.MS2_D100: 	drift, l = 1.0
+I.MS2_D073: 	drift, l = 0.73
+I.MS2_D064: 	drift, l = 0.64
+I.MS2_D016: 	drift, l = 0.16
+I.MS2_D0162: 	drift, l = 0.162
+I.MS2_D0005: 	drift, l = 0.005
+I.MS2_D0025: 	drift, l = 0.025
+I.MS2_D0565: 	drift, l = 0.565
+I.MS2_D0085: 	drift, l = 0.085
+I.MS2_D0088: 	drift, l = 0.088
+I.MS2_D00555:	drift, l = 0.0555
+I.MS2_D01945:	drift, l = 0.1945
+I.MS2_D0212:	drift, l = 0.212
+
+
+MATCH2:    line = (I.MS2, I.MS2_D010, I.MS2.DIA.SCR.1, I.MS2_D0088, I.MS2.DIA.DET.1, I.MS2_D0212,&
+		   I.MS2.MAG.QB.1,&
+		   I.MS2_D020, I.MAG.COEp, I.MS2.MAG.COEX.1, I.MAG.COEp, I.MAG.COEp, I.MS2.MAG.COEY.1, I.MAG.COEp, I.MS2_D011, I.MS2.DIA.CTR.1, I.MS2_D015,&
+		   I.MS2.MAG.QB.2,&
+		   I.MS2_D0565, I.MAG.COEp, I.MS2.MAG.COEX.2, I.MAG.COEp, I.MS2_D0085,&
+		   I.MS2.MAG.QB.3,&
+		   I.MS2_D090, STRIPD, I.MS2.DIA.BPL.1-E, STRIPD, I.MS2_D010,&
+		   I.MS2.MAG.QB.4,&
+		   I.MS2_D030, EOD, I.MS2_D0025, I.MAG.COEp, I.MS2.MAG.COEY.2-RESERVED, I.MAG.COEp, I.MS2_D025, I.MS2.DIA.SCR.2, I.MS2_D0055)
+ 
+
+
+!++++++++++++++++++++++++++++++++++++++++++ MAIN ACCELERATOR, BC1 to 1.5 GeV ++++++++++++++++++++++++++++++++++++++++++
+
+!---Quadrupoles
+
+I.S04b.MAG.QB.1:    kquad, l = 0.2, K1=0.3822000878464422
+I.S05a.MAG.QB.1:    kquad, l = 0.2, K1=-0.3434905922138747
+I.S06a.MAG.QB.1:    kquad, l = 0.2, K1=-0.005451049625837808
+
+
+!---Corrector magnets
+
+I.S03b.MAG.COEX.1:    HKICK, l = 0.07, B2 = 6.944
+I.S04b.MAG.COEY.1:    VKICK, l = 0.07, B2 = 6.944
+I.S06b.MAG.COEX.1:    HKICK, l = 0.07, B2 = 6.944
+I.S07b.MAG.COEY.1:    VKICK, l = 0.07, B2 = 6.944
+
+
+!---BPMs
+
+! Free-standing stripline BPM, with electronics. Physical length is 0.2 m (estimate)
+I.S04b.DIA.BPL.1-E:   	monitor, l = 0.15, weight = 1
+I.S06a.DIA.BPD.1:   	monitor, l = 0.15, weight = 0
+I.S08a.DIA.BPL.1-NE:   	monitor, l = 0.15, weight = 0		! Used for radiation protection
+
+
+!---Screens
+
+!I.S04a.DIA.SCRN.1:	        WATCH, FILENAME="./output/%s-I_S04a_DIA_SCRN_1.w1"
+I.S04a.DIA.SCRN.1-RESERVED:    marker
+I.S04a.DIA.SCR.1:	       line = (SCRNd, I.S04a.DIA.SCRN.1-RESERVED, SCRNd)
+
+I.S07a.DIA.SCRN.1:    WATCH, FILENAME="./output/%s-I_S07a_DIA_SCRN_1.w1"
+I.S07a.DIA.SCR.1:     line = (SCRNd, I.S07a.DIA.SCRN.1, SCRNd)
+
+
+!---Markers
+
+I.S02a:    marker
+I.S03a:	   marker
+I.S04a:	   marker
+I.S05a:	   marker
+I.S06a:	   marker
+I.S07a:	   marker
+I.S08a:	   marker
+I.S09a:	   marker
+I.S02b:	   marker
+I.S03b:	   marker
+I.S04b:	   marker
+I.S05b:	   marker
+I.S06b:	   marker
+I.S07b:	   marker
+I.S08b:	   marker
+I.S09b:	   marker
+
+I.L02a:	   marker
+I.L03a:	   marker
+I.L04a:	   marker
+I.L05a:	   marker
+I.L06a:	   marker
+I.L07a:	   marker
+I.L08a:	   marker
+I.L09a:	   marker
+I.L02b:	   marker
+I.L03b:	   marker
+I.L04b:	   marker
+I.L05b:	   marker
+I.L06b:	   marker
+I.L07b:	   marker
+I.L08b:	   marker
+I.L09b:	   marker
+
+
+!---Drifts
+
+mainD005:  	drift, l = 0.05
+mainD025:  	drift, l = 0.25
+mainD085:  	drift, l = 0.85
+mainD110: 	drift, l = 1.1
+mainD035: 	drift, l = 0.35
+mainD045: 	drift, l = 0.45
+mainD065: 	drift, l = 0.65
+mainD075: 	drift, l = 0.75
+mainD01346: 	drift, l = 0.1346
+mainD018: 	drift, l = 0.18
+mainD020: 	drift, l = 0.20
+mainD022: 	drift, l = 0.22
+mainD023: 	drift, l = 0.23
+mainD027: 	drift, l = 0.27
+mainD0147: 	drift, l = 0.147
+mainD015: 	drift, l = 0.15
+mainD0025: 	drift, l = 0.025
+mainD0028: 	drift, l = 0.028
+mainD0075: 	drift, l = 0.075
+mainD00954:	drift, l = 0.0954
+mainD0103: 	drift, l = 0.103
+mainD0125: 	drift, l = 0.125
+mainD01546:	drift, l = 0.1546
+mainD0145: 	drift, l = 0.145
+mainD0155: 	drift, l = 0.155
+mainD0175: 	drift, l = 0.175
+mainD0225:	drift, l = 0.225
+mainD0257: 	drift, l = 0.257
+mainD0265:	drift, l = 0.265
+mainD0295: 	drift, l = 0.295
+mainD030: 	drift, l = 0.30
+mainD0302:	drift, l = 0.302
+mainD0325: 	drift, l = 0.325
+mainD0375: 	drift, l = 0.375
+mainD0575: 	drift, l = 0.575
+mainD0598:	drift, l = 0.598
+mainD0643: 	drift, l = 0.643
+mainD0655: 	drift, l = 0.655
+mainD0685:	drift, l = 0.685
+mainD070: 	drift, l = 0.70
+mainD0775: 	drift, l = 0.775
+mainD0872:	drift, l = 0.872
+mainD0275:	drift, l = 0.275
+mainD0900:      drift, l = 0.9   
+mainD0277:      drift, l = 0.277
+mainD0623:      drift, l = 0.623   
+
+
+! Injector sections from I.L02b to 9b
+! Historical note: the end part of I.MS2 was originally I.S02a but was merged into MS2 as an artificial division was deemed unnecessary.
+
+MainAcc15_SPF:    line = (I.L02a, I.L02a_linspf, &
+                       	  I.S02b, mainD110, &
+			  I.L02b, I.L02b_linspf, &
+                	  I.S03a, mainD110, &
+			  I.L03a, I.L03a_linspf, &
+                	  I.S03b, mainD0375, I.MAG.COEp, I.S03b.MAG.COEX.1, I.MAG.COEp, mainD0575, &
+			  I.L03b, I.L03b_linspf, &
+                	  I.S04a, mainD0302, I.S04a.DIA.SCR.1, mainD0598, &
+			  I.L04a, I.L04a_linspf, &
+                	  I.S04b, mainD025, I.MAG.COEp, I.S04b.MAG.COEY.1, I.MAG.COEp, mainD005, I.S04b.MAG.QB.1, mainD0147, STRIPD, I.S04b.DIA.BPL.1-E, STRIPD, mainD0103, &
+			  I.L04b, I.L04b_linspf, &
+                	  I.S05a, mainD045, I.S05a.MAG.QB.1, mainD045, &
+			  I.L05a, I.L05a_linspf, &
+                	  I.S05b, mainD110, &
+			  I.L05b, I.L05b_linspf, &
+                	  I.S06a, mainD045, I.S06a.MAG.QB.1, mainD0147, STRIPD, I.S06a.DIA.BPD.1, STRIPD, mainD0103, &
+			  I.L06a, I.L06a_linspf, &
+                	  I.S06b, mainD0295, I.MAG.COEp, I.S06b.MAG.COEX.1, I.MAG.COEp, mainD0655, &
+			  I.L06b, I.L06b_linspf, &
+                	  I.S07a, mainD0277, I.S07a.DIA.SCR.1, mainD0623, &
+			  I.L07a, I.L07a_linspf, &
+                	  I.S07b, mainD0295, I.MAG.COEp, I.S07b.MAG.COEY.1, I.MAG.COEp, mainD0655, &
+			  I.L07b, I.L07b_linspf, &
+                	  I.S08a, mainD0872, STRIPD, I.S08a.DIA.BPL.1-NE, STRIPD, mainD0028, &
+			  I.L08a, I.L08a_linspf, &
+                	  I.S08b, mainD110, &
+			  I.L08b, I.L08b_linspf, &
+                	  I.S09a, mainD110, &
+			  I.L09a, I.L09a_linspf, &
+                	  I.S09b, mainD110, &
+			  I.L09b, I.L09b_linspf)
+
+MainAcc15_INJ15:    line = (I.L02a, I.L02a_lin15, &
+                      	    I.S02b, mainD110, &
+			    I.L02b, I.L02b_lin15, &
+                	    I.S03a, mainD110, &
+			    I.L03a, I.L03a_lin15, &
+                	    I.S03b, mainD0375, I.MAG.COEp, I.S03b.MAG.COEX.1, I.MAG.COEp, mainD0575, &
+			    I.L03b, I.L03b_lin15, &
+                	    I.S04a, mainD0302, I.S04a.DIA.SCR.1, mainD0598, &
+			    I.L04a, I.L04a_lin15, &
+                	    I.S04b, mainD0275, I.MAG.COEp, I.S04b.MAG.COEY.1, I.MAG.COEp, mainD0025, I.S04b.MAG.QB.1, mainD0147, STRIPD, I.S04b.DIA.BPL.1-E, STRIPD, mainD0103, &
+			    I.L04b, I.L04b_lin15, &
+                	    I.S05a, mainD045, I.S05a.MAG.QB.1, mainD045, &
+			    I.L05a, I.L05a_lin15, &
+                	    I.S05b, mainD110, &
+			    I.L05b, I.L05b_lin15, &
+                	    I.S06a, mainD045, I.S06a.MAG.QB.1, mainD0147, STRIPD, I.S06a.DIA.BPD.1, STRIPD, mainD0103, &
+			    I.L06a, I.L06a_lin15, &
+                	    I.S06b, mainD0295, I.MAG.COEp, I.S06b.MAG.COEX.1, I.MAG.COEp, mainD0655, &
+			    I.L06b, I.L06b_lin15, &
+                	    I.S07a, mainD0277, I.S07a.DIA.SCR.1, mainD0623, &
+			    I.L07a, I.L07a_lin15, &
+                	    I.S07b, mainD0295, I.MAG.COEp, I.S07b.MAG.COEY.1, I.MAG.COEp, mainD0655, &
+			    I.L07b, I.L07b_lin15, &
+                	    I.S08a, mainD0872, STRIPD, I.S08a.DIA.BPL.1-NE, STRIPD, mainD0028, &
+			    I.L08a, I.L08a_lin15, &
+                	    I.S08b, mainD110, &
+			    I.L08b, I.L08b_lin15, &
+                	    I.S09a, mainD110, &
+			    I.L09a, I.L09a_lin15, &
+                	    I.S09b, mainD110, &
+			    I.L09b, I.L09b_lin15)
+
+MainAcc15_INJ3:    line = (I.L02a, I.L02a_lin3, &
+                   	   I.S02b, mainD110, &
+			   I.L02b, I.L02b_lin3, &
+                	   I.S03a, mainD110, &
+			   I.L03a, I.L03a_lin3, &
+                	   I.S03b, mainD0375, I.MAG.COEp, I.S03b.MAG.COEX.1, I.MAG.COEp, mainD0575, &
+			   I.L03b, I.L03b_lin3, &
+                	   I.S04a, mainD0302, I.S04a.DIA.SCR.1, mainD0598, &
+			   I.L04a, I.L04a_lin3, &
+                	   I.S04b, mainD025, I.MAG.COEp, I.S04b.MAG.COEY.1, I.MAG.COEp, mainD005, I.S04b.MAG.QB.1, mainD0147, STRIPD, I.S04b.DIA.BPL.1-E, STRIPD, mainD0103, &
+			   I.L04b, I.L04b_lin3, &
+                	   I.S05a, mainD045, I.S05a.MAG.QB.1, mainD045, &
+			   I.L05a, I.L05a_lin3, &
+                	   I.S05b, mainD110, &
+			   I.L05b, I.L05b_lin3, &
+                	   I.S06a, mainD045, I.S06a.MAG.QB.1, mainD0147, STRIPD, I.S06a.DIA.BPD.1, STRIPD, mainD0103, &
+			   I.L06a, I.L06a_lin3, &
+                	   I.S06b, mainD0295, I.MAG.COEp, I.S06b.MAG.COEX.1, I.MAG.COEp, mainD0655, &
+			   I.L06b, I.L06b_lin3, &
+                	   I.S07a, mainD0277, I.S07a.DIA.SCR.1, mainD0623, &
+			   I.L07a, I.L07a_lin3, &
+                	   I.S07b, mainD0295, I.MAG.COEp, I.S07b.MAG.COEY.1, I.MAG.COEp, mainD0655, &
+			   I.L07b, I.L07b_lin3, &
+                	   I.S08a, mainD0872, STRIPD, I.S08a.DIA.BPL.1-NE, STRIPD, mainD0028, &
+			   I.L08a, I.L08a_lin3, &
+                	   I.S08b, mainD110, &
+			   I.L08b, I.L08b_lin3, &
+                	   I.S09a, mainD110, &
+			   I.L09a, I.L09a_lin3, &
+                	   I.S09b, mainD110, &
+			   I.L09b, I.L09b_lin3)
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ EX1 and TR1 ++++++++++++++++++++++++++++++++++++++++++
+! (1.5 GeV extraction and transfer line)
+
+!------Kickers-------
+! Circuit knobs
+% 1   			sto knob_I.EX1.MAG.CRDI
+
+! Nominal field strength
+% 0.02814   		sto nominal_DIH_EX1_ANGLE
+% -4.5915492957		sto nominal_DIH_EX1_B2
+
+
+! Element declarations
+I.EX1.MAG.DIH.1_I.EX1.MAG.CRDI-on:	rben, l = 0.4, angle="nominal_DIH_EX1_ANGLE knob_I.EX1.MAG.CRDI * -1 *", E1=0, E2="nominal_DIH_EX1_ANGLE knob_I.EX1.MAG.CRDI * -1 *", &
+									use_bn=1, b2="nominal_DIH_EX1_B2 knob_I.EX1.MAG.CRDI * -1 *"
+I.EX1.MAG.DIH.2_I.EX1.MAG.CRDI-on:	rben, l = 0.4, angle="nominal_DIH_EX1_ANGLE knob_I.EX1.MAG.CRDI *", E1="nominal_DIH_EX1_ANGLE knob_I.EX1.MAG.CRDI * -1 *", E2=0, &
+									use_bn=1, b2="nominal_DIH_EX1_B2 knob_I.EX1.MAG.CRDI *"
+I.EX1.MAG.DIH.1_I.EX1.MAG.CRDI-off:	rben, l = 0.4, angle= 0
+I.EX1.MAG.DIH.2_I.EX1.MAG.CRDI-off:	rben, l = 0.4, angle= 0
+I.EX1_D0133:				drift, l = 0.133
+
+testkick:	vkick, l = 0.05, kick=2.2e-7
+!~ testkick:	vkick, l = 0.01, kick=0
+
+!----------bends------------- 
+! Circuit knobs
+% 1   			sto knob_I.TR1.MAG.CRSM
+% 1   			sto knob_I.TR1.MAG.CRDI
+
+! Nominal field strengths
+% 10 180 / pi *		sto nominal_SM1_TR1_ANGLE
+% 17 180 / pi *		sto nominal_DI_TR1_ANGLE
+
+! Element declarations
+I.TR1.MAG.SM1A_I.TR1.MAG.CRSM: 	  SBEN, l = 1.027, ANGLE="nominal_SM1_TR1_ANGLE knob_I.TR1.MAG.CRSM * -1 *", TILT="0.5 pi *"                   
+I.TR1.MAG.DIE_I.TR1.MAG.CRDI: 	  SBEN, l = 0.92721, ANGLE="nominal_DI_TR1_ANGLE knob_I.TR1.MAG.CRDI * -1 *",TILT="0.5 pi *"                       
+I.TR1.MAG.DIF_I.TR1.MAG.CRDI: 	  SBEN, l = 0.92721, ANGLE="nominal_DI_TR1_ANGLE knob_I.TR1.MAG.CRDI *" ,TILT="0.5 pi *"                          
+R1.01S.MAG.SM1B_I.TR1.MAG.CRSM:   SBEN, l = 1.027, ANGLE="nominal_SM1_TR1_ANGLE knob_I.TR1.MAG.CRSM *",TILT="0.5 pi *" 
+
+!-----------quads-----------
+! Circuit knobs
+% 1.0   	sto  knob_I.TR1.MAG.CRQ1
+% 1.0   	sto  knob_I.TR1.MAG.CRQ2
+% 1.0   	sto  knob_I.TR1.MAG.CRQ3
+
+! Nominal quadrupole field strengths
+% -4.2822	sto  nominal_Q1_TR1_K1
+% 4.33752	sto  nominal_Q2_TR1_K1
+% -2.55548	sto  nominal_Q3_TR1_K1
+
+! Element declarations
+I.TR1.MAG.QF.1_I.TR1.MAG.CRQ1:	kquad, l = 0.2, K1="nominal_Q1_TR1_K1 knob_I.TR1.MAG.CRQ1 *"
+I.TR1.MAG.QF.2_I.TR1.MAG.CRQ2:	kquad, l = 0.2, K1="nominal_Q2_TR1_K1 knob_I.TR1.MAG.CRQ2 *"
+I.TR1.MAG.QF.3_I.TR1.MAG.CRQ3:	kquad, l = 0.2, K1="nominal_Q3_TR1_K1 knob_I.TR1.MAG.CRQ3 *"
+I.TR1.MAG.QF.4_I.TR1.MAG.CRQ3:	kquad, l = 0.2, K1="nominal_Q3_TR1_K1 knob_I.TR1.MAG.CRQ3 *"
+I.TR1.MAG.QF.5_I.TR1.MAG.CRQ2:	kquad, l = 0.2, K1="nominal_Q2_TR1_K1 knob_I.TR1.MAG.CRQ2 *"
+I.TR1.MAG.QF.6_I.TR1.MAG.CRQ1:	kquad, l = 0.2, K1="nominal_Q1_TR1_K1 knob_I.TR1.MAG.CRQ1 *"
+
+!~ I.TR1.MAG.QF.1_I.TR1.MAG.CRQ1:   kquad, l = 0.2, K1="nominal_Q1_TR1_K1 knob_I.TR1.MAG.CRQ1 *"
+!~ I.TR1.MAG.QF.2_I.TR1.MAG.CRQ2:   kquad, l = 0.2, K1="nominal_Q2_TR1_K1 knob_I.TR1.MAG.CRQ2 *"
+!~ I.TR1.MAG.QF.3_I.TR1.MAG.CRQ3:   kquad, l = 0.2, K1="nominal_Q3_TR1_K1 knob_I.TR1.MAG.CRQ3 *"
+!~ I.TR1.MAG.QF.4_I.TR1.MAG.CRQ3:   kquad, l = 0.2, K1="nominal_Q3_TR1_K1 knob_I.TR1.MAG.CRQ3 *"
+!~ I.TR1.MAG.QF.5_I.TR1.MAG.CRQ2:   kquad, l = 0.2, K1="nominal_Q2_TR1_K1 knob_I.TR1.MAG.CRQ2 *"
+!~ I.TR1.MAG.QF.6_I.TR1.MAG.CRQ1:   kquad, l = 0.2, K1="nominal_Q1_TR1_K1 knob_I.TR1.MAG.CRQ1 *"
+
+!---Drifts
+I.EX1_D0075:	drift, l = 0.075
+I.EX1_D020:    	drift, l = 0.2
+I.EX1_D0333:   	drift, l = 0.333
+I.EX1_D01355:  	drift, l = 0.1355
+I.EX1_D002405:	drift, l = 0.02405
+I.EX1_D00297:	drift, l = 0.0297
+I.EX1_D0051:	drift, l = 0.051
+I.EX1_D01058:	drift, l = 0.1058
+I.EX1_D197735:	drift, l = 1.97735
+I.EX1_D22524:  	drift, l = 2.2524
+I.EX1_D0185:	drift, l = 0.185
+
+I.TR1_D002:    	drift, l = 0.02
+I.TR1_D0025:   	drift, l = 0.025
+I.TR1_D005:    	drift, l = 0.05
+I.TR1_D020:    	drift, l = 0.2
+I.TR1_D025:    	drift, l = 0.25
+I.TR1_D010:    	drift, l = 0.10000
+I.TR1_D085:    	drift, l = 0.85
+I.TR1_D128:    	drift, l = 1.28
+I.TR1_D12955:  	drift, l = 1.2955
+I.TR1_D040:    	drift, l = 0.400
+I.TR1_D09455:  	drift, l = 0.9455
+I.TR1_D170:    	drift, l = 1.7
+I.TR1_D0475:   	drift, l = 0.475
+I.TR1_D030:    	drift, l = 0.300
+I.TR1_D035:    	drift, l = 0.35
+I.TR1_D065:	drift, l = 0.65
+I.TR1_D050:	drift, l = 0.50
+I.TR1_D015:    	drift, l = 0.15
+I.TR1_D070:    	drift, l = 0.7
+
+I.TR1_D004a:	drift, l = 0.04119
+I.TR1_D0045:	drift, l = 0.045
+I.TR1_D00532:	drift, l = 0.0532
+I.TR1_D0085:	drift, l = 0.085
+I.TR1_D01477:	drift, l = 0.1477
+I.TR1_D01647:	drift, l = 0.1647
+I.TR1_D0227:	drift, l = 0.227
+I.TR1_D02353:	drift, l = 0.2353
+I.TR1_D02523:	drift, l = 0.2523
+I.TR1_D0208:	drift, l = 0.208
+I.TR1_D0373:	drift, l = 0.373
+I.TR1_D054:	drift, l = 0.54
+I.TR1_D06988:	drift, l = 0.6988
+I.TR1_D070a: 	drift, l = 0.69881
+I.TR1_D08655:	drift, l = 0.8655
+I.TR1_D0165:	drift, l = 0.165
+I.TR1_D0235:	drift, l = 0.235
+I.TR1_D03595:	drift, l = 0.3595
+I.TR1_D0551:	drift, l = 0.551
+I.TR1_D00453:	drift, l= 0.0453
+
+R1.01S_D00935:  drift, l = 0.0935
+R1.01S_D0142:   drift, l = 0.142
+R1.01S_D02875:  drift, l = 0.2875
+
+!--- Free-standing stripline BPM, with electronics. Physical length is 0.2 m (estimate)
+I.EX1.DIA.BPL.1-E:   	monitor, l = 0.15, weight = 1		! Launcher BPM for 1.5 GeV injection
+I.EX1.DIA.BPL.2-E:   	monitor, l = 0.15, weight = 1		! Launcher BPM for 1.5 GeV injection
+I.TR1.DIA.BPL.1-NE: 	monitor, l = 0.15, weight = 0		! Spectrometer BPM low resolution
+I.TR1.DIA.BPL.2-E:   	monitor, l = 0.15, weight = 0		! Spectrometer BPM high resolution
+I.TR1.DIA.BPL.3-NE:	monitor, l = 0.15, weight = 0		! Zero dispersion BPM		
+I.TR1.DIA.BPL.4-NE: 	monitor, l = 0.15, weight = 0		! Spare BPM for finding septum entrance
+
+!--- Button BPMs
+! Note that these are located inside the storage rings and are included for trajectory correction calculations during injection mode.
+R1.01S_BUTTONBPM: 	monitor, l = 0, weight = 1
+R1.01_BUTTONBPM:	monitor, l = 0, weight = 1
+
+!--- Screens
+I.EX1.DIA.SCRN.1:   	WATCH,FILENAME="./output/%s-I_EX1_DIA_SCRN_1.w1"
+I.EX1.DIA.SCR.1:	line = (SCRNd, I.EX1.DIA.SCRN.1, SCRNd)
+I.TR1.DIA.SCRN.1:   	WATCH,FILENAME="./output/%s-I_TR1_DIA_SCRN_1.w1"
+I.TR1.DIA.SCR.1:	line = (SCRNd, I.TR1.DIA.SCRN.1, SCRNd)
+I.TR1.DIA.SCRN.2:   	WATCH,FILENAME="./output/%s-I_TR1_DIA_SCRN_2.w1"
+I.TR1.DIA.SCR.2:	line = (SCRNa, I.TR1.DIA.SCRN.2, SCRNb)
+R1.01S.DIA.SCRN.1:  	WATCH,FILENAME="./output/%s-R1_01S_DIA_SCRN_1.w1"
+!R1.01S.DIA.SCR.1:	line = (SCRNd, R1.01S.DIA.SCRN.1, SCRNd)
+
+!--- Beam dumps
+I.TR1.VAC.BD.1:	ECOL, X_MAX=1.0, Y_MAX=1.0, DX=0, DY=0
+I.TR1.VAC.BD.2:	ECOL, X_MAX=1.0, Y_MAX=1.0, DX=0, DY=0 
+
+!--- Faraday cups
+I.TR1.DIA.FCUP.1:	WATCH,FILENAME="./output/%s-I_TR1_DIA_FCUP_1.w1"
+I.TR1.DIA.FCUP.2:	WATCH,FILENAME="./output/%s-I_TR1_DIA_FCUP_2.w1"
+
+!--- Current transformers
+I.EX1.DIA.CT.1:		WATCH,FILENAME="./output/%s-I_EX1_DIA_CT_1.ct"
+I.EX1.DIA.CTR.1:	line = (CTdb,I.EX1.DIA.CT.1,CTda)
+I.TR1.DIA.CT.1:		WATCH,FILENAME="./output/%s-I_EX1_DIA_CT_1.ct"
+I.TR1.DIA.CTR.1:	line = (CTdb,I.TR1.DIA.CT.1,CTda)
+!CTda:			drift, l = 0.09825
+!CTdb:			drift, l = 0.04175
+
+!--- Corrector magnets
+I.EX1.MAG.CODX.1: 	HKICK, l = 0.14, B2 = 4.722
+I.EX1.MAG.CODY.1: 	VKICK, l = 0.14, B2 = 4.722
+!I.EX1.MAG.CODX.2:	HKICK, l = 0.14, B2 = 4.722
+I.EX1.MAG.CODY.2: 	VKICK, l = 0.14, B2 = 4.722
+I.TR1.MAG.CODX.1: 	HKICK, l = 0.14, B2 = 4.722
+I.TR1.MAG.CODX.2: 	HKICK, l = 0.14, B2 = 4.722
+I.TR1.MAG.CODX.3: 	HKICK, l = 0.14, B2 = 4.722
+I.TR1.MAG.CODX.4: 	HKICK, l = 0.14, B2 = 4.722
+I.TR1.MAG.CODX.5: 	HKICK, l = 0.14, B2 = 4.722
+I.TR1.MAG.CODX.6: 	HKICK, l = 0.14, B2 = 4.722
+I.TR1.MAG.CODY.1: 	VKICK, l = 0.14, B2 = 4.722
+I.TR1.MAG.CODY.2: 	VKICK, l = 0.14, B2 = 4.722
+I.TR1.MAG.CODY.3: 	VKICK, l = 0.14, B2 = 4.722
+
+
+
+!---Markers
+I.TR1:	  marker
+I.EX1:	  marker
+R1.01S:	  marker
+
+
+EX1on:  line = (I.EX1,I.EX1_D0185, I.MAG.CODp, I.EX1.MAG.CODX.1, I.MAG.CODp, I.MAG.CODp, I.EX1.MAG.CODY.1, I.MAG.CODp, &
+			I.EX1_D0075,STRIPD, I.EX1.DIA.BPL.1-E, STRIPD, I.EX1_D197735, I.EX1.DIA.CTR.1,I.EX1_D002405,STRIPD, I.EX1.DIA.BPL.2-E, STRIPD,I.EX1_D0051,&
+			I.EX1.MAG.DIH.1_I.EX1.MAG.CRDI-on,I.EX1_D0133,I.EX1.MAG.DIH.2_I.EX1.MAG.CRDI-on,I.EX1_D00297,I.EX1.DIA.SCR.1,I.EX1_D01058,15INJ)
+EX1off:  line = (I.EX1,I.EX1_D0185, I.MAG.CODp, I.EX1.MAG.CODX.1, I.MAG.CODp, I.MAG.CODp, I.EX1.MAG.CODY.1, I.MAG.CODp, &
+			I.EX1_D0075,STRIPD, I.EX1.DIA.BPL.1-E, STRIPD, I.EX1_D197735, I.EX1.DIA.CTR.1,I.EX1_D002405,STRIPD, I.EX1.DIA.BPL.2-E, STRIPD,I.EX1_D0051,&
+			I.EX1.MAG.DIH.1_I.EX1.MAG.CRDI-off,I.EX1_D0133,I.EX1.MAG.DIH.2_I.EX1.MAG.CRDI-off,I.EX1_D00297,I.EX1.DIA.SCR.1,I.EX1_D01058,15INJ)
+
+! Comment: first monitor provides energy reading with low resolution but 
+!  large range, the second monitor provides very high resolution but very 
+!  narrow range.
+!  Beamstoppers should ideally be installed after these energy read-outs,
+!  to allow the use of the transfer line as a spectrometer.
+
+
+TR1a:  line = (I.TR1.MAG.SM1A_I.TR1.MAG.CRSM,I.TR1_D01647,STRIPD, I.TR1.DIA.BPL.1-NE, STRIPD,I.TR1_D02353,&
+                I.TR1.MAG.DIE_I.TR1.MAG.CRDI,I.TR1_D020,I.MAG.CODp,I.TR1.MAG.CODY.1,I.MAG.CODp,I.MAG.CODp,I.TR1.MAG.CODX.1,I.MAG.CODp,I.TR1_D020,STRIPD, I.TR1.DIA.BPL.2-E, STRIPD,I.TR1_D010,I.TR1.MAG.QF.1_I.TR1.MAG.CRQ1,&
+                I.TR1_D00532,I.TR1.DIA.SCR.1,I.TR1_D0208,I.TR1.DIA.FCUP.1,I.TR1.VAC.BD.1,I.TR1_D054,I.TR1.DIA.FCUP.2,I.TR1.VAC.BD.2,I.TR1_D06988,I.TR1.MAG.QF.2_I.TR1.MAG.CRQ2,&
+                I.TR1_D12955,I.TR1.MAG.QF.3_I.TR1.MAG.CRQ3)
+
+
+TR1b:  line = (I.TR1.MAG.QF.4_I.TR1.MAG.CRQ3,I.TR1_D03595,I.MAG.CODp,I.TR1.MAG.CODY.2,I.MAG.CODp,I.TR1_D0551,I.MAG.CODp,I.TR1.MAG.CODX.2,I.MAG.CODp,I.TR1_D0085,&
+                I.TR1.MAG.QF.5_I.TR1.MAG.CRQ2,I.TR1_D070,I.MAG.CODp,I.TR1.MAG.CODY.3,I.MAG.CODp,I.TR1_D085,&
+                I.TR1.MAG.QF.6_I.TR1.MAG.CRQ1,I.TR1_D005,I.TR1.DIA.CTR.1,I.TR1_D0045,I.MAG.CODp,I.TR1.MAG.CODX.3,I.MAG.CODp,I.MAG.CODp,I.TR1.MAG.CODX.4,I.MAG.CODp,I.MAG.CODp,I.TR1.MAG.CODX.5,I.MAG.CODp,I.MAG.CODp,I.TR1.MAG.CODX.6,I.MAG.CODp,I.TR1_D0165,I.TR1.MAG.DIF_I.TR1.MAG.CRDI,&
+                I.TR1_D02523,STRIPD, I.TR1.DIA.BPL.4-NE, STRIPD,I.TR1_D01477,R1.01S,R1.01S.MAG.SM1B_I.TR1.MAG.CRSM)
+
+TR1:   line = (I.TR1,TR1a,I.TR1_D0227,STRIPD, I.TR1.DIA.BPL.3-NE, STRIPD,I.TR1.DIA.SCR.2,I.TR1_D0373,TR1b,IP15)
+
+R15GEV: line = (R1.01S_D00935,R1.01S_BUTTONBPM,R1.01S_D0142,R1.01S.DIA.SCRN.1,R1.01S_D02875,R1.01_BUTTONBPM)
+
+
+TOT15:  line = (EX1on, TR1, R15GEV)
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ MAIN ACCELERATOR, 1.5 GeV to 3.0 GeV ++++++++++++++++++++++++++++++++++++++++++
+
+!---Quadrupoles
+
+I.S14b.MAG.QB.1:    kquad, l = 0.2, K1=0.1543884811317237
+I.S16a.MAG.QB.1:    kquad, l = 0.2, K1=-0.3989464188450969
+I.S16b.MAG.QB.2:    kquad, l = 0.2, K1=0.315849279135899
+
+
+!---Corrector magnets
+
+I.S10b.MAG.CODX.1:    HKICK, l = 0.14, B2 = 4.722
+I.S13a.MAG.CODY.1-RESERVED:    drift, l = 0.14
+I.S14b.MAG.CODX.1:    HKICK, l = 0.14, B2 = 4.722
+I.S16a.MAG.CODY.1:    VKICK, l = 0.14, B2 = 4.722
+I.S16b.MAG.CODX.1:    HKICK, l = 0.14, B2 = 4.722
+I.S19b.MAG.CODX.1:    HKICK, l = 0.14, B2 = 4.722
+I.S19b.MAG.CODY.1:    VKICK, l = 0.14, B2 = 4.722
+
+
+!---BPMs
+
+! Free-standing stripline BPM, with electronics. Physical length is 0.2 m (estimate)
+I.S12a.DIA.BPL.1-NE:   	monitor, l = 0.15, weight = 0		! Spare BPM		
+I.S14b.DIA.BPL.1-E:   	monitor, l = 0.15, weight = 1		
+I.S16b.DIA.BPL.1-NE:   	monitor, l = 0.15, weight = 0		
+I.S19b.DIA.BPL.1-E:   	monitor, l = 0.15, weight = 1		! Launcher BPM for 3 GeV injection
+
+
+!---Screens
+
+!I.S12a.DIA.SCRN.1:		WATCH, FILENAME="./output/%s-I_S12a_DIA_SCRN_1.w1"
+I.S12a.DIA.SCRN.1-RESERVED:    marker
+I.S12a.DIA.SCR.1:	       line = (SCRNd, I.S12a.DIA.SCRN.1-RESERVED, SCRNd)
+
+I.S15a.DIA.SCRN.1:	       WATCH, FILENAME="./output/%s-I_S15a_DIA_SCRN_1.w1"
+I.S15a.DIA.SCR.1:	       line = (SCRNd, I.S15a.DIA.SCRN.1, SCRNd)
+
+
+!---Markers
+
+I.S10a:    marker
+I.S11a:	   marker
+I.S12a:	   marker
+I.S13a:	   marker
+I.S14a:	   marker
+I.S15a:	   marker
+I.S16a:	   marker
+I.S17a:	   marker
+I.S18a:	   marker
+I.S19a:	   marker
+I.S10b:	   marker
+I.S11b:	   marker
+I.S12b:	   marker
+I.S13b:	   marker
+I.S14b:	   marker
+I.S15b:	   marker
+I.S16b:	   marker
+I.S17b:	   marker
+I.S18b:	   marker
+I.S19b:	   marker
+
+I.L10a:	   marker
+I.L11a:	   marker
+I.L12a:	   marker
+I.L13a:	   marker
+I.L14a:	   marker
+I.L15a:	   marker
+I.L16a:	   marker
+I.L17a:	   marker
+I.L18a:	   marker
+I.L19a:	   marker
+I.L10b:	   marker
+I.L11b:	   marker
+I.L12b:	   marker
+I.L13b:	   marker
+I.L14b:	   marker
+I.L15b:	   marker
+I.L16b:	   marker
+I.L17b:	   marker
+I.L18b:	   marker
+I.L19b:	   marker
+
+
+!---Drifts
+
+I.EX1_D033065:    drift, l = 0.33065
+I.EX1_D15839: 	  drift, l = 1.5839
+I.EX1_D025565:    drift, l = 0.25565
+I.EX1_D15089:	  drift, l = 1.5089
+I.EX1_D15485:	  drift, l = 1.5485
+
+mainD097:      drift, l = 0.97
+mainD013:      drift, l = 0.13
+mainD028:      drift, l = 0.28
+mainD017:      drift, l = 0.17
+mainD014:      drift, l = 0.14
+mainD087:      drift, l = 0.87
+mainD00596:    drift, l = 0.0596
+mainD0795:     drift, l = 0.795
+mainD010:      drift, l = 0.10
+mainD0298:     drift, l = 0.298
+mainD0052:     drift, l = 0.052
+mainD0085:     drift, l = 0.085
+mainD0215:     drift, l = 0.215
+mainD10604:    drift, l = 1.0604
+mainD055:      drift, l = 0.55
+mainD0122:     drift, l = 0.122
+mainD0072:     drift, l = 0.072
+
+
+MainAcc3_SPF:    line = (I.EX1_D025565, I.EX1_D15485, I.MAG.CODp, I.EX1.MAG.CODY.2, I.MAG.CODp, &
+		      	 I.S10a, mainD10604,&
+			 I.L10a, I.L10a_linspf,&
+                	 I.S10b, mainD0795, I.MAG.CODp, I.S10b.MAG.CODX.1, I.MAG.CODp, mainD0155,&
+			 I.L10b, I.L10b_linspf,&
+                	 I.S11a, mainD110,&
+			 I.L11a, I.L11a_linspf,&
+                	 I.S11b, mainD110,&
+			 I.L11b, I.L11b_linspf,&
+                	 I.S12a, mainD055, I.S12a.DIA.SCR.1, mainD0122, STRIPD, I.S12a.DIA.BPL.1-NE, STRIPD, mainD0028,&
+			 I.L12a, I.L12a_linspf,&
+                	 I.S12b, mainD110,&
+			 I.L12b, I.L12b_linspf,&
+                	 I.S13a, mainD0775, I.MAG.CODp, I.S13a.MAG.CODY.1-RESERVED, I.MAG.CODp, mainD0175,&
+			 I.L13a, I.L13a_linspf,&
+                	 I.S13b, mainD110,&
+			 I.L13b, I.L13b_linspf,&
+                	 I.S14a, mainD110,&
+			 I.L14a, I.L14a_linspf,&
+                	 I.S14b, mainD0215, I.MAG.CODp, I.S14b.MAG.CODX.1, I.MAG.CODp, mainD0085, I.S14b.MAG.QB.1, mainD0147, STRIPD, I.S14b.DIA.BPL.1-E, STRIPD, mainD0103, &
+			 I.L14b, I.L14b_linspf,&
+                	 I.S15a, mainD0277, I.S15a.DIA.SCR.1, mainD0623, &
+			 I.L15a, I.L15a_linspf,&
+                	 I.S15b, mainD110,&
+			 I.L15b, I.L15b_linspf,&
+                	 I.S16a, mainD045, I.S16a.MAG.QB.1, mainD010, I.MAG.CODp, I.S16a.MAG.CODY.1, I.MAG.CODp, mainD020,&
+			 I.L16a, I.L16a_linspf,&
+                	 I.S16b, mainD0215, I.MAG.CODp, I.S16b.MAG.CODX.1, I.MAG.CODp, mainD0085, I.S16b.MAG.QB.2, mainD0147, STRIPD, I.S16b.DIA.BPL.1-NE, STRIPD, mainD0103, &
+			 I.L16b, I.L16b_linspf,&
+                	 I.S17a, mainD110,&
+			 I.L17a, I.L17a_linspf,&
+                	 I.S17b, mainD110,&
+			 I.L17b, I.L17b_linspf,&
+                	 I.S18a, mainD110,&
+			 I.L18a, I.L18a_linspf,&
+                	 I.S18b, mainD110,&
+			 I.L18b, I.L18b_linspf,&
+                	 I.S19a, mainD110,&
+			 I.L19a, I.L19a_linspf,&
+                	 I.S19b, mainD0375, I.MAG.CODp, I.S19b.MAG.CODY.1, I.MAG.CODp, mainD005, I.MAG.CODp, I.S19b.MAG.CODX.1, I.MAG.CODp, mainD0072, STRIPD, I.S19b.DIA.BPL.1-E, STRIPD, mainD0103,&
+			 I.L19b, I.L19b_linspf)
+ 
+MainAcc3_INJ3:    line = (I.EX1_D025565, I.EX1_D15485, I.MAG.CODp, I.EX1.MAG.CODY.2, I.MAG.CODp, &
+		       	  I.S10a, mainD10604,&
+			  I.L10a, I.L10a_lin3,&
+                	  I.S10b, mainD0795, I.MAG.CODp, I.S10b.MAG.CODX.1, I.MAG.CODp, mainD0155,&
+			  I.L10b, I.L10b_lin3,&
+                	  I.S11a, mainD110,&
+			  I.L11a, I.L11a_lin3,&
+                	  I.S11b, mainD110,&
+			  I.L11b, I.L11b_lin3,&
+                	  I.S12a, mainD055, I.S12a.DIA.SCR.1, mainD0122, STRIPD, I.S12a.DIA.BPL.1-NE, STRIPD, mainD0028,&
+			  I.L12a, I.L12a_lin3,&
+                	  I.S12b, mainD110,&
+			  I.L12b, I.L12b_lin3,&
+                	  I.S13a, mainD0775, I.MAG.CODp, I.S13a.MAG.CODY.1-RESERVED, I.MAG.CODp, mainD0175,&
+			  I.L13a, I.L13a_lin3,&
+                	  I.S13b, mainD110,&
+			  I.L13b, I.L13b_lin3,&
+                	  I.S14a, mainD110,&
+			  I.L14a, I.L14a_lin3,&
+                	  I.S14b, mainD0215, I.MAG.CODp, I.S14b.MAG.CODX.1, I.MAG.CODp, mainD0085, I.S14b.MAG.QB.1, mainD0147, STRIPD, I.S14b.DIA.BPL.1-E, STRIPD, mainD0103, &
+			  I.L14b, I.L14b_lin3,&
+                	  I.S15a, mainD0277, I.S15a.DIA.SCR.1, mainD0623, &
+			  I.L15a, I.L15a_lin3,&
+                	  I.S15b, mainD110,&
+			  I.L15b, I.L15b_lin3,&
+                	  I.S16a, mainD045, I.S16a.MAG.QB.1, mainD010, I.MAG.CODp, I.S16a.MAG.CODY.1, I.MAG.CODp, mainD020,&
+			  I.L16a, I.L16a_lin3,&
+                	  I.S16b, mainD0215, I.MAG.CODp, I.S16b.MAG.CODX.1, I.MAG.CODp, mainD0085, I.S16b.MAG.QB.2, mainD0147, STRIPD, I.S16b.DIA.BPL.1-NE, STRIPD, mainD0103, &
+			  I.L16b, I.L16b_lin3,&
+                	  I.S17a, mainD110,&
+			  I.L17a, I.L17a_lin3,&
+                	  I.S17b, mainD110,&
+			  I.L17b, I.L17b_lin3,&
+                	  I.S18a, mainD110,&
+			  I.L18a, I.L18a_lin3,&
+                	  I.S18b, mainD110,&
+			  I.L18b, I.L18b_lin3,&
+                	  I.S19a, mainD110,&
+			  I.L19a, I.L19a_lin3,&
+                	  I.S19b, mainD0375, I.MAG.CODp, I.S19b.MAG.CODY.1, I.MAG.CODp, mainD005, I.MAG.CODp, I.S19b.MAG.CODX.1, I.MAG.CODp, mainD0072, STRIPD, I.S19b.DIA.BPL.1-E, STRIPD, mainD0103,&
+			  I.L19b, I.L19b_lin3)
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ EX3 and TR3 ++++++++++++++++++++++++++++++++++++++++++
+! (3 GeV extraction and transfer line)
+
+!------bends---------------------
+! Circuit knobs
+% 1   sto   knob_I.TR3.MAG.CRSM
+% 1   sto   knob_I.TR3.MAG.CRDI
+
+! Nominal quadrupole field strengths
+% 5 180 / pi *		sto nominal_SM3_TR3_ANGLE
+% 16.5 180 / pi *	sto nominal_DI_TR3_ANGLE
+
+! Element declarations
+I.TR3.MAG.SM3A_I.TR3.MAG.CRSM: 		SBEN,l = 1.027,ANGLE="nominal_SM3_TR3_ANGLE knob_I.TR3.MAG.CRSM * -1 *", TILT="0.5 pi *"                   
+I.TR3.MAG.DIC_I.TR3.MAG.CRDI: 		SBEN,l = 1.79994,ANGLE="nominal_DI_TR3_ANGLE knob_I.TR3.MAG.CRDI * -1 *",TILT="0.5 pi *"                   
+I.TR3.MAG.DID_I.TR3.MAG.CRDI: 		SBEN,l = 1.79994,ANGLE="nominal_DI_TR3_ANGLE knob_I.TR3.MAG.CRDI *" ,TILT="0.5 pi *"                          
+R3.01L.MAG.SM3B_I.TR3.MAG.CRSM: 	SBEN,l = 1.027,ANGLE="nominal_SM3_TR3_ANGLE knob_I.TR3.MAG.CRSM *",TILT="0.5 pi *" 
+
+!--------quads--------------
+! Circuit knobs
+% 1   sto   knob_I.TR3.MAG.CRQ1
+% 1   sto   knob_I.TR3.MAG.CRQ2
+% 1   sto   knob_I.TR3.MAG.CRQ3
+
+! Nominal quadrupole field strengths
+% -3.423     sto   nominal_Q1_TR3_K1
+% 3.4835     sto   nominal_Q2_TR3_K1
+% -2.0281    sto   nominal_Q3_TR3_K1
+
+!% 3.323      sto   nominal_Q1_TR3_K1
+!% -3.6835    sto nominal_Q2_TR3_K1
+!% 2.0281     sto nominal_Q3_TR3_K1
+
+! Element declarations
+I.TR3.MAG.QF.1_I.TR3.MAG.CRQ1: 	kquad,l = 0.2,K1="nominal_Q1_TR3_K1 knob_I.TR3.MAG.CRQ1 *"
+I.TR3.MAG.QF.2_I.TR3.MAG.CRQ2: 	kquad,l = 0.2,K1="nominal_Q2_TR3_K1 knob_I.TR3.MAG.CRQ2 *"
+I.TR3.MAG.QF.3_I.TR3.MAG.CRQ3: 	kquad,l = 0.2,K1="nominal_Q3_TR3_K1 knob_I.TR3.MAG.CRQ3 *"
+I.TR3.MAG.QF.4_I.TR3.MAG.CRQ3: 	kquad,l = 0.2,K1="nominal_Q3_TR3_K1 knob_I.TR3.MAG.CRQ3 *"
+I.TR3.MAG.QF.5_I.TR3.MAG.CRQ2: 	kquad,l = 0.2,K1="nominal_Q2_TR3_K1 knob_I.TR3.MAG.CRQ2 *"
+I.TR3.MAG.QF.6_I.TR3.MAG.CRQ1: 	kquad,l = 0.2,K1="nominal_Q1_TR3_K1 knob_I.TR3.MAG.CRQ1 *"
+
+!~ I.TR3.MAG.QF.1_I.TR3.MAG.CRQ1: 	kquad,l = 0.2,K1="nominal_Q1_TR3_K1 knob_I.TR3.MAG.CRQ1 *"
+!~ I.TR3.MAG.QF.2_I.TR3.MAG.CRQ2: 	kquad,l = 0.2,K1="nominal_Q2_TR3_K1 knob_I.TR3.MAG.CRQ2 *"
+!~ I.TR3.MAG.QF.3_I.TR3.MAG.CRQ3: 	kquad,l = 0.2,K1="nominal_Q3_TR3_K1 knob_I.TR3.MAG.CRQ3 *"
+!~ I.TR3.MAG.QF.4_I.TR3.MAG.CRQ3: 	kquad,l = 0.2,K1="nominal_Q3_TR3_K1 knob_I.TR3.MAG.CRQ3 *"
+!~ I.TR3.MAG.QF.5_I.TR3.MAG.CRQ2: 	kquad,l = 0.2,K1="nominal_Q2_TR3_K1 knob_I.TR3.MAG.CRQ2 *"
+!~ I.TR3.MAG.QF.6_I.TR3.MAG.CRQ1: 	kquad,l = 0.2,K1="nominal_Q1_TR3_K1 knob_I.TR3.MAG.CRQ1 *"
+
+
+!------Kickers-------
+! Circuit knobs
+% 1   sto   knob_I.EX3.MAG.CRDI
+
+! Nominal field strengths
+% 0.02814   sto   nominal_DIH_EX3_ANGLE
+% -4.5915492957   sto   nominal_DIH_EX3_B2
+
+! Element declarations
+I.EX3.MAG.DIH.1_I.EX3.MAG.CRDI-on:	rben, l = 0.4, angle="nominal_DIH_EX3_ANGLE knob_I.EX3.MAG.CRDI * -1 *", E1=0, E2="nominal_DIH_EX3_ANGLE knob_I.EX3.MAG.CRDI * -1 *", &
+									use_bn=1, b2="nominal_DIH_EX1_B2 knob_I.EX3.MAG.CRDI * -1 *"
+I.EX3.MAG.DIH.2_I.EX3.MAG.CRDI-on:	rben, l = 0.4, angle="nominal_DIH_EX3_ANGLE knob_I.EX3.MAG.CRDI *", E1="nominal_DIH_EX3_ANGLE knob_I.EX3.MAG.CRDI * -1 *", E2=0, &
+									use_bn=1, b2="nominal_DIH_EX1_B2 knob_I.EX3.MAG.CRDI *"
+I.EX3.MAG.DIH.1_I.EX3.MAG.CRDI-off:	rben, l = 0.4, angle= 0
+I.EX3.MAG.DIH.2_I.EX3.MAG.CRDI-off:	rben, l = 0.4, angle= 0
+
+I.EX3_D0133:	drift, l = 0.133
+
+!---Drifts
+I.EX3_D010:     drift, l = 0.1
+I.EX3_D020:     drift, l = 0.2
+I.EX3_D019:     drift, l = 0.19
+
+I.EX3_D0333:    drift, l = 0.333
+I.EX3_D01355:  	drift, l = 0.1355
+I.EX3_D0124:    drift, l = 0.124
+I.EX3_D0275:    drift, l = 0.275
+I.EX3_D01075:   drift, l = 0.1075
+I.EX3_D0011:	drift, l = 0.011
+I.EX3_D0202:	drift, l = 0.202
+I.EX3_D00461:	drift, l = 0.0461
+I.EX3_D004:	drift, l = 0.04
+I.EX3_D01864:	drift, l = 0.1864
+I.EX3_D0003:	drift, l = 0.003
+I.EX3_D0048:	drift, l = 0.048
+I.EX3_D00548:	drift, l = 0.0548
+I.EX3_D01777:	drift, l = 0.1777
+I.EX3_D0115:	drift, l = 0.115
+I.EX3_D12505:	drift, l = 1.2505
+I.EX3_D03445:	drift, l = 0.3445
+I.EX3_D171: 	drift, l = 1.71
+I.EX3_D01901: 	drift, l = 0.1901
+I.EX3_D0040: 	drift, l = 0.04
+
+I.TR3_D020:	drift, l = 0.20
+I.TR3_D0325:    drift, l = 0.325
+I.TR3_D085:	drift, l = 0.85
+I.TR3_D0165:  	drift, l = 0.165
+I.TR3_D045:    	drift, l = 0.45
+I.TR3_D105:    	drift, l = 1.05
+I.TR3_D002:    	drift, l = 0.02
+I.TR3_D153:    	drift, l = 1.529958
+I.TR3_D17665:	drift, l = 1.7665
+I.TR3_D040:    	drift, l = 0.4
+I.TR3_D050:    	drift, l = 0.5
+I.TR3_D0025:  	drift, l = 0.025
+I.TR3_D14165:	drift, l = 1.4165
+I.TR3_D210:    	drift, l = 2.1
+I.TR3_D0715:  	drift, l = 0.715
+I.TR3_D005:    	drift, l = 0.05
+I.TR3_D150:   	drift, l = 1.5
+I.TR3_D015:    	drift, l = 0.15
+
+I.TR3_01587:	drift, l = 0.1587
+I.TR3_D00313:	drift, l = 0.0313
+I.TR3_D0045:	drift, l = 0.045
+I.TR3_D00532:	drift, l = 0.053158
+I.TR3_D0085:	drift, l = 0.085
+I.TR3_D010:	drift, l = 0.100
+I.TR3_D0125:	drift, l = 0.125
+I.TR3_D01491:	drift, l = 0.1491
+I.TR3_D0208:	drift, l = 0.208
+I.TR3_D0231:	drift, l = 0.231
+I.TR3_D02319:	drift, l = 0.2319
+I.TR3_D0244:	drift, l = 0.244
+I.TR3_D030:	drift, l = 0.30
+I.TR3_D0425:	drift, l = 0.425
+I.TR3_D054:	drift, l = 0.540
+I.TR3_D060:	drift, l = 0.600
+I.TR3_D0625:	drift, l = 0.625
+I.TR3_D0825:	drift, l = 0.825
+I.TR3_D08638:	drift, l = 0.8638
+I.TR3_D13365:	drift, l = 1.3365
+I.TR3_D0166:	drift, l = 0.166
+I.TR3_D0024:	drift, l = 0.024
+I.TR3_D0542:	drift, l = 0.542
+I.TR3_D00862: 	drift, l = 0.086158
+I.TR3_D0175:	drift, l = 0.175
+I.TR3_D0194:	drift, l = 0.194
+I.TR3_D01106:	drift, l = 0.11055
+I.TR3_D0037:	drift, l = 0.037
+I.TR3_D011: 	drift, l = 0.110
+I.TR3_D019: 	drift, l = 0.190
+
+
+
+
+R3.01L_D00935:    drift, l = 0.0935
+R3.01L_D0142:     drift, l = 0.142
+R3.01L_D04442:    drift, l = 0.4442
+
+!--- Free-standing stripline BPM. Physical length is 0.2 m (estimate)
+I.EX3.DIA.BPL.1-E:   	monitor, l = 0.15, weight = 1		! Launcher BPM for 3 GeV injection
+I.TR3.DIA.BPL.1-NE:	monitor, l = 0.15, weight = 0		! Spectrometer BPM low resolution
+I.TR3.DIA.BPL.2-E:	monitor, l = 0.15, weight = 0		! Spectrometer BPM high resolution
+I.TR3.DIA.BPL.3-NE:	monitor, l = 0.15, weight = 0		! Zero dispersion BPM
+I.TR3.DIA.BPL.4-NE:	monitor, l = 0.15, weight = 0		! Spare BPM for finding septum entrance
+
+
+!--- Button BPMs
+! Note that these are located inside the storage rings and are included for trajectory correction calculations during injection mode.
+R3.01L.BPMG:	monitor, l = 0, weight = 1
+R3.01M1.BPMH:	monitor, l = 0, weight = 1
+
+!--- Screens
+I.EX3.DIA.SCRN.1:   	WATCH,FILENAME="./output/%s-I_EX3_DIA_SCRN_1.w1"
+I.EX3.DIA.SCR.1:	line = (SCRNd, I.EX3.DIA.SCRN.1, SCRNd)
+I.TR3.DIA.SCRN.1:   	WATCH,FILENAME="./output/%s-I_TR3_DIA_SCRN_1.w1"
+I.TR3.DIA.SCR.1:	line = (SCRNd, I.TR3.DIA.SCRN.1, SCRNd)
+I.TR3.DIA.SCRN.2:   	WATCH,FILENAME="./output/%s-I_TR3_DIA_SCRN_2.w1"
+I.TR3.DIA.SCR.2:	line = (SCRNd, I.TR3.DIA.SCRN.2, SCRNd)
+R3.01L.DIA.SCRN.1:   	WATCH,FILENAME="./output/%s-R3_01L_DIA_SCRN_1.w1"
+!R3.01L.DIA.SCR.1:	line = (SCRNd, R3.01L.DIA.SCRN.1, SCRNd)
+
+!--- Beam dumps
+I.TR3.VAC.BD.1:	  ECOL, X_MAX=1.0, Y_MAX=1.0, DX=0, DY=0
+I.TR3.VAC.BD.2:	  ECOL, X_MAX=1.0, Y_MAX=1.0, DX=0, DY=0
+
+!--- Faraday cups
+I.TR3.DIA.FCUP.1:	WATCH,FILENAME="./output/%s-I_TR3_DIA_FCUP_1.w1"
+I.TR3.DIA.FCUP.2:	WATCH,FILENAME="./output/%s-I_TR3_DIA_FCUP_2.w1"
+
+!--- Current transformers
+!CTda:		drift, l = 0.09825
+!CTdb:		drift, l = 0.04175
+I.EX3.DIA.CT.1:	    WATCH,FILENAME="./output/%s-I_EX3_DIA_CT_1.ct"
+I.EX3.DIA.CTR.1:    line = (CTda,I.EX3.DIA.CT.1,CTdb)
+I.TR3.DIA.CT.1:	    WATCH,FILENAME="./output/%s-I_TR3_DIA_CT_1.ct"
+I.TR3.DIA.CTR.1:    line = (CTda,I.TR3.DIA.CT.1,CTdb)
+
+!--- correctors
+I.TR3.MAG.CODX.1:  	HKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODX.2:  	HKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODX.3:  	HKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODX.4:  	HKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODX.5:  	HKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODX.6:  	HKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODX.7:  	HKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODX.8:  	HKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODY.1:   	VKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODY.2:   	VKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODY.3:   	VKICK, l = 0.14, B2 = 4.722, steering = 1
+I.TR3.MAG.CODY.4:   	VKICK, l = 0.14, B2 = 4.722, steering = 1
+
+I.EX3.MAG.CODX.1-RESERVED:   drift, l = 0.14
+I.EX3.MAG.CODY.1-RESERVED:   drift, l = 0.14
+
+!---Markers
+I.TR3:	 marker
+I.EX3:	 marker
+R3.01L:	 marker
+
+
+! Due to engineering constraints, placing correctors in the space between 
+! DID and SM3B is not possible. 
+
+
+EX3on:       line = (I.EX3,I.EX3_D0202,STRIPD,I.EX3.DIA.BPL.1-E,STRIPD, I.EX3_D0003, I.EX3.DIA.CTR.1,I.EX3_D0048,&
+				I.EX3.MAG.DIH.1_I.EX3.MAG.CRDI-on,I.EX3_D0133,I.EX3.MAG.DIH.2_I.EX3.MAG.CRDI-on,& 		
+				I.EX3_D00548, I.EX3.DIA.SCR.1,I.EX3_D01777,3INJ)							
+
+EX3off:       line = (I.EX3,I.EX3_D0202,STRIPD,I.EX3.DIA.BPL.1-E,STRIPD, I.EX3_D0003, I.EX3.DIA.CTR.1,I.EX3_D0048,&
+				I.EX3.MAG.DIH.1_I.EX3.MAG.CRDI-off,I.EX3_D0133,I.EX3.MAG.DIH.2_I.EX3.MAG.CRDI-off,& 		
+				I.EX3_D00548, I.EX3.DIA.SCR.1,I.EX3_D01777,3INJ)							
+
+
+
+! Comment: first monitor provides energy reading with low resolution but 
+!  large range, the second monitor provides very high resolution but very 
+!  narrow range.
+!  Beamstoppers should ideally be installed after these energy read-outs,
+!  to allow the use of the transfer line as a spectrometer.
+
+TR3a:   line = (I.TR3.MAG.SM3A_I.TR3.MAG.CRSM,I.TR3_D0166,STRIPD,I.TR3.DIA.BPL.1-NE,STRIPD,I.TR3_D0024,I.MAG.CODp,I.TR3.MAG.CODX.1,I.MAG.CODp,I.TR3_D0425,&            
+                I.TR3.MAG.DIC_I.TR3.MAG.CRDI,I.TR3_D0208,I.MAG.CODp,I.TR3.MAG.CODY.1,I.MAG.CODp,I.TR3_D0542,STRIPD,I.TR3.DIA.BPL.2-E,STRIPD,I.TR3_D010,I.TR3.MAG.QF.1_I.TR3.MAG.CRQ1,&                
+                I.TR3_D00862,I.TR3.DIA.SCR.1,I.TR3_D0175,&
+		I.TR3.DIA.FCUP.1,I.TR3.VAC.BD.1,I.TR3_D054,I.TR3.DIA.FCUP.2,I.TR3.VAC.BD.2,&
+		I.TR3_D08638,I.MAG.CODp,I.TR3.MAG.CODX.2,I.MAG.CODp,I.TR3_D0085,I.TR3.MAG.QF.2_I.TR3.MAG.CRQ2,&               
+                I.TR3_D17665,I.TR3.MAG.QF.3_I.TR3.MAG.CRQ3,I.TR3_D020)                                
+
+TR3b:   line = (I.TR3_D040,I.TR3.MAG.QF.4_I.TR3.MAG.CRQ3,I.TR3_D0045,I.MAG.CODp,I.TR3.MAG.CODY.2,I.MAG.CODp,I.TR3_D13365,I.MAG.CODp,I.TR3.MAG.CODX.3,I.MAG.CODp,I.TR3_D0085,& 
+                I.TR3.MAG.QF.5_I.TR3.MAG.CRQ2, I.TR3_D150,I.MAG.CODp,I.TR3.MAG.CODY.3,I.MAG.CODp,I.TR3_D045,&                         
+                I.TR3.MAG.QF.6_I.TR3.MAG.CRQ1,I.TR3_D060,I.TR3_D011,I.MAG.CODp,I.TR3.MAG.CODX.4,I.MAG.CODp,&
+		I.MAG.CODp,I.TR3.MAG.CODX.5,I.MAG.CODp,I.TR3_D019,I.TR3.MAG.DID_I.TR3.MAG.CRDI,&   
+		I.TR3_D0194,I.MAG.CODp,I.TR3.MAG.CODX.6,I.MAG.CODp,I.TR3_D0037,I.EX3.DIA.CTR.1,STRIPD,I.TR3.DIA.BPL.4-NE,STRIPD,I.TR3_D0244,&
+		R3.01L, R3.01L.MAG.SM3B_I.TR3.MAG.CRSM)                  
+
+TR3:    line = (I.TR3,TR3a,STRIPD,I.TR3.DIA.BPL.3-NE,STRIPD,I.TR3.DIA.SCR.2,TR3b,IP3)
+
+
+R3GEV:  line = (R3.01L_D00935, R3.01L.BPMG, R3.01L_D0142, R3.01L.DIA.SCRN.1, R3.01L_D04442, R3.01M1.BPMH)
+
+TOT3: line=(EX3on, I.TR3, TR3, R3GEV)
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ PRE-BC2 ++++++++++++++++++++++++++++++++++++++++++
+
+! This region lies between the launching section (for 3 GeV injection
+! and Bunch Compressor 2) and BC2. As such, the correctors should not be
+! included in the trajectory correction during regular operation.
+
+
+!---Drifts
+
+I.EX3_D1595: 	 drift, l = 1.595
+I.EX3_D02301:    drift, l = 0.2301
+
+
+PreBC2:    line = (I.EX3_D171, I.MAG.CODp, I.EX3.MAG.CODX.1-RESERVED, I.MAG.CODp, I.EX3_D01901, I.MAG.CODp, I.EX3.MAG.CODY.1-RESERVED, I.MAG.CODp)
+
+
+
+!------------ Matching section 3 ------------------------------------------
+
+!---Quadrupoles
+
+!I.MS3.MAG.QF.1:    Kquad, l = 0.2, K1=0.686418352056257
+!I.MS3.MAG.QF.2:    Kquad, l = 0.2, K1=2.024879132381813
+!I.MS3.MAG.QF.3:    Kquad, l = 0.2, K1=-3.020534212247656
+!I.MS3.MAG.QF.4:    Kquad, l = 0.2, K1=2.72073153128247
+
+!I.MS3.MAG.QF.1:    Kquad,L=0.2,K1=0.7292306262617871
+!I.MS3.MAG.QF.2:    Kquad,L=0.2,K1=1.906071239482976
+!I.MS3.MAG.QF.3:    Kquad,L=0.2,K1=-2.949293114149822
+!I.MS3.MAG.QF.4:    Kquad,L=0.2,K1=2.572825726939381
+
+I.MS3.MAG.QF.1:    Kquad, L=0.2, K1=-0.5656453936264964
+I.MS3.MAG.QF.2:    Kquad, L=0.2, K1=2.882484726073298
+I.MS3.MAG.QF.3:    Kquad, L=0.2, K1=-2.063915024620528
+I.MS3.MAG.QF.4:    Kquad, L=0.2, K1=-2.694679355033773
+I.MS3.MAG.QF.5:    Kquad, L=0.2, K1=3.495596321925105
+I.MS3.MAG.QF.6:    Kquad, L=0.2, K1=3.133921566955370
+
+!I.MS3.MAG.QF.1:    quad,L=0.2,K1=-0.5656453936264964
+!I.MS3.MAG.QF.2:    quad,L=0.2,K1=2.882484726073298
+!I.MS3.MAG.QF.3:    quad,L=0.2,K1=-2.063915024620528
+!I.MS3.MAG.QF.4:    quad,L=0.2,K1=-2.694679355033773
+!I.MS3.MAG.QF.5:    quad,L=0.2,K1=3.495596321925105
+!I.MS3.MAG.QF.6:    quad,L=0.2,K1=3.133921566955370
+
+
+!---Corrector magnets
+
+! In SPF operating mode, these extra kicks proved necessary to avoid a 
+! singular matrix for the correction system
+I.MS3.MAG.CODX.1-RESERVED:    drift, l = 0.14
+I.MS3.MAG.CODY.1-RESERVED:    drift, l = 0.14
+I.MS3.MAG.CODX.2-RESERVED:    drift, l = 0.14
+I.MS3.MAG.CODY.2: 	      VKICK, l = 0.14
+
+
+!---BPMs
+
+! Free-standing stripline BPM, with electronics. Physical length is 0.2 m (estimate)
+I.MS3.DIA.BPD.1:    monitor, l = 0.15, weight = 0		! Launcher BPM for BC2
+I.MS3.DIA.BPD.2:    monitor, l = 0.15, weight = 0		! Launcher BPM for BC2
+
+
+!---Screens
+
+I.MS3.DIA.SCRN.1:	      WATCH, FILENAME="./output/%s-I_MS3_DIA_SCRN_1.w1"
+!I.MS3.DIA.SCRN.1-RESERVED:    marker
+I.MS3.DIA.SCR.1:	      line = (SCRNb, I.MS3.DIA.SCRN.1, SCRNa)
+
+
+!---Markers
+
+I.MS3:    marker
+
+
+!---Drifts
+
+I.MS3_D0025:	drift, l = 0.025
+I.MS3_D007:	drift, l = 0.070
+I.MS3_D010:	drift, l = 0.100
+I.MS3_D0125:    drift, l = 0.125
+I.MS3_D013:	drift, l = 0.130
+I.MS3_D015:	drift, l = 0.150
+I.MS3_D020:	drift, l = 0.200
+I.MS3_D035:	drift, l = 0.350
+I.MS3_D055:	drift, l = 0.550
+I.MS3_D100: 	drift, l = 1.000
+I.MS3_D080: 	drift, l = 0.800
+I.MS3_D135:	drift, l = 1.350
+I.MS3_D041:	drift, l = 0.410
+I.MS3_D030:	drift, l = 0.300
+I.MS3_D011:	drift, l = 0.110
+I.MS3_D019:	drift, l = 0.190
+I.MS3_D0575:	drift, l = 0.575
+I.MS3_D050:	drift, l = 0.5
+I.MS3_D003:	drift, l = 0.03
+I.MS3_D027:	drift, l = 0.27
+
+
+match3:    line = (I.MS3, I.MS3_D050, I.MAG.CODp, I.MS3.MAG.CODX.1-RESERVED, I.MAG.CODp, I.MS3_D0025, I.MAG.CODp, I.MS3.MAG.CODY.1-RESERVED, I.MAG.CODp, I.MS3_D010,&
+		   I.MS3.MAG.QF.1,&
+		   I.MS3_D100, I.MS3_D080,&
+		   I.MS3.MAG.QF.2,&
+		   I.MS3_D055, I.MAG.CODp, I.MS3.MAG.CODX.2-RESERVED, I.MAG.CODp, I.MS3_D0025, I.MAG.CODp, I.MS3.MAG.CODY.2, I.MAG.CODp, I.MS3_D0125,&
+		   I.MS3.MAG.QF.3,&
+		   I.MS3_D010, STRIPD, I.MS3.DIA.BPD.1, STRIPD, I.MS3_D135, STRIPD, I.MS3.DIA.BPD.2, STRIPD, I.MS3_D015,&
+		   I.MS3.MAG.QF.4,&
+		   I.MS3_D030,&
+		   I.MS3.MAG.QF.5,&
+		   I.MS3_D020,&
+		   I.MS3.MAG.QF.6,&
+		   I.MS3_D003, I.MS3.DIA.SCR.1, I.MS3_D027)
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ BUNCH COMPRESSOR 2 ++++++++++++++++++++++++++++++++++++++++++
+
+! Lattice historical note: 
+! - a section of BC2 after the last bending magnet was moved to the SPF-line
+
+
+!---Dipoles
+
+! Assume the settings for the dipoles will be the same for the SPF branch and the TDC branch (the angles are fixed by the design).
+
+! Dipole circuit knob
+! Note that all BC2 dipoles are powered by the same power supply
+% 1    sto    knob_I.BC2.MAG.CRDI
+
+! Nominal dipole field strengths
+% 3.2 180 / pi *    sto    nominal_DIB_ANGLE
+% -0.7519	    sto    nominal_DIB_K1
+
+
+! Dipoles common for the two branches
+
+I.BC2.MAG.DIB.1_I.BC2.MAG.CRDI:    csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI *", l=0.55,&
+					      e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 /", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 /",&
+					      K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+					      K3 = 0,&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC2.MAG.DIB.2_I.BC2.MAG.CRDI:    csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI *", l=0.55,&
+					      e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 /", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 /",&
+					      K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+					      K3 = 0,&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC2.MAG.DIB.3_I.BC2.MAG.CRDI:    csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI *", l=0.55,&
+					      e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 /", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 /",&
+					      K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+					      K3 = 0,&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC2.MAG.DIB.4_I.BC2.MAG.CRDI:    csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI *", l=0.55,&
+					      e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 /", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 /",&
+					      K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+					      K3 = 0,&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+
+! Dipoles specific for the SPF branch
+
+I.BC2.MAG.DIB.5_I.BC2.MAG.CRDI:    csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * -1 *", l=0.55,&
+					      e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *",&
+					      K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+					      K3 = 0,&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC2.MAG.DIB.6_I.BC2.MAG.CRDI:    csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * -1 *", l=0.55,&
+					      e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *",&
+					      K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+					      K3 = 0,&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC2.MAG.DIB.7_I.BC2.MAG.CRDI:    csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * -1 *", l=0.55,&
+					      e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *",&
+					      K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+					      K3 = 0,&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4,
+I.BC2.MAG.DIB.8_I.BC2.MAG.CRDI:    csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * -1 *", l=0.55,&
+					      e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *",&
+					      K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+					      K3 = 0,&
+					      nonlinear=1, n_kicks=100, integration_order=4,&
+					      bins=600, sg_halfwidth=1,&
+					      hgap=0.0075, fint=0.4, output_file="lastbendbc2.csr",
+
+! Dipoles specific for the TDC branch
+
+I.BC2.MAG.DIB.9_I.BC2.MAG.CRDI:      csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * -1 *", l=0.55,&
+					      	e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *",&
+					      	K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+					      	K3=0,&
+					      	nonlinear=1, n_kicks=100, integration_order=4,&
+					      	bins=600, sg_halfwidth=1,&
+					      	hgap=0.001, fint=0.4,
+I.BC2.MAG.DIBB.10_I.BC2.MAG.CRDI:    csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * -1 *", l=0.55,&
+				     		e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *",&
+				     		K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+				     		K3=0,&
+				     		nonlinear=1, n_kicks=100, integration_order=4,&
+				     		bins=600, sg_halfwidth=1,&
+				     		hgap=0.001, fint=0.4,
+I.BC2.MAG.DIB.11_I.BC2.MAG.CRDI:     csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * -1 *", l=0.55,&
+				                e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *",&
+						K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+						K3=0,&
+						nonlinear=1, n_kicks=100, integration_order=4,&
+						bins=600, sg_halfwidth=1,&
+						hgap=0.001, fint=0.4,
+I.BC2.MAG.DIB.12_I.BC2.MAG.CRDI:     csrcsbend, angle="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * -1 *", l=0.55,&
+				     		e1="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *", e2="nominal_DIB_ANGLE knob_I.BC2.MAG.CRDI * 2 / -1 *",&
+						K1="nominal_DIB_K1 knob_I.BC2.MAG.CRDI *",&
+						K3=0,&
+						nonlinear=1, n_kicks=100, integration_order=4,&
+						bins=600, sg_halfwidth=1,&
+						hgap=0.001, fint=0.4, output_file="lastbendbc2.csr",
+
+
+!---Quadrupoles
+
+! Quadrupole settings for the SPF branch
+
+% 2.298537     sto    BC2_QM_K1_SPF
+% 1.373108     sto    BC2_Q_K1_SPF
+% -0.599175    sto    BC2_QMITT_K1_SPF
+
+I.BC2.MAG.QF.1_I.BC2.MAG.CRQM_SPF:    Kquad, l = 0.2, K1="BC2_QM_K1_SPF"
+I.BC2.MAG.QF.2_I.BC2.MAG.CRQM_SPF:    Kquad, l = 0.2, K1="BC2_QM_K1_SPF"
+I.BC2.MAG.QF.3_I.BC2.MAG.CRQ1_SPF:    Kquad, l = 0.2, K1="BC2_Q_K1_SPF"
+I.BC2.MAG.QF.4_I.BC2.MAG.CRQ2_SPF:    Kquad, l = 0.2, K1="BC2_QMITT_K1_SPF"
+I.BC2.MAG.QF.5_I.BC2.MAG.CRQ1_SPF:    Kquad, l = 0.2, K1="BC2_Q_K1_SPF"
+I.BC2.MAG.QF.6_I.BC2.MAG.CRQM_SPF:    Kquad, l = 0.2, K1="BC2_QM_K1_SPF"
+I.BC2.MAG.QF.7_I.BC2.MAG.CRQM_SPF:    Kquad, l = 0.2, K1="BC2_QM_K1_SPF"
+
+! Quadrupole settings for the TDC branch
+
+!!!! Initial values
+!!!% 2.298537   sto BC2_QM_K1_TDC
+!!!% 1.373108   sto BC2_Q_K1_TDC
+!!!% -0.599175  sto BC2_QMITT_K1_TDC
+
+!!!! Values optimized for Sx and Sy in BC2_TDC_END
+!!!% 2.300223   sto BC2_QM_K1_TDC
+!!!% 1.392572   sto BC2_Q_K1_TDC
+!!!% -1.243411  sto BC2_QMITT_K1_TDC
+
+!!!! Values optimized for Sx, Sy, sqr(s16), sqr(s36) in BC2_TDC_END (not varying the sextupoles)
+!!!% 2.291322   sto BC2_QM_K1_TDC
+!!!% 1.395153   sto BC2_Q_K1_TDC
+!!!% -1.248850  sto BC2_QMITT_K1_TDC
+
+!!!! Values optimized for Sx, Sy, sqr(s16), sqr(s36) in BC2_TDC_END (including varying the sextupoles)
+!!!% 2.291178     sto    BC2_QM_K1_TDC
+!!!% 1.397896     sto    BC2_Q_K1_TDC
+!!!% -1.245365    sto    BC2_QMITT_K1_TDC
+
+! BC2_QM_K1_TDC optimized for etax and etapx in BC2END_TDC
+% 2.298537     sto    BC2_QM_K1_TDC
+% 1.397896     sto    BC2_Q_K1_TDC
+% -1.245365    sto    BC2_QMITT_K1_TDC
+
+I.BC2.MAG.QF.1_I.BC2.MAG.CRQM_TDC:     KQUAD, L = 0.2, K1="BC2_QM_K1_TDC"
+I.BC2.MAG.QF.2_I.BC2.MAG.CRQM_TDC:     KQUAD, L = 0.2, K1="BC2_QM_K1_TDC"
+I.BC2.MAG.QF.3_I.BC2.MAG.CRQ1_TDC:     KQUAD, L = 0.2, K1="BC2_Q_K1_TDC"
+I.BC2.MAG.QF.8_I.BC2.MAG.CRQ2_TDC:     KQUAD, L = 0.2, K1="BC2_QMITT_K1_TDC"
+I.BC2.MAG.QF.9_I.BC2.MAG.CRQ1_TDC:     KQUAD, L = 0.2, K1="BC2_Q_K1_TDC"
+I.BC2.MAG.QF.10_I.BC2.MAG.CRQM_TDC:    KQUAD, L = 0.2, K1="BC2_QM_K1_TDC"
+I.BC2.MAG.QF.11_I.BC2.MAG.CRQM_TDC:    KQUAD, L = 0.2, K1="BC2_QM_K1_TDC"
+
+
+!---Sextupoles
+
+! Sextupole settings for the SPF branch
+
+!% 100.228    sto    SXH_K2_SPF
+% 50 	     sto    SXH_K2_SPF
+!% 50 	      sto    SXH_K2_SPF
+
+I.BC2.MAG.SXH.1_I.BC2.MAG.CRSX_SPF:    KSEXT, L = 0.1, K2="SXH_K2_SPF"
+I.BC2.MAG.SXH.2_I.BC2.MAG.CRSX_SPF:    KSEXT, L = 0.1, K2="SXH_K2_SPF -1 *"
+
+! Sextupole settings for the TDC branch
+
+!!!! Initial value
+!!!% 50    sto    SXH_K2_TDC
+
+! Value optimized for Sx, Sy, sqr(s16), sqr(s36) in BC2_TDC_END
+% 50.011380    sto    SXH_K2_TDC
+
+I.BC2.MAG.SXH.1_I.BC2.MAG.CRSX_TDC:    KSEXT, L = 0.1, K2="SXH_K2_TDC"
+I.BC2.MAG.SXH.3_I.BC2.MAG.CRSX_TDC:    KSEXT, L = 0.1, K2="SXH_K2_TDC -1 *"
+
+
+!--- Corrector magnets
+
+I.BC2.MAG.CODX.1:    HKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODY.1:    VKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODX.2:    HKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODY.2-RESERVED:    DRIFT, L = 0.14
+!I.BC2.MAG.CODY.2:    VKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODX.3:    HKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODY.3:    VKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODX.4:    HKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODY.4:    VKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODX.5:    HKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODY.5:    VKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODX.6:    HKICK, L = 0.14, B2 = 4.722
+I.BC2.MAG.CODY.6:    VKICK, L = 0.14, B2 = 4.722
+
+
+!---BPMs
+
+! Free-standing stripline BPM, with electronics. Physical length is 0.2 m (estimate)
+I.BC2.DIA.BPL.1-E:    monitor, l = 0.15, weight = 1		
+! Dispersive maxima in 1st achromat needed to fixate beam position in center of QSQ magnet sandwich needed for energy feedback needed for dispersion measurement
+! Calibrate against the QSQ sandwich
+
+I.BC2.DIA.BPD.2:    monitor, l = 0.15, weight = 0   	
+! May be able to dispense with this monitor
+
+I.BC2.DIA.BPL.3-E:    monitor, l = 0.15, weight = 1		
+! BC2 center.
+! If removed, ver. trajectory error grows to about 1 mm RMS. Hor. trajectory error grows to about 1 mm RMS. About 10% hor. emittance growth.
+! Calibrate against neighbouring quadrupole
+
+I.BC2.DIA.BPL.4-E:    monitor, l = 0.15, weight = 1
+! If removed, hor. trajectory error grows about 20 times to 1 mm RMS. Bunch compression is noticeably affected (note that statistics are low).
+! Calibrate against neighbouring quadrupole
+
+I.BC2.DIA.BPL.5-E:    monitor, l = 0.15, weight = 1   	
+! Dispersive maxima in 2nd achromat needed to fixate beam position in center of QSQ magnet sandwich
+
+
+!---Screens
+
+I.BC2.DIA.SCRN.1:             WATCH, FILENAME="./output/%s-I_BC2_DIA_SCRN_1.w1"
+I.BC2.DIA.SCR.1:              line = (SCRNd, I.BC2.DIA.SCRN.1, SCRNd)
+
+!I.BC2.DIA.SCRN.2:             WATCH, FILENAME="./output/%s-I_BC2_DIA_SCRN_2.w1"
+I.BC2.DIA.SCRN.2-RESERVED:    marker
+I.BC2.DIA.SCR.2:	      line = (SCRNd, I.BC2.DIA.SCRN.2-RESERVED, SCRNd)
+
+I.BC2.DIA.SCRN.3:   	      WATCH, FILENAME="./output/%s-I_BC2_DIA_SCRN_3.w1"
+I.BC2.DIA.SCR.3:	      line = (SCRNd, I.BC2.DIA.SCRN.3, SCRNd)
+
+!I.BC2.DIA.SCRN:   	       WATCH, FILENAME="./output/%s-I_BC2_DIA_SCRN_4.w1"
+I.BC2.DIA.SCRN.4-RESERVED:    marker
+I.BC2.DIA.SCR.4:	      line = (SCRNd, I.BC2.DIA.SCRN.4-RESERVED, SCRNd)
+
+I.BC2.DIA.SCRN.5:   	      WATCH, FILENAME="./output/%s-I_BC2_DIA_SCRN_5.w1"
+I.BC2.DIA.SCR.5:	      line = (SCRNd, I.BC2.DIA.SCRN.5, SCRNd)
+
+!New screen in BC2 line for the TDC branch
+I.BC2.DIA.SCRN.6:   	      WATCH, FILENAME="./output/%s-I_BC2_DIA_SCRN_6.w1"
+I.BC2.DIA.SCR.6:	      line = (SCRNd, I.BC2.DIA.SCRN.6, SCRNd)
+
+
+!---Faraday cups
+
+I.BC2.DIA.FCUP.1:    WATCH, FILENAME="./output/%s-I_BC2_DIA_FCUP_1.w1"
+I.BC2.DIA.FCUP.2:    WATCH, FILENAME="./output/%s-I_BC2_DIA_FCUP_2.w1"
+
+I.BC2.VAC.BD_start:    marker
+I.BC2.VAC.BD_stop:     marker
+
+
+!---Scrapers
+
+I.BC2.VAC.SCRP.1:    scraper, l = 0.00, insert_from = "+x", position = 0.05
+I.BC2.VAC.SCRP.2:    scraper, l = 0.00, insert_from = "-x", position = -0.05
+
+
+!---Markers
+
+I.BC2:    marker, FITPOINT = 1
+
+! Markers specific for the TDC branch
+BC2END_TDC:     marker, FITPOINT = 1
+BC2_TDC_END:    WATCH, FILENAME="./output/bc2_tdc_end.sdds"
+
+
+!---Drifts
+
+I.BC2_D005:    	drift, l = 0.050
+I.BC2_D0066:    drift, l = 0.0660
+I.BC2_D007:    	drift, l = 0.070
+I.BC2_D010:	drift, l = 0.10
+I.BC2_D01115:   drift, l = 0.1115
+I.BC2_D012:    	drift, l = 0.120
+I.BC2_D013:	drift, l = 0.130
+I.BC2_D015:    	drift, l = 0.150
+I.BC2_D020:    	drift, l = 0.2
+I.BC2_D032:    	drift, l = 0.320
+I.BC2_D034:    	drift, l = 0.340
+I.BC2_D066:    	drift, l = 0.660
+I.BC2_D090:    	drift, l = 0.900
+I.BC2_D100:    	drift, l = 1.0
+I.BC2_D120:    	drift, l = 1.2
+I.BC2_D006:    	drift, l = 0.06
+I.BC2_D122:    	drift, l = 1.22
+I.BC2_D030:    	drift, l = 0.3
+I.BC2_D040:    	drift, l = 0.4
+I.BC2_D080:    	drift, l = 0.80
+I.BC2_D082:    	drift, l = 0.82
+I.BC2_D088:    	drift, l = 0.880
+I.BC2_D08885:   drift, l = 0.8885
+I.BC2_D024:    	drift, l = 0.24430
+I.BC2_D150:    	drift, l = 1.5
+I.BC2_D394:    	drift, l = 3.94430
+I.BC2_D450:    	drift, l = 4.5
+I.BC2_D460:    	drift, l = 4.6
+I.BC2_D470:    	drift, l = 4.7
+I.BC2_D620:    	drift, l = 6.2
+I.BC2_D200:    	drift, l = 2
+I.BC2_D280:    	drift, l = 2.8
+I.BC2_D1000: 	drift, l = 10.0
+I.BC2_D0745:	drift, l = 0.745
+I.BC2_D0325:	drift, l = 0.325
+I.BC2_D0045:	drift, l = 0.045
+I.BC2_D0805:	drift, l = 0.805
+I.BC2_D0585:	drift, l = 0.585
+I.BC2_D0825:	drift, l = 0.825
+I.BC2_D0225:	drift, l = 0.225
+I.BC2_D0245:	drift, l = 0.245
+I.BC2_D0265:	drift, l = 0.265
+I.BC2_D2125:	drift, l = 2.125
+I.BC2_D4425:	drift, l = 4.425
+I.BC2_D4275:	drift, l = 4.275
+I.BC2_D9850:	drift, l = 9.850
+I.BC2_D0169:	drift, l = 0.16930
+I.BC2_D0165:	drift, l = 0.165
+I.BC2_D3865: 	drift, l = 3.86930
+I.BC2_D9744:	drift, l = 9.74430
+I.BC2_D0125:	drift, l = 0.125
+I.BC2_D0170:	drift, l = 0.170
+I.BC2_D3715: 	drift, l = 3.71930
+I.BC2_D3821:  	drift, l = 3.82130
+I.BC2_D0048: 	drift, l = 0.048
+I.BC2_D0055:	drift, l = 0.055
+I.BC2_D445: 	drift, l = 4.45
+I.BC2_D6125: 	drift, l = 6.125
+I.BC2_D6025: 	drift, l = 6.025
+I.BC2_D1925: 	drift, l = 1.925
+!I.BC2_D1425: 	drift, l = 1.425
+I.BC2_D0425: 	drift, l = 0.425
+I.BC2_D049:	drift, l = 0.490
+I.BC2_D051:	drift, l = 0.510
+I.BC2_D093:	drift, l = 0.930
+I.BC2_D0270:	drift, l = 0.270
+I.BC2_D0625:	drift, l = 0.625
+I.BC2_D1659:	drift, l = 1.659
+I.BC2_D23423: 	drift, l = 2.3423
+I.BC2_D5402: 	drift, l = 5.402
+I.BC2_D0682: 	drift, l = 0.682
+I.BC2_D1377: 	drift, l = 1.377
+I.BC2_D205: 	drift, l = 2.05
+I.BC2_D076: 	drift, l = 0.76
+I.BC2_D0246: 	drift, l = 0.246
+I.BC2_D0371: 	drift, l = 0.371
+I.BC2_D0484: 	drift, l = 0.484
+I.BC2_D037: 	drift, l = 0.37
+I.BC2_D0523: 	drift, l = 0.523
+
+I.BC2_D2_SP02wall:    drift, l = 2
+
+! Drifts specific for the TDC branch
+I.BC2_D1200:    drift, l = 1.200
+I.BC2_D1220:  	drift, l = 1.220
+I.BC2_D3500:  	drift, l = 3.500
+I.BC2_D6740:  	drift, l = 6.740
+
+
+!---BC2 line for the SPF branch
+
+BC2_ACHR1_SPF:    line = (BC2START, I.BC2,&
+		       	  I.BC2.MAG.DIB.1_I.BC2.MAG.CRDI,&
+		     	  I.BC2_D0325, I.MAG.CODp, I.BC2.MAG.CODX.1, I.MAG.CODp, I.BC2_D0270, I.MAG.CODp, I.BC2.MAG.CODY.1, I.MAG.CODp, I.BC2_D0325,&
+		     	  I.BC2.MAG.DIB.2_I.BC2.MAG.CRDI,&
+		     	  I.BC2_D090, STRIPD, I.BC2.DIA.BPL.1-E, STRIPD, I.BC2_D010,&
+		     	  I.BC2.MAG.QF.1_I.BC2.MAG.CRQM_SPF,&
+		     	  I.BC2_D006,&
+		     	  I.BC2.MAG.SXH.1_I.BC2.MAG.CRSX_SPF,&
+		     	  I.BC2_D006,&
+		     	  I.BC2.MAG.QF.2_I.BC2.MAG.CRQM_SPF,&
+		     	  I.BC2_D0055, I.BC2.DIA.SCR.1, w-end, I.BC2_D0170, I.MAG.CODp, I.BC2.MAG.CODX.2, I.MAG.CODp, I.BC2_D0625,&
+		     	  I.BC2.MAG.DIB.3_I.BC2.MAG.CRDI,&
+		     	  I.BC2_D122,&
+		     	  I.BC2.MAG.DIB.4_I.BC2.MAG.CRDI)
+ 
+! Add two screens, 0.9 m from the achromat dipoles
+BC2_MITT_SPF:    line = (I.BC2_D0325, I.MAG.CODp, I.BC2.MAG.CODY.2-RESERVED, I.MAG.CODp, I.BC2_D0325, I.BC2.DIA.SCR.2, I.BC2_D0682, I.BC2.VAC.SCRP.1, I.BC2_D0066, I.BC2.VAC.SCRP.2,&
+	    	      	 I.BC2_D0484, I.BC2.VAC.BD_start, I.BC2_D037, I.BC2.VAC.BD_stop, I.BC2_D0523, I.MAG.CODp, I.BC2.MAG.CODX.3, I.MAG.CODp, I.BC2_D0225,&
+	    	    	 I.BC2.MAG.QF.3_I.BC2.MAG.CRQ1_SPF,&
+		    	 I.BC2_D015, STRIPD, I.BC2.DIA.BPD.2, STRIPD, I.BC2_D4275, I.MAG.CODp, I.BC2.MAG.CODY.3, I.MAG.CODp, I.BC2_D23423,&
+		    	 I.BC2_D2_SP02wall,&
+		    	 I.BC2_D5402, I.MAG.CODp, I.BC2.MAG.CODY.4, I.MAG.CODp, I.BC2_D0125, STRIPD, I.BC2.DIA.BPL.3-E, STRIPD, I.BC2_D015,&
+		    	 I.BC2.MAG.QF.4_I.BC2.MAG.CRQ2_SPF,&
+		    	 I.BC2_D0048, I.BC2.DIA.SCR.3, I.BC2_D3821, I.MAG.CODp, I.BC2.MAG.CODX.4, I.MAG.CODp, I.BC2_D445,&
+		    	 I.MAG.CODp, I.BC2.MAG.CODY.5, I.MAG.CODp, I.BC2_D6025, STRIPD, I.BC2.DIA.BPL.4-E, STRIPD, I.BC2_D010,&
+		    	 I.BC2.MAG.QF.5_I.BC2.MAG.CRQ1_SPF,&
+		    	 I.BC2_D1925, I.MAG.CODp, I.BC2.MAG.CODX.5, I.MAG.CODp, I.BC2_D0425, I.BC2.DIA.SCR.4, I.BC2_D080)
+
+BC2_ACHR2_SPF:    line = (I.BC2.MAG.DIB.5_I.BC2.MAG.CRDI,&
+			  I.BC2_D0245, I.MAG.CODp, I.BC2.MAG.CODY.6, I.MAG.CODp, I.BC2_D0825,&
+		     	  I.BC2.MAG.DIB.6_I.BC2.MAG.CRDI,&
+		     	  I.BC2_D0585, I.MAG.CODp, I.BC2.MAG.CODX.6, I.MAG.CODp, I.BC2_D0165, STRIPD, I.BC2.DIA.BPL.5-E, STRIPD, I.BC2_D010,&
+		     	  I.BC2.MAG.QF.6_I.BC2.MAG.CRQM_SPF,&
+		     	  I.BC2_D006,&
+		     	  I.BC2.MAG.SXH.2_I.BC2.MAG.CRSX_SPF,&
+		     	  I.BC2_D006,&
+		     	  I.BC2.MAG.QF.7_I.BC2.MAG.CRQM_SPF,&
+		     	  I.BC2_D007, I.BC2.DIA.SCR.5, I.BC2_D093,&
+		     	  I.BC2.MAG.DIB.7_I.BC2.MAG.CRDI,&
+		     	  I.BC2_D122,&
+		     	  I.BC2.MAG.DIB.8_I.BC2.MAG.CRDI,&
+		     	  BC2END)
+
+BC2_SPF:    line = (BC2_ACHR1_SPF, BC2_MITT_SPF, BC2_ACHR2_SPF)
+
+
+!---BC2 line for the TDC branch
+
+BC2_ACHR1_TDC:    line = (BC2START, I.BC2,&
+		       	  I.BC2.MAG.DIB.1_I.BC2.MAG.CRDI,&
+			  I.BC2_D0325, I.MAG.CODp, I.BC2.MAG.CODX.1, I.MAG.CODp, I.BC2_D0270, I.MAG.CODp, I.BC2.MAG.CODY.1, I.MAG.CODp, I.BC2_D0325,&
+			  I.BC2.MAG.DIB.2_I.BC2.MAG.CRDI,&
+			  I.BC2_D090, STRIPD, I.BC2.DIA.BPL.1-E, STRIPD, I.BC2_D010,&
+		      	  I.BC2.MAG.QF.1_I.BC2.MAG.CRQM_TDC,&
+			  I.BC2_D006,&
+			  I.BC2.MAG.SXH.1_I.BC2.MAG.CRSX_TDC,&
+			  I.BC2_D006,&
+			  I.BC2.MAG.QF.2_I.BC2.MAG.CRQM_TDC,&
+			  I.BC2_D0055, I.BC2.DIA.SCR.1, w-end, I.BC2_D0170, I.MAG.CODp, I.BC2.MAG.CODX.2, I.MAG.CODp, I.BC2_D0625,&
+		      	  I.BC2.MAG.DIB.3_I.BC2.MAG.CRDI,&
+			  I.BC2_D122,&
+			  I.BC2.MAG.DIB.4_I.BC2.MAG.CRDI)
+! Exakt kopia av BC2_ACHR1_SPF
+
+BC2_MITT_TDC:    line = (I.BC2_D3500,&
+		      	 I.BC2.MAG.QF.3_I.BC2.MAG.CRQ1_TDC,&
+			 I.BC2_D6740,&
+			 I.BC2.MAG.QF.8_I.BC2.MAG.CRQ2_TDC,&
+			 I.BC2_D6740,&
+			 I.BC2.MAG.QF.9_I.BC2.MAG.CRQ1_TDC,&
+			 I.BC2_D3500)
+! Har inte kopierat BC2_MITT_SPF utan skapat helt ny line.
+! Har aen saa laenge bara lagt till kvadrupolerna.
+
+BC2_ACHR2_TDC:    line = (I.BC2.MAG.DIB.9_I.BC2.MAG.CRDI,&
+		       	  I.BC2_D1220,&
+			  I.BC2.MAG.DIBB.10_I.BC2.MAG.CRDI,&
+			  I.BC2_D1200,&
+	      	          I.BC2.MAG.QF.10_I.BC2.MAG.CRQM_TDC,&
+			  I.BC2_D006,&
+			  I.BC2.MAG.SXH.3_I.BC2.MAG.CRSX_TDC,&
+			  I.BC2_D006,&
+			  I.BC2.MAG.QF.11_I.BC2.MAG.CRQM_TDC,&
+			  I.BC2_D01115, I.BC2.DIA.SCR.6, I.BC2_D08885,&
+		      	  I.BC2.MAG.DIB.11_I.BC2.MAG.CRDI,&
+			  I.BC2_D122,&
+			  I.BC2.MAG.DIB.12_I.BC2.MAG.CRDI,&
+			  BC2END_TDC)
+! Har kopierat BC2_ACHR2_SPF, rensat ut allting utom dipoler, kvaddar och sextupol, ändrat till aktuella elementnamn
+
+BC2_TDC:    line = (BC2_ACHR1_TDC, BC2_MITT_TDC, BC2_ACHR2_TDC, BC2_TDC_END)
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ TDC (SP01B) ++++++++++++++++++++++++++++++++++++++++++
+
+!---Definitions
+! DEGREES!!! 90 gives zero-crossing
+% 90                    sto tdc_phase,
+! RADIANS, zero angle deflects in x-direction
+% 0 2 /                 sto tdc_rot_angle, 
+! cavity voltage, nominal is 61.4 MV (peak?)
+% 61.4e6                sto tdc_voltage, 
+!% 0                    sto tdc_voltage, 
+! Nominal bend angle, also related to magnet edge angle w.r.t. beam axis
+% 2.8 180 / pi *        sto tdc_nom_spec_dip_angle,
+! Actual bend angle; 0, 3 or 5.9 degrees (now hard-coded into BSPEC definition)
+! Note angle should be negative!
+!% 0 180 / pi * -1 *    sto tdc_spec_dip_angle,
+
+
+!---Dipoles
+
+I.SP01B_BRANCHB.MAG.BSPEC.1:  CSRCSBEND, ANGLE="3 180 / pi * -1 *", L=0.5, TILT="3 pi * 2 /",&
+					E1="0", E2="0",&
+					K1=0, K2=0, K3=0,&
+					NONLINEAR=1, N_KICKS=550, INTEGRATION_ORDER=4,&
+					EDGE1_EFFECTS=1, EDGE2_EFFECTS=1, EDGE_ORDER=2,&
+					BINS=600, SG_HALFWIDTH=1,&
+					HGAP=0.0055, FINT=0.4,
+					
+I.SP01B_BRANCHC.MAG.BSPEC.1:  CSRCSBEND, ANGLE="5.9 180 / pi * -1 *", L=0.5, TILT="3 pi * 2 /",&
+					E1="0", E2="0",&
+					K1=0, K2=0, K3=0,&
+					NONLINEAR=1, N_KICKS=550, INTEGRATION_ORDER=4,&
+					EDGE1_EFFECTS=1, EDGE2_EFFECTS=1, EDGE_ORDER=2,&
+					BINS=600, SG_HALFWIDTH=1,&
+					HGAP=0.0055, FINT=0.4,
+
+
+!---Quadrupoles
+
+! Quad eller Kquad?
+I.SP01M.MAG.QH.1:    KQUAD, L=0.200000, K1= 0.6154000
+I.SP01M.MAG.QH.2:    KQUAD, L=0.200000, K1=-0.8241018
+I.SP01C.MAG.QH.3:    KQUAD, L=0.200000, K1= 0.6265298
+I.SP01C.MAG.QH.4:    KQUAD, L=0.200000, K1= 0.0000000
+I.SP01S.MAG.QH.5:    KQUAD, L=0.200000, K1= 0.0000000
+
+
+!---TDCs
+
+I.SP01B.MAG.BTDC.1:  RFDF, L=3, PHASE="tdc_phase", TILT="tdc_rot_angle", frequency="rf_frequency", VOLTAGE="tdc_voltage", N_KICKS=3000, MAGNETIC_DEFLECTION=1,
+I.SP01B.MAG.BTDC.2:  RFDF, L=3, PHASE="tdc_phase", TILT="tdc_rot_angle", frequency="rf_frequency", VOLTAGE="tdc_voltage", N_KICKS=3000, MAGNETIC_DEFLECTION=1,
+
+
+!---Markers
+
+I.SP01B_QG2: MARK, FITPOINT=1
+I.SP01B_TDC_MIDDLE: MARK, FITPOINT=1
+I.SP01B_COMMON_SCR1: MARK, FITPOINT=1
+I.SP01B_COMMON_SCR2: MARK, FITPOINT=1
+I.SP01B_COMMON_SCR3: MARK, FITPOINT=1
+I.SP01B_BRANCHA_SCR4: MARK, FITPOINT=1
+I.SP01B_BRANCHB_SCR5: MARK, FITPOINT=1
+I.SP01B_BRANCHA_SCR6: MARK, FITPOINT=1
+I.SP01B_BRANCHB_SCR7: MARK, FITPOINT=1
+I.SP01B_BRANCHC_SCR8: MARK, FITPOINT=1
+I.SP01B_BRANCHA_SCR9: MARK, FITPOINT=1
+I.SP01B_BRANCHB_SCR10: MARK, FITPOINT=1
+SP01B_END:    WATCH, FILENAME="./output/sp01b_end.sdds"
+
+
+!---Screens
+
+I.SP01B_COMMON.DIA.SCRN.1:             WATCH, FILENAME="./output/%s-I_SP01B_COMMON_DIA_SCRN_1.w1"
+I.SP01B_COMMON.DIA.SCR.1:              line = (SCRNd, I.SP01B_COMMON_SCR1, I.SP01B_COMMON.DIA.SCRN.1, SCRNd)
+
+I.SP01B_COMMON.DIA.SCRN.2:             WATCH, FILENAME="./output/%s-I_SP01B_COMMON_DIA_SCRN_2.w1"
+I.SP01B_COMMON.DIA.SCR.2:              line = (SCRNd, I.SP01B_COMMON_SCR2, I.SP01B_COMMON.DIA.SCRN.2, SCRNd)
+
+I.SP01B_COMMON.DIA.SCRN.3:             WATCH, FILENAME="./output/%s-I_SP01B_COMMON_DIA_SCRN_3.w1"
+I.SP01B_COMMON.DIA.SCR.3:              line = (SCRNd, I.SP01B_COMMON_SCR3, I.SP01B_COMMON.DIA.SCRN.3, SCRNd)
+
+I.SP01B_BRANCHA.DIA.SCRN.4:             WATCH, FILENAME="./output/%s-I_SP01B_BRANCHA_DIA_SCRN_4.w1"
+I.SP01B_BRANCHA.DIA.SCR.4:              line = (SCRNd, I.SP01B_BRANCHA_SCR4, I.SP01B_BRANCHA.DIA.SCRN.4, SCRNd)
+
+I.SP01B_BRANCHB.DIA.SCRN.5:             WATCH, FILENAME="./output/%s-I_SP01B_BRANCHB_DIA_SCRN_5.w1"
+I.SP01B_BRANCHB.DIA.SCR.5:              line = (SCRNd, I.SP01B_BRANCHB_SCR5, I.SP01B_BRANCHB.DIA.SCRN.5, SCRNd)
+
+I.SP01B_BRANCHA.DIA.SCRN.6:             WATCH, FILENAME="./output/%s-I_SP01B_BRANCHA_DIA_SCRN_6.w1"
+I.SP01B_BRANCHA.DIA.SCR.6:              line = (SCRNd, I.SP01B_BRANCHA_SCR6, I.SP01B_BRANCHA.DIA.SCRN.6, SCRNd)
+
+I.SP01B_BRANCHB.DIA.SCRN.7:             WATCH, FILENAME="./output/%s-I_SP01B_BRANCHB_DIA_SCRN_7.w1"
+I.SP01B_BRANCHB.DIA.SCR.7:              line = (SCRNd, I.SP01B_BRANCHB_SCR7, I.SP01B_BRANCHB.DIA.SCRN.7, SCRNd)
+
+I.SP01B_BRANCHC.DIA.SCRN.8:             WATCH, FILENAME="./output/%s-I_SP01B_BRANCHC_DIA_SCRN_8.w1"
+I.SP01B_BRANCHC.DIA.SCR.8:              line = (SCRNd, I.SP01B_BRANCHC_SCR8, I.SP01B_BRANCHC.DIA.SCRN.8, SCRNd)
+
+I.SP01B_BRANCHA.DIA.SCRN.9:             WATCH, FILENAME="./output/%s-I_SP01B_BRANCHA_DIA_SCRN_9.w1"
+I.SP01B_BRANCHA.DIA.SCR.9:              line = (SCRNd, I.SP01B_BRANCHA_SCR9, I.SP01B_BRANCHA.DIA.SCRN.9, SCRNd)
+
+I.SP01B_BRANCHB.DIA.SCRN.10:            WATCH, FILENAME="./output/%s-I_SP01B_BRANCHB_DIA_SCRN_10.w1"
+I.SP01B_BRANCHB.DIA.SCR.10:             line = (SCRNd, I.SP01B_BRANCHB_SCR10, I.SP01B_BRANCHB.DIA.SCRN.10, SCRNd)
+
+
+!---Drifts
+
+I.SP01B_D00716:      DRIFT, L = 0.0716
+I.SP01B_D02215:      DRIFT, L = 0.2215
+I.SP01B_D02739:      DRIFT, L = 0.2739
+I.SP01B_D04415:      DRIFT, L = 0.4415
+I.SP01B_D05:      DRIFT, L = 0.5
+I.SP01B_D05869:      DRIFT, L = 0.5869
+I.SP01B_D05966:      DRIFT, L = 0.5966
+I.SP01B_D07666:      DRIFT, L = 0.7666
+I.SP01B_D18985:      DRIFT, L = 1.8985
+I.SP01B_D21034:      DRIFT, L = 2.1034
+I.SP01B_D44034:      DRIFT, L = 4.4034
+I.SP01B_D45301:      DRIFT, L = 4.5301
+I.SP01B_D45858:      DRIFT, L = 4.5858
+I.SP01B_D46635:      DRIFT, L = 4.6635
+I.SP01B_D47322:      DRIFT, L = 4.7322
+I.SP01B_D93875:      DRIFT, L = 9.3875
+I.SP01B_D94007:      DRIFT, L = 9.4007
+I.SP01B_D95006:      DRIFT, L = 9.5006
+I.SP01B_D105350:      DRIFT, L = 10.5350
+
+
+SP01B_COMMON: line = (I.SP01B_D05966, I.SP01B_COMMON.DIA.SCR.1, I.SP01B_D21034,&
+		       	  I.SP01M.MAG.QH.1,&
+		       	  I.SP01B_D105350,&
+		       	  I.SP01B_QG2, I.SP01M.MAG.QH.2,&
+		       	  I.SP01B_D18985,&
+		       	  I.SP01B.MAG.BTDC.1,&
+		       	  I.SP01B_D04415,&
+		       	  I.SP01B_TDC_MIDDLE, I.SP01C.MAG.QH.3,&
+		       	  I.SP01B_D00716, I.SP01B_COMMON.DIA.SCR.2, I.SP01B_D05869,&
+		       	  I.SP01B.MAG.BTDC.2,&
+		       	  I.SP01B_D02215,&
+		       	  I.SP01C.MAG.QH.4,&
+		       	  I.SP01B_D07666, I.SP01B_COMMON.DIA.SCR.3, I.SP01B_D44034,&
+		       	  I.SP01S.MAG.QH.5,&
+		       	  I.SP01B_D02739)
+
+SP01B_BRANCHA: line = (I.SP01B_D05,&
+		       	  I.SP01B_D45858,&
+		       	  I.SP01B_BRANCHA.DIA.SCR.4,&
+		       	  I.SP01B_D46635,&
+		       	  I.SP01B_BRANCHA.DIA.SCR.6,&
+		       	  I.SP01B_D93875,&
+		       	  I.SP01B_BRANCHA.DIA.SCR.9, SP01B_END)
+
+SP01B_BRANCHB: line = (I.SP01B_BRANCHB.MAG.BSPEC.1,&
+		       	  I.SP01B_D47322,&
+		       	  I.SP01B_BRANCHB.DIA.SCR.5,&
+		       	  I.SP01B_D45301,&
+		       	  I.SP01B_BRANCHB.DIA.SCR.7,&
+		       	  I.SP01B_D94007,&
+		       	  I.SP01B_BRANCHB.DIA.SCR.10, SP01B_END)
+
+SP01B_BRANCHC: line = (I.SP01B_BRANCHC.MAG.BSPEC.1,&
+		       	  I.SP01B_D95006,&
+		       	  I.SP01B_BRANCHC.DIA.SCR.8, SP01B_END)
+
+SP01B_COMMON_BRANCHA: line = (SP01B_COMMON, SP01B_BRANCHA)
+SP01B_COMMON_BRANCHB: line = (SP01B_COMMON, SP01B_BRANCHB)
+SP01B_COMMON_BRANCHC: line = (SP01B_COMMON, SP01B_BRANCHC)
+
+
+
+!++++++++++++++++++++++++++++++++++++++++++ SPF (SP02) ++++++++++++++++++++++++++++++++++++++++++
+
+!---Dipoles
+
+! Note that the projected length on the floor is 2.4 m
+!I.SP02.MAG.DIPBD:    sbend, ANGLE="24.97 180 / pi *", TILT="0.5 pi *", l=2.4, e1=0, e2=0, K1=0
+I.SP02.MAG.DIPBD:    sbend, ANGLE="24.97 180 / pi *", TILT="0.5 pi *", l=2.477675, e1=0, e2=0, K1=0, K2=0
+
+
+!---Quadrupoles
+
+! Settings for minimum gap, 2 undulators, symmetric betas
+!I.SP02.MAG.QF.1:    Kquad, L=0.2, K1=2.028166475797497
+!I.SP02.MAG.QF.2:    Kquad, L=0.2, K1=1.820025571413171
+!I.SP02.MAG.QF.3:    Kquad, L=0.2, K1=1.176337202801619
+!I.SP02.MAG.QF.4:    Kquad, L=0.2, K1=-2.622201418411255
+!I.SP02.MAG.QF.5:    Kquad, L=0.2, K1=1.867914582612573
+I.SP02.MAG.QF.1:    KQUAD, L=0.2, K1=3.464090049864959
+I.SP02.MAG.QF.2:    KQUAD, L=0.2, K1=0.5916012236413561
+I.SP02.MAG.QF.3:    KQUAD, L=0.2, K1=2.138845461600412
+I.SP02.MAG.QF.4:    KQUAD, L=0.2, K1=-3.12886486409888
+I.SP02.MAG.QF.5:    KQUAD, L=0.2, K1=2.064704740529171
+
+! Settings for minimum gap, 2 undulators, asymmetric betas
+!I.SP02.MAG.QF.1:    Kquad, L=0.2, K1=3.568359344877547
+!I.SP02.MAG.QF.2:    Kquad, L=0.2, K1=2.957406748905504
+!I.SP02.MAG.QF.3:    Kquad, L=0.2, K1=-1.703015561462893
+!I.SP02.MAG.QF.4:    Kquad, L=0.2, K1=-2.394021648961747
+!I.SP02.MAG.QF.5:    Kquad, L=0.2, K1=2.904702348725634
+
+! Settings for infinite gap
+!I.SP02.MAG.QF.1:    Kquad, L=0.2, K1=3.599991647316278
+!I.SP02.MAG.QF.2:    Kquad, L=0.2, K1=2.841590846957265
+!I.SP02.MAG.QF.3:    Kquad, L=0.2, K1=-1.189137956811900
+!I.SP02.MAG.QF.4:    Kquad, L=0.2, K1=-2.800962855408620
+!I.SP02.MAG.QF.5:    Kquad, L=0.2, K1=2.981606216824745
+
+
+!---Corrector magnets
+
+I.SP02.MAG.CODX.1:    HKICK, l = 0.140000
+I.SP02.MAG.CODY.1:    VKICK, l = 0.140000
+I.SP02.MAG.CODX.2:    HKICK, l = 0.140000
+I.SP02.MAG.CODY.2:    VKICK, l = 0.140000
+I.SP02.MAG.CODX.3:    HKICK, l = 0.140000
+I.SP02.MAG.CODY.3:    VKICK, l = 0.140000
+I.SP02.MAG.CODX.4:    HKICK, l = 0.140000
+I.SP02.MAG.CODY.4:    VKICK, l = 0.140000
+
+
+!---BPMs
+
+! Free-standing stripline BPM, with electronics. Physical length is 0.2 m (estimate)
+! Note that weights should all be 1, but that the elegant code currently can't handle that
+I.SP02.DIA.BPL.1-E:    moni, l = 0.200000, weight = 0.0	       ! Launcher BPM for first ID
+I.SP02.DIA.BPL.2-E:    moni, l = 0.200000, weight = 1	       ! Launcher BPM for first ID
+I.SP02.DIA.BPL.3-E:    moni, l = 0.200000, weight = 0
+I.SP02.DIA.BPL.4-E:    moni, l = 0.200000, weight = 0
+I.SP02.DIA.BPL.5-E:    moni, l = 0.200000, weight = 1
+
+
+!---Screens
+
+I.SP02.DIA.SCRN.1:    WATCH, FILENAME="./output/%s-I_SP02_DIA_SCRN_1.w1"
+I.SP02.DIA.SCR.1:     line = (SCRNa, I.SP02.DIA.SCRN.1, SCRNb)
+I.SP02.DIA.SCRN.2:    WATCH, FILENAME="./output/%s-I_SP02_DIA_SCRN_2.w1"
+I.SP02.DIA.SCR.2:     line = (SCRNd, I.SP02.DIA.SCRN.2, SCRNd)
+I.SP02.DIA.SCRN.3:    WATCH, FILENAME="./output/%s-I_SP02_DIA_SCRN_3.w1"
+I.SP02.DIA.SCR.3:     line = (SCRNd, I.SP02.DIA.SCRN.3, SCRNd)
+
+
+!---Current transformers
+
+I.SP02.DIA.CT.1:     WATCH, FILENAME="./output/%s-I_SP02_DIA_CT_1.w1"
+I.SP02.DIA.CTR.1:    line = (CTda, I.SP02.DIA.CT.1, CTdb)
+
+
+!---Faraday cups
+
+I.SP02.DIA.FCUP.1:    WATCH, FILENAME="./output/%s-I_SP02_DIA_FCUP_1.w1"
+
+
+!---Insertion devices
+
+% 2 E_EX3 E0 / E_EX3 E0 / * + sqrt                sto    gammaSPF
+% 0.01				      		  sto    Bpeak_spfu1
+% 0.015				      		  sto    lambda_spfu1
+% 1 c Bpeak_spfu1 * E_EX3 / /	      		  sto    rho_spfu1
+% gammaSPF lambda_spfu1 * 2 pi * rho_spfu1 * /    sto    K_spfu1
+
+I.SP02.ID.IDUA.1:	      wiggler, l = 4.95, K = 2.23, POLES = 328
+I.SP02.ID.IDUA.2:	      wiggler, l = 4.95, K = 2.23, POLES = 328
+!I.SP02.ID.IDUA.3-RESERVED:    wiggler, l = 4.95, K = 2.23, POLES = 328
+!I.SP02.ID.IDUA.1:	       drift, l = 4.95
+!I.SP02.ID.IDUA.2:	       drift, l = 4.95
+I.SP02.ID.IDUA.3-RESERVED:    drift, l = 4.95
+
+
+!---Phase cavity
+
+! Used to measure the bunch arrival time
+! Length is insanely long compared with LCLS phase cavity design, which only needs a single S-band cell. 20 cm would be more realistic.
+I.SP02_phcav:		 drift, l = 1.500000
+Phasecavity-RESERVED:    drift, l = 0.300000
+
+
+!---Phase shifter
+
+! Magnetic chicane to adjust the slippage electron bunch vs photon pulse
+! Length is 0.23 m for the TESLA prototype, so 3 dm seems a good guess
+! UPDATE: length needed is 70 mm, plus flanges on each side.
+I.SP02-Phaseshifter:    drift, l = 0.300000
+
+
+!---ID observation points (used for simulation only)
+
+"ENTRY_I.SP02.ID.IDUA.1":    WATCHPOINT, FILENAME="./output/%s-I_SP02_ID_IDUA_1-ENTRY.w1"
+"EXIT_I.SP02.ID.IDUA.1":     WATCHPOINT, FILENAME="./output/%s-I_SP02_ID_IDUA_1-EXIT.w1"
+"ENTRY_I.SP02.ID.IDUA.2":    WATCHPOINT, FILENAME="./output/%s-I_SP02_ID_IDUA_2-ENTRY.w1"
+"EXIT_I.SP02.ID.IDUA.2":     WATCHPOINT, FILENAME="./output/%s-I_SP02_ID_IDUA_2-EXIT.w1"
+"ENTRY_I.SP02.ID.IDUA.3":    WATCHPOINT, FILENAME="./output/%s-I_SP02_ID_IDUA_3-ENTRY.w1"
+"EXIT_I.SP02.ID.IDUA.3":     WATCHPOINT, FILENAME="./output/%s-I_SP02_ID_IDUA_3-EXIT.w1"
+"ENTRY_I.SP02.ID.IDWA.1":    WATCHPOINT, FILENAME="./output/%s-I_SP02_ID_IDWA_1-ENTRY.w1"
+"EXIT_I.SP02.ID.IDWA.1":     WATCHPOINT, FILENAME="./output/%s-I_SP02_ID_IDWA_1-EXIT.w1"
+ENTRY_I.SP02.ID.ID:	     marker, fitpoint = 1
+MID_I.SP02.ID.ID:	     marker, fitpoint = 1
+EXIT_I.SP02.ID.ID:	     marker, fitpoint = 1
+
+
+!---Markers
+
+I.SP02:		     marker
+I.SP02.VAC.MBD.1:    ECOL, X_MAX=1.0, Y_MAX=1.0, DX=0, DY=0
+
+
+!---Drifts
+
+I.SP02_D0: 	 drift, l = 0.100000
+I.SP02_D05: 	 drift, l = 0.150000
+I.SP02_D1: 	 drift, l = 0.300000
+I.SP02_D2: 	 drift, l = 1.000000
+I.SP02_D3: 	 drift, l = 0.700000
+I.SP02_D4: 	 drift, l = 0.800000
+I.SP02_D5: 	 drift, l = 2.56095754
+
+I.SP02_D010:	 drift, l = 0.100000
+I.SP02_D015:	 drift, l = 0.150000
+I.SP02_D020:	 drift, l = 0.200000
+I.SP02_D030:	 drift, l = 0.300000
+I.SP02_D040:	 drift, l = 0.400000
+I.SP02_D050:	 drift, l = 0.500000
+I.SP02_D053:	 drift, l = 0.530000
+I.SP02_D056:	 drift, l = 0.560000
+I.SP02_D070:	 drift, l = 0.700000
+I.SP02_D075:	 drift, l = 0.750000
+I.SP02_D080: 	 drift, l = 0.800000
+I.SP02_D085: 	 drift, l = 0.850000
+I.SP02_D110: 	 drift, l = 1.100000
+I.SP02_D130: 	 drift, l = 1.300000
+I.SP02_D140: 	 drift, l = 1.400000
+I.SP02_D200: 	 drift, l = 2.000000
+I.SP02_D300: 	 drift, l = 3.000000
+I.SP02_D012a:    drift, l = 0.0966
+I.SP02_D153:	 drift, l = 1.530000
+I.SP02_D008:	 drift, l = 0.08
+I.SP02_D017:	 drift, l = 0.17
+I.SP02_D019:	 drift, l = 0.19
+I.SP02_D011:	 drift, l = 0.11
+I.SP02_D013:	 drift, l = 0.13
+I.SP02_D006:	 drift, l = 0.06
+I.SP02_D115:	 drift, l = 1.15
+I.SP02_D024:	 drift, l = 0.24
+I.SP02_D001:	 drift, l = 0.01
+I.SP02_D3724:	 drift, l = 0.3724
+I.SP02_D8876:	 drift, l = 0.8876
+I.SP02_D1744:	 drift, l = 0.1744
+I.SP02_D0244:	 drift, l = 0.0244
+
+I.SP02-UndulatorChamber:    drift, l = 0.135000
+!I.SP02-UndulatorChamber:    drift, l = 0.365000
+I.SP02_qmarg: 		    drift, l = 0.050000
+I.SP02_dw:		    drift, l = 0.300000
+
+I.SP02_Dumpmarg:	    drift, l = 0.200000
+I.SP02_Ddump: 		    drift, l = 3.000000
+
+I.SP02-valvebellow:	    drift, l = 0.150000
+
+
+SP02:    line = (I.SP02, I.SP02_D024, I.SP02.DIA.SCR.1, I.SP02_D001, I.SP02_qmarg,&
+	      	 I.SP02.MAG.QF.1,&
+		 I.SP02_qmarg, I.SP02_D010, I.SP02_qmarg,&
+		 I.SP02.MAG.QF.2,&
+		 I.SP02_qmarg, I.SP02_D013, I.MAG.CODp, I.SP02.MAG.CODX.1, I.MAG.CODp, I.MAG.CODp, I.SP02.MAG.CODY.1, I.MAG.CODp, I.SP02.DIA.CTR.1, I.SP02_D3724, I.SP02_qmarg,&
+		 I.SP02.MAG.QF.3,&
+		 I.SP02_qmarg, I.MAG.CODp, I.SP02.MAG.CODX.2, I.MAG.CODp, I.MAG.CODp, I.SP02.MAG.CODY.2, I.SP02_D050, I.MAG.CODp, I.SP02_qmarg,&
+		 I.SP02.MAG.QF.4,&
+		 I.SP02_qmarg, I.SP02.DIA.BPL.1-E, I.SP02_D115, Phasecavity-RESERVED, I.SP02_qmarg,&
+		 I.SP02.MAG.QF.5,&
+		 I.SP02_qmarg, I.SP02.DIA.BPL.2-E, I.SP02-valvebellow, I.SP02_D040, I.SP02_D8876, I.SP02-UndulatorChamber,&
+		 ENTRY_I.SP02.ID.ID,&
+		 "ENTRY_I.SP02.ID.IDUA.1", I.SP02.ID.IDUA.1, "EXIT_I.SP02.ID.IDUA.1",&
+		 I.SP02-UndulatorChamber, I.SP02-valvebellow, I.SP02_D010, I.SP02_D010, I.SP02-Phaseshifter, I.SP02.DIA.BPL.3-E, I.SP02-UndulatorChamber,&
+		 "ENTRY_I.SP02.ID.IDUA.2", I.SP02.ID.IDUA.2, "EXIT_I.SP02.ID.IDUA.2",&
+		 MID_I.SP02.ID.ID, I.SP02-UndulatorChamber, I.SP02-valvebellow, I.SP02_D010, I.SP02_D010, I.SP02-Phaseshifter, I.SP02.DIA.BPL.4-E, I.SP02-UndulatorChamber,&
+		 "ENTRY_I.SP02.ID.IDUA.3", I.SP02.ID.IDUA.3-RESERVED, "EXIT_I.SP02.ID.IDUA.3",&
+		 EXIT_I.SP02.ID.ID,&
+		 I.SP02-UndulatorChamber, I.SP02-valvebellow, I.SP02.DIA.BPL.5-E, I.SP02.DIA.SCR.2, I.SP02_D1744, I.MAG.CODp, I.SP02.MAG.CODX.3, I.MAG.CODp,&
+		 I.SP02_D012a, I.SP02_Dumpmarg)
+
+
+SP02dump:    line = (I.SP02.MAG.DIPBD, I.SP02_Dumpmarg, I.SP02_D080, I.SP02.DIA.SCR.3, I.SP02_D300, I.SP02.DIA.FCUP.1, I.SP02.VAC.MBD.1)
+
+
+
+!==============OPERATION MODES====================
+
+!TDC:      line = (PREINJ, "W-INIT", CH, PreBC1_SPF, MATCH1_SPF, BC1, MATCH2, MainAcc15_SPF, EX1off, MainAcc3_SPF, EX3off, PreBC2, match3, "W-TEMP", BC2_TDC, SP01B)
+!TDC:      line = (CH, PREINJ, "W-INIT", PreBC1_SPF, MATCH1_SPF, BC1, MATCH2, MainAcc15_SPF, EX1off, MainAcc3_SPF, EX3off, PreBC2, match3, "W-TEMP", BC2_TDC, SP01B)
+TDC_BRANCHA:      line = (CH, PREINJ, "W-INIT", PreBC1_SPF, MATCH1_SPF, BC1, MATCH2, MainAcc15_SPF, EX1off, MainAcc3_SPF, EX3off, PreBC2, match3, "W-TEMP", BC2_TDC, SP01B_COMMON, SP01B_BRANCHA)
+TDC_BRANCHB:      line = (CH, PREINJ, "W-INIT", PreBC1_SPF, MATCH1_SPF, BC1, MATCH2, MainAcc15_SPF, EX1off, MainAcc3_SPF, EX3off, PreBC2, match3, "W-TEMP", BC2_TDC, SP01B_COMMON, SP01B_BRANCHB)
+TDC_BRANCHC:      line = (CH, PREINJ, "W-INIT", PreBC1_SPF, MATCH1_SPF, BC1, MATCH2, MainAcc15_SPF, EX1off, MainAcc3_SPF, EX3off, PreBC2, match3, "W-TEMP", BC2_TDC, SP01B_COMMON, SP01B_BRANCHC)
+
+
+EX1offTESTING:  line = (I.EX1,I.EX1_D0185, I.MAG.CODp, I.EX1.MAG.CODX.1, I.MAG.CODp, I.MAG.CODp, I.EX1.MAG.CODY.1, I.MAG.CODp, &
+			I.EX1_D0075,STRIPD, I.EX1.DIA.BPL.1-E, STRIPD, I.EX1_D197735, I.EX1.DIA.CTR.1,I.EX1_D002405,STRIPD, I.EX1.DIA.BPL.2-E, STRIPD,I.EX1_D0051,&
+      I.EX1.MAG.DIH.1_I.EX1.MAG.CRDI-off,I.EX1_D0133,I.EX1.MAG.DIH.2_I.EX1.MAG.CRDI-off,I.EX1_D00297,I.EX1.DIA.SCR.1,I.EX1_D01058,15INJ)
+!SPF:      line = (PREINJ, "W-INIT", CH, PreBC1_SPF, MATCH1_SPF, BC1, MATCH2, MainAcc15_SPF,   EX1off, MainAcc3_SPF,  EX3off, PreBC2, match3, "W-TEMP", BC2_SPF, "W-END", SP02, SP02dump)
+SPF:      line = (CH, PREINJ, "W-INIT", PreBC1_SPF,   MATCH1_SPF, BC1, MATCH2, MainAcc15_SPF, EX1off, MainAcc3_SPF,  EX3off, PreBC2, match3, "W-TEMP", BC2_SPF, "W-END", SP02, SP02dump)
+TEST:      line = (CH, PREINJ, "W-INIT", PreBC1_SPF,   MATCH1_SPF, BC1, MATCH2, MainAcc15_SPF, EX1offTESTING)!, MainAcc3_SPF,  EX3off, PreBC2, match3, "W-TEMP", BC2_SPF, "W-END", SP02, SP02dump)
+
+!INJ15:    line = (PREINJ, "W-INIT", CH, PreBC1_INJ15, MATCH1_INJ, BC1, MATCH2, MainAcc15_INJ15, EX1on, TR1, R15GEV)
+
+!INJ3:     line = (PREINJ, "W-INIT", CH, PreBC1_INJ3,  MATCH1_INJ, BC1, MATCH2, MainAcc15_INJ3,  EX1off, MainAcc3_INJ3, EX3on, TR3, R3GEV)
