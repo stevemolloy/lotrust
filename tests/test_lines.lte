@@ -47,25 +47,26 @@ test_scraper: scraper, l = 0.00, insert_from = "-x", position = -0.05
 test_ecol: ECOL, X_MAX=1.0, Y_MAX=1.0, DX=0, DY=0
 test_monitor: monitor, l = 0.15, weight = 1
 test_moni: moni, l = 0.200000, weight = 1
+"W-END":       WATCH, FILENAME="./output/w-end.sdds"
+"W-INIT":      WATCH, FILENAME="./output/w-init.sdds"
 
-
-DRIFT: line = ( test_drift )
-MARKER: line = ( test_marker )
-SBEND: line = ( test_sbend )
-HKICK: line = ( test_hkick )
-VKICK: line = ( test_vkick )
-KQUAD: line = ( test_kquad )
-RFCW_ZEROCROSSING: line = ( test_rfcw_zerocrossing )
-RFCW_CREST: line = ( test_rfcw_crest )
-RFDF: line = ( test_rfdf )
-WIGGLER: line = ( test_wiggler )
-CSRCSBEND: line = ( test_csrcsbend )
-RBEN: line = ( test_rben )
-SBEN: line = ( test_sben )
-KSEXT: line = ( test_ksext )
-SCRAPER: line = ( test_scraper )
-ECOL: line = ( test_ecol )
-MONITOR: line = ( test_monitor )
-MONI: line = ( test_moni )
+DRIFT: line = ( "W-INIT", test_drift , "W-END" )
+MARKER: line = ( "W-INIT", test_marker , "W-END" )
+SBEND: line = ( "W-INIT", test_sbend , "W-END" )
+HKICK: line = ( "W-INIT", test_hkick , "W-END" )
+VKICK: line = ( "W-INIT", test_vkick , "W-END" )
+KQUAD: line = ( "W-INIT", test_kquad , "W-END" )
+RFCW_ZEROCROSSING: line = ( "W-INIT", test_rfcw_zerocrossing , "W-END" )
+RFCW_CREST: line = ( "W-INIT", test_rfcw_crest , "W-END" )
+RFDF: line = ( "W-INIT", test_rfdf , "W-END" )
+WIGGLER: line = ( "W-INIT", test_wiggler , "W-END" )
+CSRCSBEND: line = ( "W-INIT", test_csrcsbend , "W-END" )
+RBEN: line = ( "W-INIT", test_rben , "W-END" )
+SBEN: line = ( "W-INIT", test_sben , "W-END" )
+KSEXT: line = ( "W-INIT", test_ksext , "W-END" )
+SCRAPER: line = ( "W-INIT", test_scraper , "W-END" )
+ECOL: line = ( "W-INIT", test_ecol , "W-END" )
+MONITOR: line = ( "W-INIT", test_monitor , "W-END" )
+MONI: line = ( "W-INIT", test_moni , "W-END" )
 
 

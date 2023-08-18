@@ -1,0 +1,31 @@
+&run_setup
+     lattice = test_lines.lte
+     default_order = 1,
+     final_pass = 1,
+     use_beamline = KSEXT,
+     p_central = 4.9023677597920600E+02,
+	   output = "./output/KSEXT/%s_O1.out"
+	   sigma = "./output/KSEXT/%s_O1.sig",
+	   magnets =  "./output/KSEXT/%s_O1.magn",
+	   centroid =  "./output/KSEXT/%s_O1.cen",
+	   parameters = "./output/KSEXT/%s_O1.param",
+	   semaphore_file = "./output/KSEXT/%s_O1.sem",
+     print_statistics = 1
+	   always_change_p0 = 1
+&end
+
+&run_control
+&end
+
+&sdds_beam
+     input="./input/test_beam.sdds",
+     input_type="elegant",
+     sample_fraction = 1,
+     center_transversely = 1,
+     center_arrival_time = 1,
+     reuse_bunch = 1,
+&end
+
+&track
+&end
+

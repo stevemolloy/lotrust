@@ -1,5 +1,5 @@
 use crate::elements::EleType;
-use ndarray::{arr2, s, Array, Array2, Axis};
+use ndarray::{arr2, s, Array2, Axis};
 use std::io::Write;
 
 use crate::elements::Element;
@@ -28,39 +28,26 @@ impl Beam {
                 self.pos = self.pos.dot(&t_matrix);
             }
             EleType::AccCav(details) => {
-                let length = details.length;
-                let k = details.wavenumber;
-                let volt = details.voltage;
-                let phase = details.phase;
-                let gamma_sq = ele.gamma.powi(2);
-                let beta_sq = gamma_2_beta(ele.gamma);
-                let synchro_ke = gamma_2_ke(ele.gamma);
-                let synchro_ke_gain = volt * phase.cos();
-                let new_synchro_ke = synchro_ke + synchro_ke_gain;
+                let gamma0_i = ele.gamma;
+                let beta0_i = gamma_2_beta(gamma0_i);
+                let gamma0_f =
+                    ke_2_gamma(gamma_2_ke(gamma0_i) + details.voltage * details.phase.cos());
 
-                let e_err_mat = arr2(&[[1f64, 0f64], [0f64, synchro_ke / new_synchro_ke]]);
-
-                let r56_drift = length / (beta_sq * gamma_sq);
+                let r56_drift = (details.length / 2f64) / (beta0_i.powi(2) * gamma0_i.powi(2));
                 let drift_matrix = arr2(&[[1f64, 0f64], [r56_drift, 1f64]]);
 
-                let mut newpos = Array::zeros((0, 2));
-                for particle in self.pos.outer_iter() {
-                    // arr2 defines matrices in terms of a list of columns
-                    // let ident_matrix = arr2(&[[1f64, 0f64], [0f64, 1f64]]);
-                    let mut newparticle = particle.dot(&drift_matrix);
-                    let phase_error = newparticle[0] * details.wavenumber;
-                    let new_phase = details.phase - phase_error;
-                    let r65_kick =
-                        k * volt * new_phase.sin() / ((gamma_sq - 1f64).powf(0.5) * MASS);
-                    let kick_matrix = arr2(&[[1f64, r65_kick], [0f64, 1f64]]);
+                self.pos = self.pos.dot(&drift_matrix);
 
-                    newparticle = newparticle.dot(&e_err_mat);
-                    newparticle = newparticle.dot(&kick_matrix);
-                    newparticle = newparticle.dot(&drift_matrix);
-                    newpos.push_row((&newparticle).into()).unwrap();
+                for mut particle in self.pos.outer_iter_mut() {
+                    let actual_phase = details.phase - particle[0] * details.wavenumber;
+                    let new_ke =
+                        delta_2_ke(particle[1], gamma0_i) + (details.voltage * actual_phase.cos());
+                    let new_gamma = ke_2_gamma(new_ke);
+
+                    particle[1] = gamma_2_delta(new_gamma, gamma0_f);
                 }
 
-                self.pos = newpos;
+                self.pos = self.pos.dot(&drift_matrix);
             }
         }
     }
@@ -88,6 +75,20 @@ pub fn gamma_2_beta(g: f64) -> f64 {
     (1f64 - (1f64 / g.powi(2))).sqrt()
 }
 
+fn gamma_2_delta(gamma: f64, gamma0: f64) -> f64 {
+    let beta0 = gamma_2_beta(gamma0);
+    (1f64 / beta0) * ((gamma / gamma0) - 1f64)
+}
+
+fn delta_2_gamma(delta: f64, gamma0: f64) -> f64 {
+    let beta0 = gamma_2_beta(gamma0);
+    beta0 * gamma0 * delta + gamma0
+}
+
+fn delta_2_ke(delta: f64, gamma0: f64) -> f64 {
+    gamma_2_ke(delta_2_gamma(delta, gamma0))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -108,5 +109,19 @@ mod tests {
     fn zero_ke_has_zero_beta() {
         let ke = 0f64;
         assert_eq!(gamma_2_beta(ke_2_gamma(ke)), 0.0);
+    }
+
+    #[test]
+    fn zero_delta_means_gamma_is_gamma0() {
+        let delta = 0f64;
+        let gamma0 = 100f64;
+        assert_eq!(delta_2_gamma(delta, gamma0), gamma0);
+    }
+
+    #[test]
+    fn gamma_is_gamma0_implies_zero_delta() {
+        let gamma0 = 100f64;
+        let gamma = gamma0;
+        assert_eq!(gamma_2_delta(gamma, gamma0), 0f64);
     }
 }
