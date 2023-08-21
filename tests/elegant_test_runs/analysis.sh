@@ -25,8 +25,10 @@ do
     -define=col,beta,"p gamma / " \
     -define=col,z,"beta 299792458 dt -1 * * *" \
     -define=col,ke,"gamma 1 - 510998.949996164 *" \
-    -process=ke,average,keAvg \
-    -define=col,delta,"ke keAvg -" \
+    -process=ke,first,ke0 \
+    -process=beta,first,beta0 \
+    -process=gamma,first,gamma0 \
+    -define=col,delta,"1 beta0 / gamma gamma0 / 1 - *" \
     -summarize \
     -noWarnings
   sddsprintout -spreadsheet=csv -columns ./output/$ele/w-init.sdds ./output/$ele/initial_dist.csv
@@ -37,8 +39,10 @@ do
     -define=col,beta,"p gamma / " \
     -define=col,z,"beta 299792458 dt -1 * * *" \
     -define=col,ke,"gamma 1 - 510998.949996164 *" \
-    -process=ke,average,keAvg \
-    -define=col,delta,"ke keAvg -" \
+    -process=ke,first,ke0 \
+    -process=beta,first,beta0 \
+    -process=gamma,first,gamma0 \
+    -define=col,delta,"1 beta0 / gamma gamma0 / 1 - *" \
     -summarize \
     -noWarnings
   sddsprintout -spreadsheet=csv -columns ./output/$ele/w-end.sdds ./output/$ele/final_dist.csv
